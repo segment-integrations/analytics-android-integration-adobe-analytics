@@ -113,6 +113,9 @@ public class AdobeIntegration extends Integration<Void> {
   @Override
   public void flush() {
     super.flush();
+
+    com.adobe.mobile.Analytics.sendQueuedHits();
+    logger.verbose("Analytics.sendQueuedHits();");
   }
 
   @Override
