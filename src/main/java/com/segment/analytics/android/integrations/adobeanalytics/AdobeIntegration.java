@@ -1,8 +1,11 @@
 package com.segment.analytics.android.integrations.adobeanalytics;
 
+import android.app.Activity;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.adobe.mobile.Config;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Traits;
@@ -15,6 +18,7 @@ import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
 
+import java.io.FileWriter;
 import java.security.Provider;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Date;
 
 import static com.segment.analytics.internal.Utils.isNullOrEmpty;
 
@@ -38,13 +43,14 @@ import static com.segment.analytics.internal.Utils.isNullOrEmpty;
  *     href="https://github.com/Adobe-Marketing-Cloud/mobile-services/releases/tag/v4.14.0-Android">Adobe
  *     Android SDK</a>
  */
-public class AdobeIntegration extends Integration<Void> {
+public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
 
   public static final Factory FACTORY =
       new Factory() {
         @Override
-        public Integration<?> create(ValueMap settings, Analytics analytics) {
-          return new AdobeIntegration(analytics, settings);
+        public Integration<?> create(ValueMap settings, com.segment.analytics.Analytics analytics) {
+          Logger logger = analytics.logger(ADOBE_KEY);
+          return new AdobeIntegration(settings, logger);
         }
 
         @Override
@@ -54,13 +60,41 @@ public class AdobeIntegration extends Integration<Void> {
       };
 
   private static final String ADOBE_KEY = "Adobe Analytics";
-  // place all member variables here
+  private final Logger logger;
 
-  AdobeIntegration(Analytics analytics, ValueMap settings) {}
+  AdobeIntegration(ValueMap settings, Logger logger) {
+    this.logger = logger;
+  }
+
+  @Override
+  public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+    super.onActivityCreated(activity, savedInstanceState);
+
+    Config.setContext(activity.getApplicationContext());
+    logger.verbose("Config.setContext(%s);", activity.getApplicationContext());
+  }
+
+  @Override
+  public void onActivityPaused(Activity activity) {
+    super.onActivityPaused(activity);
+
+    Config.pauseCollectingLifecycleData();
+    logger.verbose("Config.pauseCollectingLifecycleData();");
+  }
+
+  @Override
+  public void onActivityResumed(Activity activity) {
+    super.onActivityResumed(activity);
+
+    Config.collectLifecycleData(activity);
+    logger.verbose("Config.collectLifecycleData(%s);", activity);
+  }
 
   @Override
   public void identify(IdentifyPayload identify) {
     super.identify(identify);
+
+
   }
 
   @Override
