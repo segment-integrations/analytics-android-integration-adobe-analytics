@@ -105,6 +105,9 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
   @Override
   public void track(TrackPayload track) {
     super.track(track);
+
+    com.adobe.mobile.Analytics.trackAction(track.event(), track.properties());
+    logger.verbose("com.adobe.mobile.Analytics.trackAction(%s, %s);", track.event(), track.properties());
   }
 
   @Override
