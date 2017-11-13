@@ -88,6 +88,8 @@ public class AdobeIntegration extends Integration<Void> {
   @Override
   public void screen(ScreenPayload screen) {
     super.screen(screen);
+
+    com.adobe.mobile.Analytics.trackState(screen.name(), screen.properties());
   }
 
   @Override
