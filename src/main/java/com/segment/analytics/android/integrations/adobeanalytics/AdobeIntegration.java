@@ -20,6 +20,7 @@ import com.segment.analytics.integrations.TrackPayload;
 
 import java.io.FileWriter;
 import java.security.Provider;
+import java.util.HashMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -61,9 +62,11 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
 
   private static final String ADOBE_KEY = "Adobe Analytics";
   private final Logger logger;
+  private final Map<String, Object> evarMapper;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
     this.logger = logger;
+    this.evarMapper = settings.getValueMap("eVars");
   }
 
   @Override
@@ -106,8 +109,29 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
   public void track(TrackPayload track) {
     super.track(track);
 
+    Properties properties = track.properties();
+
+    if (!isNullOrEmpty(track.properties()) && !isNullOrEmpty(evarMapper)) {
+      Properties propertiesCopy = new Properties();
+      propertiesCopy.putAll(properties);
+
+      for (Map.Entry<String, Object> entry : properties.entrySet()) {
+        String property = entry.getKey();
+        Object value = entry.getValue();
+
+        if (evarMapper.containsKey(property)) {
+            propertiesCopy.put(String.valueOf(evarMapper.get(property)), value);
+        } else {
+          propertiesCopy.put(property, value);
+        }
+      }
+      com.adobe.mobile.Analytics.trackAction(track.event(), propertiesCopy);
+      logger.verbose("Analytics.trackAction(%s, %s);", track.event(), propertiesCopy);
+      return;
+    }
+
     com.adobe.mobile.Analytics.trackAction(track.event(), track.properties());
-    logger.verbose("com.adobe.mobile.Analytics.trackAction(%s, %s);", track.event(), track.properties());
+    logger.verbose("Analytics.trackAction(%s, %s);", track.event(), properties);
   }
 
   @Override
