@@ -112,7 +112,17 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
   public void screen(ScreenPayload screen) {
     super.screen(screen);
 
-    com.adobe.mobile.Analytics.trackState(screen.name(), screen.properties());
+    Properties properties = screen.properties();
+
+    if (isNullOrEmpty(properties)) {
+      com.adobe.mobile.Analytics.trackState(screen.name(), null);
+      logger.verbose("Analytics.trackState(%s, %s);", screen.name(), null);
+      return;
+    }
+
+    Properties mappedProperties = mapProperties(properties);
+    com.adobe.mobile.Analytics.trackState(screen.name(), mappedProperties);
+    logger.verbose("Analytics.trackState(%s, %s);", screen.name(), mappedProperties);
   }
 
   @Override
@@ -122,8 +132,8 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
     String eventName = track.event();
 
     if (isNullOrEmpty(events) || !events.containsKey(eventName)) {
-      logger.verbose("Please map your events to corresponding "
-          + "Adobe events in your Segment UI.");
+      logger.verbose("Please map your event names to corresponding "
+          + "Adobe event names in your Segment UI.");
       return;
     }
 
@@ -131,11 +141,18 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
     Properties properties = track.properties();
 
     if (isNullOrEmpty(properties)) {
-      com.adobe.mobile.Analytics.trackAction(eventName, properties);
-      logger.verbose("Analytics.trackAction(%s, %s);", eventName, properties);
+      com.adobe.mobile.Analytics.trackAction(eventName, null);
+      logger.verbose("Analytics.trackAction(%s, %s);", eventName, null);
       return;
     }
 
+    Properties mappedProperties = mapProperties(properties);
+
+    com.adobe.mobile.Analytics.trackAction(eventName, mappedProperties);
+    logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
+  }
+
+  private Properties mapProperties(Properties properties) {
     Properties propertiesCopy = new Properties();
     propertiesCopy.putAll(properties);
     Properties mappedProperties = new Properties();
@@ -185,8 +202,7 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
     }
     // pass along remaining unmapped Segment properties as contextData values
     mappedProperties.putAll(propertiesCopy);
-    com.adobe.mobile.Analytics.trackAction(eventName, mappedProperties);
-    logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
+    return mappedProperties;
   }
 
   @Override
