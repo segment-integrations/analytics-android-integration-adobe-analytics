@@ -100,6 +100,8 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
   @Override
   public void screen(ScreenPayload screen) {
     super.screen(screen);
+
+    com.adobe.mobile.Analytics.trackState(screen.name(), screen.properties());
   }
 
   @Override
