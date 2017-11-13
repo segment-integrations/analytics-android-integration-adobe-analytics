@@ -136,12 +136,12 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
         }
       }
       com.adobe.mobile.Analytics.trackAction(eventName, propertiesCopy);
-      logger.verbose("Analytics.trackAction(%s, %s);", track.event(), propertiesCopy);
+      logger.verbose("Analytics.trackAction(%s, %s);", eventName, propertiesCopy);
       return;
     }
 
     com.adobe.mobile.Analytics.trackAction(eventName, track.properties());
-    logger.verbose("Analytics.trackAction(%s, %s);", track.event(), properties);
+    logger.verbose("Analytics.trackAction(%s, %s);", eventName, properties);
   }
 
   @Override
