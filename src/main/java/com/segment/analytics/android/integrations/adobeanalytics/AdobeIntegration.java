@@ -63,9 +63,11 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
   private static final String ADOBE_KEY = "Adobe Analytics";
   private final Logger logger;
   private final Map<String, Object> evarMapper;
+  private final Map<String, Object> events;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
     this.logger = logger;
+    this.events = settings.getValueMap("events");
     this.evarMapper = settings.getValueMap("eVars");
   }
 
@@ -109,6 +111,14 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
   public void track(TrackPayload track) {
     super.track(track);
 
+    String eventName = track.event();
+
+    if (!isNullOrEmpty(events)) {
+      if (events.containsKey(eventName)) {
+        eventName = String.valueOf(events.get(eventName));
+      }
+    }
+
     Properties properties = track.properties();
 
     if (!isNullOrEmpty(track.properties()) && !isNullOrEmpty(evarMapper)) {
@@ -125,12 +135,12 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
           propertiesCopy.put(property, value);
         }
       }
-      com.adobe.mobile.Analytics.trackAction(track.event(), propertiesCopy);
+      com.adobe.mobile.Analytics.trackAction(eventName, propertiesCopy);
       logger.verbose("Analytics.trackAction(%s, %s);", track.event(), propertiesCopy);
       return;
     }
 
-    com.adobe.mobile.Analytics.trackAction(track.event(), track.properties());
+    com.adobe.mobile.Analytics.trackAction(eventName, track.properties());
     logger.verbose("Analytics.trackAction(%s, %s);", track.event(), properties);
   }
 
