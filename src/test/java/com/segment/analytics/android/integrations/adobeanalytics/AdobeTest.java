@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(RobolectricTestRunner.class)
-@PrepareForTest({Analytics.class, com.adobe.mobile.Config.class})
+@PrepareForTest({Analytics.class, Config.class})
 @org.robolectric.annotation.Config(constants = BuildConfig.class, sdk = 18, manifest = org.robolectric.annotation.Config.NONE)
 public class AdobeTest {
 
