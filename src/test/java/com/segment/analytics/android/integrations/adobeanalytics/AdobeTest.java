@@ -25,10 +25,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.annotation.Config;
 
@@ -46,16 +51,20 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(RobolectricTestRunner.class)
+@PrepareForTest(com.adobe.mobile.Analytics.class)
 @Config(constants = BuildConfig.class, sdk = 18, manifest = Config.NONE)
 public class AdobeTest {
 
-  @Mock Application application;
-  @Mock Analytics analytics;
+  @Rule public PowerMockRule rule = new PowerMockRule();
+  private AdobeIntegration integration;
 
   @Before
   public void setUp() {
+    PowerMockito.mockStatic(com.adobe.mobile.Analytics.class);
+    integration = new AdobeIntegration(new ValueMap(), Logger.with(VERBOSE));
   }
 
   @Test
@@ -88,6 +97,9 @@ public class AdobeTest {
 
   @Test
   public void flush() {
+    integration.flush();
+    verifyStatic();
+    com.adobe.mobile.Analytics.sendQueuedHits();
   }
 
   @Test
