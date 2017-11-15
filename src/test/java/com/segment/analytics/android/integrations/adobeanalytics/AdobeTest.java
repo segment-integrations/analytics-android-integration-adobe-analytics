@@ -1,7 +1,6 @@
 package com.segment.analytics.android.integrations.adobeanalytics;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
@@ -20,11 +19,11 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
 
+import static com.segment.analytics.Analytics.LogLevel.NONE;
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(RobolectricTestRunner.class)
@@ -39,7 +38,7 @@ public class AdobeTest {
   public void setUp() {
     PowerMockito.mockStatic(Config.class);
     PowerMockito.mockStatic(Analytics.class);
-    integration = new AdobeIntegration(new ValueMap(), Logger.with(VERBOSE));
+    integration = new AdobeIntegration(new ValueMap(), Logger.with(NONE));
   }
 
   @Test
