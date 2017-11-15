@@ -97,6 +97,9 @@ public class AdobeTest {
 
   @Test
   public void flush() {
+    integration.flush();
+    verifyStatic();
+    Analytics.sendQueuedHits();
   }
 
   @Test
