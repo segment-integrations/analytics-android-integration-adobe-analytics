@@ -43,7 +43,7 @@ import static com.segment.analytics.internal.Utils.isNullOrEmpty;
  *     href="https://github.com/Adobe-Marketing-Cloud/mobile-services/releases/tag/v4.14.0-Android">Adobe
  *     Android SDK</a>
  */
-public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
+public class AdobeIntegration extends Integration<Void> {
 
   public static final Factory FACTORY =
       new Factory() {
