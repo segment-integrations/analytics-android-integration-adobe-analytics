@@ -1,7 +1,6 @@
 package com.segment.analytics.android.integrations.adobeanalytics;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
@@ -24,7 +23,6 @@ import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(RobolectricTestRunner.class)
@@ -98,6 +96,9 @@ public class AdobeTest {
 
   @Test
   public void flush() {
+    integration.flush();
+    verifyStatic();
+    Analytics.sendQueuedHits();
   }
 
   @Test
