@@ -5,8 +5,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import android.text.TextUtils;
 import com.adobe.mobile.Config;
-import com.segment.analytics.Analytics;
+import com.adobe.mobile.Analytics;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
@@ -60,9 +61,15 @@ public class AdobeIntegration extends Integration<Void> {
       };
 
   private static final String ADOBE_KEY = "Adobe Analytics";
+  Map<String, Object> events;
+  Map<String, Object> contextValues;
+  Map<String, Object> lVars;
   private final Logger logger;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
+    this.events = settings.getValueMap("events");
+    this.contextValues = settings.getValueMap("contextValues");
+    this.lVars = settings.getValueMap("lVars");
     this.logger = logger;
   }
 
@@ -103,6 +110,69 @@ public class AdobeIntegration extends Integration<Void> {
   @Override
   public void track(TrackPayload track) {
     super.track(track);
+
+    String eventName = track.event();
+
+    if (isNullOrEmpty(events) || !events.containsKey(eventName)) {
+      logger.verbose("Please map your event names to corresponding "
+          + "Adobe event names in your Segment UI.");
+      return;
+    }
+
+    Properties properties = track.properties();
+    eventName = String.valueOf(events.get(eventName));
+
+    if (isNullOrEmpty(properties)) {
+      Analytics.trackAction(eventName, null);
+      logger.verbose("Analytics.trackAction(%s, %s);", eventName, null);
+      return;
+    }
+
+    Properties mappedProperties = mapProperties(properties);
+
+    Analytics.trackAction(eventName, mappedProperties);
+    logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
+  }
+
+  private Properties mapProperties(Properties properties) {
+    Properties propertiesCopy = new Properties();
+    propertiesCopy.putAll(properties);
+    Properties mappedProperties = new Properties();
+
+    if (!isNullOrEmpty(contextValues)) {
+      for (Map.Entry<String, Object> entry : properties.entrySet()) {
+        String property = entry.getKey();
+        Object value = entry.getValue();
+
+        if (contextValues.containsKey(property)) {
+          mappedProperties.put(String.valueOf(contextValues.get(property)), value);
+          propertiesCopy.remove(property);
+        }
+      }
+    }
+
+    if (!isNullOrEmpty(lVars)) {
+      for (Map.Entry<String, Object> entry : properties.entrySet()) {
+        String property = entry.getKey();
+        Object value = entry.getValue();
+
+        if (lVars.containsKey(property)) {
+          if (value instanceof String) {
+            mappedProperties.put(String.valueOf(lVars.get(property)), value);
+            propertiesCopy.remove(property);
+          }
+          if (value instanceof List) {
+            List<Object> listValue = (List) value;
+            String list = TextUtils.join(",", listValue);
+            mappedProperties.put(String.valueOf(lVars.get(property)), list);
+            propertiesCopy.remove(property);
+          }
+        }
+      }
+    }
+    // pass along remaining unmapped Segment properties as contextData just in case
+    mappedProperties.putAll(propertiesCopy);
+    return mappedProperties;
   }
 
   @Override
