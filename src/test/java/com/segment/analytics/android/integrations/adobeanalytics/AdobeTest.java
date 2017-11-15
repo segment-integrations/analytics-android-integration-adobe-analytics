@@ -1,73 +1,85 @@
 package com.segment.analytics.android.integrations.adobeanalytics;
 
-import android.app.Application;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.segment.analytics.Analytics;
-import com.segment.analytics.Options;
-import com.segment.analytics.Properties;
-import com.segment.analytics.Traits;
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import com.adobe.mobile.Analytics;
+import com.adobe.mobile.Config;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.core.tests.BuildConfig;
-import com.segment.analytics.integrations.GroupPayload;
-import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Logger;
-import com.segment.analytics.integrations.TrackPayload;
-import com.segment.analytics.test.GroupPayloadBuilder;
-import com.segment.analytics.test.IdentifyPayloadBuilder;
-import com.segment.analytics.test.ScreenPayloadBuilder;
-import com.segment.analytics.test.TrackPayloadBuilder;
-
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
-
-import java.util.Arrays;
 
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
-import static com.segment.analytics.Utils.createTraits;
 import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.isNull;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(RobolectricTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 18, manifest = Config.NONE)
+@PrepareForTest({Analytics.class, com.adobe.mobile.Config.class})
+@org.robolectric.annotation.Config(constants = BuildConfig.class, sdk = 18, manifest = org.robolectric.annotation.Config.NONE)
 public class AdobeTest {
 
-  @Mock Application application;
-  @Mock Analytics analytics;
+  @Rule public PowerMockRule rule = new PowerMockRule();
+  private AdobeIntegration integration;
 
   @Before
   public void setUp() {
+    PowerMockito.mockStatic(Config.class);
+    PowerMockito.mockStatic(Analytics.class);
+    integration = new AdobeIntegration(new ValueMap(), Logger.with(VERBOSE));
   }
 
   @Test
   public void factory() {
+    assertThat(AdobeIntegration.FACTORY.key()).isEqualTo("Adobe Analytics");
   }
 
   @Test
   public void initialize() {
+    integration = new AdobeIntegration(new ValueMap(), Logger.with(VERBOSE));
+    // will verify settings are passed to AdobeIntegration as expected once settings are finalized
   }
 
   @Test
   public void initializeWithDefaultArguments() {
+    // default arguments have not yet been defined
+  }
+
+  @Test public void activityCreate() {
+    Activity activity = mock(Activity.class);
+    Bundle savedInstanceState = mock (Bundle.class);
+    integration.onActivityCreated(activity, savedInstanceState);
+    verifyStatic();
+    Config.setContext(activity.getApplicationContext());
+  }
+
+  @Test public void activityPause() {
+    Activity activity = mock(Activity.class);
+    integration.onActivityPaused(activity);
+    verifyStatic();
+    Config.pauseCollectingLifecycleData();
+  }
+
+  @Test public void activityResume() {
+    Activity activity = mock(Activity.class);
+    Intent intent = mock(Intent.class);
+    when(activity.getIntent()).thenReturn(intent);
+    integration.onActivityResumed(activity);
+    verifyStatic();
+    Config.collectLifecycleData(activity);
   }
 
   @Test
