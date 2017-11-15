@@ -93,8 +93,6 @@ public class AdobeIntegration extends Integration<Void> {
   @Override
   public void identify(IdentifyPayload identify) {
     super.identify(identify);
-
-
   }
 
   @Override

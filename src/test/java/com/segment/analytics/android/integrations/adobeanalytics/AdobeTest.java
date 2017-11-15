@@ -75,8 +75,6 @@ public class AdobeTest {
 
   @Test public void activityResume() {
     Activity activity = mock(Activity.class);
-    Intent intent = mock(Intent.class);
-    when(activity.getIntent()).thenReturn(intent);
     integration.onActivityResumed(activity);
     verifyStatic();
     Config.collectLifecycleData(activity);
