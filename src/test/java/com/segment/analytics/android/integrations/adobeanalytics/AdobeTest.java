@@ -55,19 +55,27 @@ public class AdobeTest {
 
   @Test
   public void initialize() {
-    integration = new AdobeIntegration(new ValueMap(), Logger.with(VERBOSE));
-    // will verify settings are passed to AdobeIntegration as expected once settings are finalized
+    integration = new AdobeIntegration(new ValueMap()
+        .putValue("events", new HashMap<String, Object>())
+        .putValue("contextValues", new HashMap<String, Object>())
+        .putValue("lVars", new HashMap<String, Object>()),
+      Logger.with(VERBOSE));
+
+    assertThat(integration.events).isEqualTo(new HashMap<String, Object>());
+    assertThat(integration.contextValues).isEqualTo(new HashMap<String, Object>());
+    assertThat(integration.lVars).isEqualTo(new HashMap<String, Object>());
   }
 
   @Test
   public void initializeWithDefaultArguments() {
-    // default arguments have not yet been defined
+    // all default arguments have not yet been defined
   }
 
   @Test public void activityCreate() {
     Activity activity = mock(Activity.class);
     Bundle savedInstanceState = mock (Bundle.class);
     integration.onActivityCreated(activity, savedInstanceState);
+
     verifyStatic();
     Config.setContext(activity.getApplicationContext());
   }
@@ -75,6 +83,7 @@ public class AdobeTest {
   @Test public void activityPause() {
     Activity activity = mock(Activity.class);
     integration.onActivityPaused(activity);
+
     verifyStatic();
     Config.pauseCollectingLifecycleData();
   }
@@ -82,6 +91,7 @@ public class AdobeTest {
   @Test public void activityResume() {
     Activity activity = mock(Activity.class);
     integration.onActivityResumed(activity);
+
     verifyStatic();
     Config.collectLifecycleData(activity);
   }
@@ -95,6 +105,7 @@ public class AdobeTest {
         .event("Testing Event")
         .build()
     );
+
     verifyStatic();
     Analytics.trackAction("Adobe Testing Event", null);
   }
@@ -112,6 +123,7 @@ public class AdobeTest {
             .putValue("testing", "testing value"))
         .build()
     );
+
     verifyStatic();
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
@@ -135,6 +147,7 @@ public class AdobeTest {
             .putValue("testing lVars", list))
         .build()
     );
+
     verifyStatic();
     String joinedlVars = "item1, item2";
     Map<String, Object> contextData = new HashMap<>();
