@@ -168,16 +168,18 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
   private void trackEcommerce(TrackPayload track) {
     String eventName = ECOMMERCE_MAPPER.get(track.event());
     Properties properties = track.properties();
-    Properties propertiesCopy = null;
-    Map<String, Object> ecommerceProperties = null;
 
-    if (!isNullOrEmpty(properties)) {
-      propertiesCopy = new Properties();
-      propertiesCopy.putAll(properties);
-      propertiesCopy.remove("products");
-      ecommerceProperties = mapEcommerce(eventName, properties);
+    if (isNullOrEmpty(properties)) {
+      com.adobe.mobile.Analytics.trackAction(eventName, null);
+      logger.verbose("Analytics.trackAction(%s, %s);", eventName, null);
+      return;
     }
-    // pass in the copy of properties without a nested products array
+
+    Properties propertiesCopy = new Properties();
+    propertiesCopy.putAll(properties);
+    Map<String, Object> ecommerceProperties = mapEcommerce(eventName, properties);
+    // pass all properties to mapper w/out products array
+    propertiesCopy.remove("products");
     Properties mappedProperties = mapProperties(propertiesCopy);
     mappedProperties.putAll(ecommerceProperties);
 
@@ -221,7 +223,7 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
         }
       }
     }
-    // pass along remaining unmapped Segment properties as contextData values
+    // pass along remaining unmapped Segment properties as contextData values just in case
     mappedProperties.putAll(propertiesCopy);
     return mappedProperties;
   }
