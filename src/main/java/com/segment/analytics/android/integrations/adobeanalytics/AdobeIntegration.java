@@ -2,35 +2,18 @@ package com.segment.analytics.android.integrations.adobeanalytics;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
-import android.text.TextUtils;
-import com.adobe.mobile.Config;
 import com.adobe.mobile.Analytics;
+import com.adobe.mobile.Config;
 import com.segment.analytics.Properties;
-import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
-import com.segment.analytics.integrations.BasePayload;
 import com.segment.analytics.integrations.GroupPayload;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
-
-import java.io.FileWriter;
-import java.security.Provider;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Date;
 
 import static com.segment.analytics.internal.Utils.isNullOrEmpty;
 
@@ -114,8 +97,9 @@ public class AdobeIntegration extends Integration<Void> {
     String eventName = track.event();
 
     if (isNullOrEmpty(events) || !events.containsKey(eventName)) {
-      logger.verbose("Please map your event names to corresponding "
-          + "Adobe event names in your Segment UI.");
+      logger.verbose(
+          "Please map your event names to corresponding "
+              + "Adobe event names in your Segment UI.");
       return;
     }
 
@@ -162,9 +146,21 @@ public class AdobeIntegration extends Integration<Void> {
             propertiesCopy.remove(property);
           }
           if (value instanceof List) {
-            List<Object> listValue = (List) value;
-            String list = TextUtils.join(",", listValue);
-            mappedProperties.put(String.valueOf(lVars.get(property)), list);
+            StringBuilder builder = new StringBuilder();
+            List<Object> list = (List) value;
+
+            for (int i = 0; i < list.size(); i++) {
+              String item = String.valueOf(list.get(i));
+              if (i < list.size() - 1) {
+                builder.append(item + ", ");
+              } else {
+                builder.append(item);
+              }
+            }
+
+            String joinedList = builder.toString();
+
+            mappedProperties.put(String.valueOf(lVars.get(property)), joinedList);
             propertiesCopy.remove(property);
           }
         }

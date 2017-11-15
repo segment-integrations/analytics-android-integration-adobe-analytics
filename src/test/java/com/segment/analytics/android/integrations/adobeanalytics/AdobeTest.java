@@ -4,9 +4,15 @@ import android.app.Activity;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
+import com.segment.analytics.Properties;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.core.tests.BuildConfig;
 import com.segment.analytics.integrations.Logger;
+import com.segment.analytics.test.TrackPayloadBuilder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.json.JSONObject;
@@ -14,6 +20,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
@@ -81,6 +88,69 @@ public class AdobeTest {
 
   @Test
   public void track() {
+    integration.events = new HashMap<>();
+    integration.events.put("Testing Event", "Adobe Testing Event");
+
+    integration.track(new TrackPayloadBuilder()
+        .event("Testing Event")
+        .build()
+    );
+    verifyStatic();
+    Analytics.trackAction("Adobe Testing Event", null);
+  }
+
+  @Test
+  public void trackWithContextValues() {
+    integration.events = new HashMap<>();
+    integration.events.put("Testing Event", "Adobe Testing Event");
+    integration.contextValues = new HashMap<>();
+    integration.contextValues.put("testing", "myapp.testing.Testing");
+
+    integration.track(new TrackPayloadBuilder()
+        .event("Testing Event")
+        .properties(new Properties()
+            .putValue("testing", "testing value"))
+        .build()
+    );
+    verifyStatic();
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("myapp.testing.Testing", "testing value");
+    Analytics.trackAction("Adobe Testing Event", contextData);
+  }
+
+  @Test
+  public void trackWithlVars() {
+    integration.events = new HashMap<>();
+    integration.events.put("Testing Event", "Adobe Testing Event");
+    integration.lVars = new HashMap<>();
+    integration.lVars.put("testing lVars", "joinedString");
+
+    List<Object> list = new ArrayList<>();
+    list.add("item1");
+    list.add("item2");
+
+    integration.track(new TrackPayloadBuilder()
+        .event("Testing Event")
+        .properties(new Properties()
+            .putValue("testing lVars", list))
+        .build()
+    );
+    verifyStatic();
+    String joinedlVars = "item1, item2";
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("joinedString", joinedlVars);
+    Analytics.trackAction("Adobe Testing Event", contextData);
+  }
+
+  @Test
+  public void trackWithoutMappedEventName() {
+    integration.track(new TrackPayloadBuilder()
+      .event("New Event")
+      .build()
+    );
+
+    verifyStatic(Mockito.times(0));
+    Analytics.trackAction("New Event", null);
   }
 
   @Test
