@@ -65,9 +65,9 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
 
   private static final String ADOBE_KEY = "Adobe Analytics";
   private final Logger logger;
-  private final Map<String, Object> events;
-  private final Map<String, Object> contextDataMapper;
-  private final Map<String, Object> lVars;
+  Map<String, Object> events;
+  Map<String, Object> contextDataMapper;
+  Map<String, Object> lVars;
   private static final Map<String, String> ECOMMERCE_MAPPER = createEcommerceMap();
   private static Map<String, String> createEcommerceMap() {
     Map<String, String> map = new HashMap<>();
@@ -260,10 +260,10 @@ public class AdobeIntegration extends Integration<com.adobe.mobile.Analytics> {
         productStringBuilder.append(concatenatedValues);
       }
       String productString = productStringBuilder.toString();
-      if (eventName.equals("purchase")) {
-        contextData.put("purchaseid", properties.getString("orderId"));
-      }
       contextData.put("&&products", productString);
+    }
+    if (eventName.equals("purchase")) {
+      contextData.put("purchaseid", properties.getString("orderId"));
     }
     return contextData;
   }
