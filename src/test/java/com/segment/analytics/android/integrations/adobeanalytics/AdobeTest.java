@@ -104,6 +104,9 @@ public class AdobeTest {
 
   @Test
   public void reset() {
+    integration.reset();
+    verifyStatic();
+    Config.setUserIdentifier(null);
   }
 
   // json matcher
