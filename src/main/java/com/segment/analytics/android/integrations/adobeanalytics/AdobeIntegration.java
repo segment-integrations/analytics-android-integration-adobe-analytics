@@ -97,7 +97,7 @@ public class AdobeIntegration extends Integration<Void> {
 
     String eventName = track.event();
 
-    if (!isNullOrEmpty(eventsV2) && eventsV2.containsKey(eventName)) {
+    if (eventsV2.containsKey(eventName)) {
       eventName = String.valueOf(eventsV2.get(eventName));
     }
 
