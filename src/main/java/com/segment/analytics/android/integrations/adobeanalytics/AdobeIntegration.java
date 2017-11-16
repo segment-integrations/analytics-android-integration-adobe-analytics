@@ -45,13 +45,13 @@ public class AdobeIntegration extends Integration<Void> {
       };
 
   private static final String ADOBE_KEY = "Adobe Analytics";
-  Map<String, Object> events;
+  Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   Map<String, Object> lVars;
   private final Logger logger;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
-    this.events = settings.getValueMap("events");
+    this.eventsV2 = settings.getValueMap("events");
     this.contextValues = settings.getValueMap("contextValues");
     this.lVars = settings.getValueMap("lVars");
     this.logger = logger;
@@ -97,15 +97,11 @@ public class AdobeIntegration extends Integration<Void> {
 
     String eventName = track.event();
 
-    if (isNullOrEmpty(events) || !events.containsKey(eventName)) {
-      logger.verbose(
-          "Please map your event names to corresponding "
-              + "Adobe event names in your Segment UI.");
-      return;
+    if (!isNullOrEmpty(eventsV2) && eventsV2.containsKey(eventName)) {
+      eventName = String.valueOf(eventsV2.get(eventName));
     }
 
     Properties properties = track.properties();
-    eventName = String.valueOf(events.get(eventName));
 
     if (isNullOrEmpty(properties)) {
       Analytics.trackAction(eventName, null);
@@ -156,7 +152,7 @@ public class AdobeIntegration extends Integration<Void> {
             for (int i = 0; i < list.size(); i++) {
               String item = String.valueOf(list.get(i));
               if (i < list.size() - 1) {
-                builder.append(item).append(",");
+                builder.append(item).append(", ");
               } else {
                 builder.append(item);
               }
