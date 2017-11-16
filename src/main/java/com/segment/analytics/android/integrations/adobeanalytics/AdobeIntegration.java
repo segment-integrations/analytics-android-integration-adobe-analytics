@@ -12,6 +12,7 @@ import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -112,16 +113,16 @@ public class AdobeIntegration extends Integration<Void> {
       return;
     }
 
-    Properties mappedProperties = mapProperties(properties);
+    Map<String, Object> mappedProperties = mapProperties(properties);
 
     Analytics.trackAction(eventName, mappedProperties);
     logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
   }
 
-  private Properties mapProperties(Properties properties) {
+  private Map<String, Object> mapProperties(Properties properties) {
     Properties propertiesCopy = new Properties();
     propertiesCopy.putAll(properties);
-    Properties mappedProperties = new Properties();
+    Map<String, Object> mappedProperties = new HashMap<>();
 
     if (!isNullOrEmpty(contextValues)) {
       for (Map.Entry<String, Object> entry : properties.entrySet()) {
