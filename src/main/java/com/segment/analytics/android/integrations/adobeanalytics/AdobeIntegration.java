@@ -93,13 +93,13 @@ public class AdobeIntegration extends Integration<Void> {
     Properties properties = screen.properties();
 
     if (isNullOrEmpty(properties)) {
-      com.adobe.mobile.Analytics.trackState(screen.name(), null);
+      Analytics.trackState(screen.name(), null);
       logger.verbose("Analytics.trackState(%s, %s);", screen.name(), null);
       return;
     }
 
     Map<String, Object> mappedProperties = mapProperties(properties);
-    com.adobe.mobile.Analytics.trackState(screen.name(), mappedProperties);
+    Analytics.trackState(screen.name(), mappedProperties);
     logger.verbose("Analytics.trackState(%s, %s);", screen.name(), mappedProperties);
   }
 
@@ -192,7 +192,7 @@ public class AdobeIntegration extends Integration<Void> {
   public void flush() {
     super.flush();
 
-    com.adobe.mobile.Analytics.sendQueuedHits();
+    Analytics.sendQueuedHits();
     logger.verbose("Analytics.sendQueuedHits();");
   }
 
