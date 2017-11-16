@@ -152,7 +152,7 @@ public class AdobeIntegration extends Integration<Void> {
             for (int i = 0; i < list.size(); i++) {
               String item = String.valueOf(list.get(i));
               if (i < list.size() - 1) {
-                builder.append(item).append(", ");
+                builder.append(item).append(",");
               } else {
                 builder.append(item);
               }

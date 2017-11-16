@@ -148,7 +148,7 @@ public class AdobeTest {
     );
 
     verifyStatic();
-    String joinedlVars = "item1, item2";
+    String joinedlVars = "item1,item2";
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("joinedString", joinedlVars);
     Analytics.trackAction("Adobe Testing Event", contextData);
