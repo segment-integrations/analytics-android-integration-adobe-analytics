@@ -125,9 +125,9 @@ public class AdobeTest {
         .build()
     );
 
-    verifyStatic();
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
+    verifyStatic();
     Analytics.trackAction("Adobe Testing Event", contextData);
   }
 
@@ -149,10 +149,10 @@ public class AdobeTest {
         .build()
     );
 
-    verifyStatic();
     String joinedlVars = "item1, item2";
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("joinedString", joinedlVars);
+    verifyStatic();
     Analytics.trackAction("Adobe Testing Event", contextData);
   }
 
@@ -194,9 +194,9 @@ public class AdobeTest {
         .build()
     );
 
-    verifyStatic();
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
+    verifyStatic();
     Analytics.trackState("Viewed a Screen", contextData);
   }
 
@@ -216,10 +216,10 @@ public class AdobeTest {
         .build()
     );
 
-    verifyStatic();
     String joinedlVars = "item1, item2";
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("joinedString", joinedlVars);
+    verifyStatic();
     Analytics.trackState("Viewed a Screen", contextData);
   }
 
