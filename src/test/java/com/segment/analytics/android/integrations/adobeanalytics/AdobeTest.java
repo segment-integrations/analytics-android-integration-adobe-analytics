@@ -21,7 +21,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
@@ -62,7 +61,7 @@ public class AdobeTest {
         .putValue("lVars", new HashMap<String, Object>()),
       Logger.with(VERBOSE));
 
-    assertThat(integration.events).isEqualTo(new HashMap<String, Object>());
+    assertThat(integration.eventsV2).isEqualTo(new HashMap<String, Object>());
     assertThat(integration.contextValues).isEqualTo(new HashMap<String, Object>());
     assertThat(integration.lVars).isEqualTo(new HashMap<String, Object>());
   }
@@ -99,8 +98,8 @@ public class AdobeTest {
 
   @Test
   public void track() {
-    integration.events = new HashMap<>();
-    integration.events.put("Testing Event", "Adobe Testing Event");
+    integration.eventsV2 = new HashMap<>();
+    integration.eventsV2.put("Testing Event", "Adobe Testing Event");
 
     integration.track(new TrackPayloadBuilder()
         .event("Testing Event")
@@ -113,8 +112,8 @@ public class AdobeTest {
 
   @Test
   public void trackWithContextValues() {
-    integration.events = new HashMap<>();
-    integration.events.put("Testing Event", "Adobe Testing Event");
+    integration.eventsV2 = new HashMap<>();
+    integration.eventsV2.put("Testing Event", "Adobe Testing Event");
     integration.contextValues = new HashMap<>();
     integration.contextValues.put("testing", "myapp.testing.Testing");
 
@@ -133,8 +132,8 @@ public class AdobeTest {
 
   @Test
   public void trackWithlVars() {
-    integration.events = new HashMap<>();
-    integration.events.put("Testing Event", "Adobe Testing Event");
+    integration.eventsV2 = new HashMap<>();
+    integration.eventsV2.put("Testing Event", "Adobe Testing Event");
     integration.lVars = new HashMap<>();
     integration.lVars.put("testing lVars", "joinedString");
 
@@ -149,22 +148,11 @@ public class AdobeTest {
         .build()
     );
 
-    String joinedlVars = "item1, item2";
+    String joinedlVars = "item1,item2";
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("joinedString", joinedlVars);
     verifyStatic();
     Analytics.trackAction("Adobe Testing Event", contextData);
-  }
-
-  @Test
-  public void trackWithoutMappedEventName() {
-    integration.track(new TrackPayloadBuilder()
-      .event("New Event")
-      .build()
-    );
-
-    verifyStatic(Mockito.times(0));
-    Analytics.trackAction("New Event", null);
   }
 
   @Test

@@ -12,6 +12,7 @@ import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,13 +45,13 @@ public class AdobeIntegration extends Integration<Void> {
       };
 
   private static final String ADOBE_KEY = "Adobe Analytics";
-  Map<String, Object> events;
+  Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   Map<String, Object> lVars;
   private final Logger logger;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
-    this.events = settings.getValueMap("events");
+    this.eventsV2 = settings.getValueMap("events");
     this.contextValues = settings.getValueMap("contextValues");
     this.lVars = settings.getValueMap("lVars");
     this.logger = logger;
@@ -108,15 +109,11 @@ public class AdobeIntegration extends Integration<Void> {
 
     String eventName = track.event();
 
-    if (isNullOrEmpty(events) || !events.containsKey(eventName)) {
-      logger.verbose(
-          "Please map your event names to corresponding "
-              + "Adobe event names in your Segment UI.");
-      return;
+    if (eventsV2.containsKey(eventName)) {
+      eventName = String.valueOf(eventsV2.get(eventName));
     }
 
     Properties properties = track.properties();
-    eventName = String.valueOf(events.get(eventName));
 
     if (isNullOrEmpty(properties)) {
       Analytics.trackAction(eventName, null);
@@ -124,16 +121,16 @@ public class AdobeIntegration extends Integration<Void> {
       return;
     }
 
-    Properties mappedProperties = mapProperties(properties);
+    Map<String, Object> mappedProperties = mapProperties(properties);
 
     Analytics.trackAction(eventName, mappedProperties);
     logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
   }
 
-  private Properties mapProperties(Properties properties) {
+  private Map<String, Object> mapProperties(Properties properties) {
     Properties propertiesCopy = new Properties();
     propertiesCopy.putAll(properties);
-    Properties mappedProperties = new Properties();
+    Map<String, Object> mappedProperties = new HashMap<>();
 
     if (!isNullOrEmpty(contextValues)) {
       for (Map.Entry<String, Object> entry : properties.entrySet()) {
@@ -153,7 +150,10 @@ public class AdobeIntegration extends Integration<Void> {
         Object value = entry.getValue();
 
         if (lVars.containsKey(property)) {
-          if (value instanceof String) {
+          if (value instanceof String
+              || value instanceof Integer
+              || value instanceof Double
+              || value instanceof Long) {
             mappedProperties.put(String.valueOf(lVars.get(property)), value);
             propertiesCopy.remove(property);
           }
@@ -164,7 +164,7 @@ public class AdobeIntegration extends Integration<Void> {
             for (int i = 0; i < list.size(); i++) {
               String item = String.valueOf(list.get(i));
               if (i < list.size() - 1) {
-                builder.append(item + ", ");
+                builder.append(item).append(",");
               } else {
                 builder.append(item);
               }
