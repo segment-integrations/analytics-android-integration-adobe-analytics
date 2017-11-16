@@ -154,7 +154,8 @@ public class AdobeIntegration extends Integration<Void> {
               || value instanceof Integer
               || value instanceof Double
               || value instanceof Long) {
-            mappedProperties.put(String.valueOf(lVars.get(property)), value);
+            mappedProperties.put(
+                String.valueOf(lVars.get(property)), String.valueOf(String.valueOf(value)));
             propertiesCopy.remove(property);
           }
           if (value instanceof List) {
