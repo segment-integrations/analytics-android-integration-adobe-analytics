@@ -142,7 +142,10 @@ public class AdobeIntegration extends Integration<Void> {
         Object value = entry.getValue();
 
         if (lVars.containsKey(property)) {
-          if (value instanceof String) {
+          if (value instanceof String
+              || value instanceof Integer
+              || value instanceof Double
+              || value instanceof Long) {
             mappedProperties.put(String.valueOf(lVars.get(property)), value);
             propertiesCopy.remove(property);
           }
@@ -153,7 +156,7 @@ public class AdobeIntegration extends Integration<Void> {
             for (int i = 0; i < list.size(); i++) {
               String item = String.valueOf(list.get(i));
               if (i < list.size() - 1) {
-                builder.append(item + ", ");
+                builder.append(item).append(",");
               } else {
                 builder.append(item);
               }
