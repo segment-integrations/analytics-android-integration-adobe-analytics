@@ -12,6 +12,7 @@ import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -200,5 +201,8 @@ public class AdobeIntegration extends Integration<Void> {
   @Override
   public void reset() {
     super.reset();
+
+    Config.setUserIdentifier(null);
+    logger.verbose("Config.setUserIdentifier(null);");
   }
 }
