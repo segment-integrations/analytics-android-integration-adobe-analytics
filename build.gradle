@@ -34,7 +34,9 @@ android {
         textOutput 'stdout'
         disable 'InvalidPackage', 'GradleCompatible'
     }
-
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {

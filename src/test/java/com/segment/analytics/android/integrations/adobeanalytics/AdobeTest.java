@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
+import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.core.tests.BuildConfig;
 import com.segment.analytics.integrations.Logger;
@@ -15,6 +16,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
@@ -87,10 +89,19 @@ public class AdobeTest {
 
   @Test
   public void identify() {
-    integration.identify(new IdentifyPayloadBuilder().traits(createTraits("123")).build());
+    Traits traits = createTraits("123");
+    integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
 
     verifyStatic();
     Config.setUserIdentifier("123");
+  }
+
+  @Test
+  public void identifyWithNoUserId() {
+    integration.identify(new IdentifyPayloadBuilder().traits(createTraits(null)).build());
+
+    verifyStatic(Mockito.times(0));
+    Config.setUserIdentifier(null);
   }
 
   @Test

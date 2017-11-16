@@ -2,34 +2,15 @@ package com.segment.analytics.android.integrations.adobeanalytics;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
-import com.segment.analytics.Properties;
-import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
-import com.segment.analytics.integrations.BasePayload;
 import com.segment.analytics.integrations.GroupPayload;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
-
-import java.io.FileWriter;
-import java.security.Provider;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Date;
 
 import static com.segment.analytics.internal.Utils.isNullOrEmpty;
 
@@ -97,6 +78,7 @@ public class AdobeIntegration extends Integration<Void> {
     String userId = identify.userId();
     if (isNullOrEmpty(userId)) return;
     Config.setUserIdentifier(userId);
+    logger.verbose("Config.setUserIdentifier(%s);", userId);
   }
 
   @Override
