@@ -49,6 +49,16 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> contextValues;
   Map<String, Object> lVars;
   private final Logger logger;
+  private static final Map<String, String> ECOMMERCE_MAPPER = createEcommerceMap();
+  private static Map<String, String> createEcommerceMap() {
+    Map<String, String> map = new HashMap<>();
+    map.put("Product Added", "scAdd");
+    map.put("Product Removed", "scRemove");
+    map.put("Cart Viewed", "scView");
+    map.put("Checkout Started", "scCheckout");
+    map.put("Order Completed", "purchase");
+    return map;
+  }
 
   AdobeIntegration(ValueMap settings, Logger logger) {
     this.eventsV2 = settings.getValueMap("events");
