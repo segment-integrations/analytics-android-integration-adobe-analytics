@@ -191,7 +191,11 @@ public class AdobeTest {
   @Test
   public void screenWithlVars() {
     integration.lVars = new HashMap<>();
-    integration.lVars.put("testing lVars", "joinedString");
+    integration.lVars.put("testing list", "joinedList");
+    integration.lVars.put("testing string", "string");
+    integration.lVars.put("testing integer", "integer");
+    integration.lVars.put("testing double", "double");
+    integration.lVars.put("testing long", "long");
 
     List<Object> list = new ArrayList<>();
     list.add("item1");
@@ -200,13 +204,25 @@ public class AdobeTest {
     integration.screen(new ScreenPayloadBuilder()
         .name("Viewed a Screen")
         .properties(new Properties()
-            .putValue("testing lVars", list))
+            .putValue("testing list", list)
+            .putValue("testing string", "string")
+            .putValue("testing integer", 1)
+            .putValue("testing double", 2.55)
+            .putValue("testing long", 1000L))
         .build()
     );
 
     String joinedlVars = "item1,item2";
+    String string = "string";
+    String integer = "1";
+    String doubleValue = "2.55";
+    String longValue = "1000";
     Map<String, Object> contextData = new HashMap<>();
-    contextData.put("joinedString", joinedlVars);
+    contextData.put("joinedList", joinedlVars);
+    contextData.put("string", string);
+    contextData.put("integer", integer);
+    contextData.put("double", doubleValue);
+    contextData.put("long", longValue);
     verifyStatic();
     Analytics.trackState("Viewed a Screen", contextData);
   }
