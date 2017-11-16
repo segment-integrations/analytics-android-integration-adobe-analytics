@@ -51,6 +51,7 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> lVars;
   private final Logger logger;
   private static final Map<String, String> ECOMMERCE_MAPPER = createEcommerceMap();
+
   private static Map<String, String> createEcommerceMap() {
     Map<String, String> map = new HashMap<>();
     map.put("Product Added", "scAdd");
@@ -122,6 +123,7 @@ public class AdobeIntegration extends Integration<Void> {
 
     if (ECOMMERCE_MAPPER.containsKey(eventName)) {
       trackEcommerce(track);
+      return;
     }
 
     if (eventsV2.containsKey(eventName)) {
@@ -218,7 +220,7 @@ public class AdobeIntegration extends Integration<Void> {
     return mappedProperties;
   }
 
-  private Map<String, Object> mapEcommerce (String eventName, Properties properties) {
+  private Map<String, Object> mapEcommerce(String eventName, Properties properties) {
     StringBuilder productStringBuilder = new StringBuilder();
     Map<String, Object> contextData = new HashMap<>();
     String concatenatedValues;

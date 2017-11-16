@@ -156,6 +156,33 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackEcommerce() {
+    integration.track(new TrackPayloadBuilder()
+        .event("Order Completed")
+        .properties(new Properties()
+            .putOrderId("123")
+        )
+        .build());
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("purchaseid", "123");
+    contextData.put("orderId", "123");
+    verifyStatic();
+    Analytics.trackAction("purchase", contextData);
+  }
+
+  @Test
+  public void trackEcommerceWithNoProperties() {
+    integration.track(new TrackPayloadBuilder()
+        .event("Order Completed")
+        .properties(new Properties())
+        .build());
+
+    verifyStatic();
+    Analytics.trackAction("purchase", null);
+  }
+
+  @Test
   public void identify() {
   }
 
