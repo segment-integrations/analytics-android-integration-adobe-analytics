@@ -2,34 +2,19 @@ package com.segment.analytics.android.integrations.adobeanalytics;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-
+import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
-import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
-import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
-import com.segment.analytics.integrations.BasePayload;
 import com.segment.analytics.integrations.GroupPayload;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
-
-import java.io.FileWriter;
-import java.security.Provider;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Date;
 
 import static com.segment.analytics.internal.Utils.isNullOrEmpty;
 
@@ -60,9 +45,15 @@ public class AdobeIntegration extends Integration<Void> {
       };
 
   private static final String ADOBE_KEY = "Adobe Analytics";
+  Map<String, Object> eventsV2;
+  Map<String, Object> contextValues;
+  Map<String, Object> lVars;
   private final Logger logger;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
+    this.eventsV2 = settings.getValueMap("events");
+    this.contextValues = settings.getValueMap("contextValues");
+    this.lVars = settings.getValueMap("lVars");
     this.logger = logger;
   }
 
@@ -98,11 +89,98 @@ public class AdobeIntegration extends Integration<Void> {
   @Override
   public void screen(ScreenPayload screen) {
     super.screen(screen);
+
+    Properties properties = screen.properties();
+
+    if (isNullOrEmpty(properties)) {
+      Analytics.trackState(screen.name(), null);
+      logger.verbose("Analytics.trackState(%s, %s);", screen.name(), null);
+      return;
+    }
+
+    Map<String, Object> mappedProperties = mapProperties(properties);
+    Analytics.trackState(screen.name(), mappedProperties);
+    logger.verbose("Analytics.trackState(%s, %s);", screen.name(), mappedProperties);
   }
 
   @Override
   public void track(TrackPayload track) {
     super.track(track);
+
+    String eventName = track.event();
+
+    if (eventsV2.containsKey(eventName)) {
+      eventName = String.valueOf(eventsV2.get(eventName));
+    }
+
+    Properties properties = track.properties();
+
+    if (isNullOrEmpty(properties)) {
+      Analytics.trackAction(eventName, null);
+      logger.verbose("Analytics.trackAction(%s, %s);", eventName, null);
+      return;
+    }
+
+    Map<String, Object> mappedProperties = mapProperties(properties);
+
+    Analytics.trackAction(eventName, mappedProperties);
+    logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
+  }
+
+  private Map<String, Object> mapProperties(Properties properties) {
+    Properties propertiesCopy = new Properties();
+    propertiesCopy.putAll(properties);
+    Map<String, Object> mappedProperties = new HashMap<>();
+
+    if (!isNullOrEmpty(contextValues)) {
+      for (Map.Entry<String, Object> entry : properties.entrySet()) {
+        String property = entry.getKey();
+        Object value = entry.getValue();
+
+        if (contextValues.containsKey(property)) {
+          mappedProperties.put(String.valueOf(contextValues.get(property)), value);
+          propertiesCopy.remove(property);
+        }
+      }
+    }
+
+    if (!isNullOrEmpty(lVars)) {
+      for (Map.Entry<String, Object> entry : properties.entrySet()) {
+        String property = entry.getKey();
+        Object value = entry.getValue();
+
+        if (lVars.containsKey(property)) {
+          if (value instanceof String
+              || value instanceof Integer
+              || value instanceof Double
+              || value instanceof Long) {
+            mappedProperties.put(String.valueOf(lVars.get(property)), value);
+            propertiesCopy.remove(property);
+          }
+          if (value instanceof List) {
+            StringBuilder builder = new StringBuilder();
+            List<Object> list = (List) value;
+
+            for (int i = 0; i < list.size(); i++) {
+              String item = String.valueOf(list.get(i));
+              if (i < list.size() - 1) {
+                builder.append(item).append(",");
+              } else {
+                builder.append(item);
+              }
+            }
+
+            String joinedList = builder.toString();
+
+            mappedProperties.put(String.valueOf(lVars.get(property)), joinedList);
+            propertiesCopy.remove(property);
+          }
+        }
+      }
+    }
+    // pass along remaining unmapped Segment properties as contextData just in case
+    mappedProperties.putAll(propertiesCopy);
+    return mappedProperties;
   }
 
   @Override
@@ -114,7 +192,7 @@ public class AdobeIntegration extends Integration<Void> {
   public void flush() {
     super.flush();
 
-    com.adobe.mobile.Analytics.sendQueuedHits();
+    Analytics.sendQueuedHits();
     logger.verbose("Analytics.sendQueuedHits();");
   }
 
