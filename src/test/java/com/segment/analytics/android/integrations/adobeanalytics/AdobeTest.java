@@ -8,6 +8,7 @@ import com.segment.analytics.Properties;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.core.tests.BuildConfig;
 import com.segment.analytics.integrations.Logger;
+import com.segment.analytics.test.ScreenPayloadBuilder;
 import com.segment.analytics.test.TrackPayloadBuilder;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,9 +124,9 @@ public class AdobeTest {
         .build()
     );
 
-    verifyStatic();
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
+    verifyStatic();
     Analytics.trackAction("Adobe Testing Event", contextData);
   }
 
@@ -147,10 +148,10 @@ public class AdobeTest {
         .build()
     );
 
-    verifyStatic();
     String joinedlVars = "item1,item2";
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("joinedString", joinedlVars);
+    verifyStatic();
     Analytics.trackAction("Adobe Testing Event", contextData);
   }
 
@@ -160,6 +161,54 @@ public class AdobeTest {
 
   @Test
   public void screen() {
+    integration.screen(new ScreenPayloadBuilder()
+        .name("Viewed a Screen")
+        .build()
+    );
+
+    verifyStatic();
+    Analytics.trackState("Viewed a Screen", null);
+  }
+
+  @Test
+  public void screenWithContextValues() {
+    integration.contextValues = new HashMap<>();
+    integration.contextValues.put("testing", "myapp.testing.Testing");
+
+    integration.screen(new ScreenPayloadBuilder()
+        .name("Viewed a Screen")
+        .properties(new Properties()
+            .putValue("testing", "testing value"))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("myapp.testing.Testing", "testing value");
+    verifyStatic();
+    Analytics.trackState("Viewed a Screen", contextData);
+  }
+
+  @Test
+  public void screenWithlVars() {
+    integration.lVars = new HashMap<>();
+    integration.lVars.put("testing lVars", "joinedString");
+
+    List<Object> list = new ArrayList<>();
+    list.add("item1");
+    list.add("item2");
+
+    integration.screen(new ScreenPayloadBuilder()
+        .name("Viewed a Screen")
+        .properties(new Properties()
+            .putValue("testing lVars", list))
+        .build()
+    );
+
+    String joinedlVars = "item1, item2";
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("joinedString", joinedlVars);
+    verifyStatic();
+    Analytics.trackState("Viewed a Screen", contextData);
   }
 
   @Test

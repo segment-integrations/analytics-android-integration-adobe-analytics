@@ -89,6 +89,18 @@ public class AdobeIntegration extends Integration<Void> {
   @Override
   public void screen(ScreenPayload screen) {
     super.screen(screen);
+
+    Properties properties = screen.properties();
+
+    if (isNullOrEmpty(properties)) {
+      com.adobe.mobile.Analytics.trackState(screen.name(), null);
+      logger.verbose("Analytics.trackState(%s, %s);", screen.name(), null);
+      return;
+    }
+
+    Properties mappedProperties = mapProperties(properties);
+    com.adobe.mobile.Analytics.trackState(screen.name(), mappedProperties);
+    logger.verbose("Analytics.trackState(%s, %s);", screen.name(), mappedProperties);
   }
 
   @Override
