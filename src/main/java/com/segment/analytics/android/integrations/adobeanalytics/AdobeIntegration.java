@@ -5,8 +5,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
-import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
@@ -93,6 +93,10 @@ public class AdobeIntegration extends Integration<Void> {
   @Override
   public void identify(IdentifyPayload identify) {
     super.identify(identify);
+
+    String userId = identify.userId();
+    if (isNullOrEmpty(userId)) return;
+    Config.setUserIdentifier(userId);
   }
 
   @Override
@@ -114,7 +118,7 @@ public class AdobeIntegration extends Integration<Void> {
   public void flush() {
     super.flush();
 
-    com.adobe.mobile.Analytics.sendQueuedHits();
+    Analytics.sendQueuedHits();
     logger.verbose("Analytics.sendQueuedHits();");
   }
 

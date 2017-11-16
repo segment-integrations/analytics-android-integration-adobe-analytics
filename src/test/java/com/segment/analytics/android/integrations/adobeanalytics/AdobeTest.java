@@ -7,6 +7,7 @@ import com.adobe.mobile.Config;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.core.tests.BuildConfig;
 import com.segment.analytics.integrations.Logger;
+import com.segment.analytics.test.IdentifyPayloadBuilder;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.json.JSONObject;
@@ -21,6 +22,7 @@ import org.robolectric.RobolectricTestRunner;
 
 import static com.segment.analytics.Analytics.LogLevel.NONE;
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
+import static com.segment.analytics.Utils.createTraits;
 import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
@@ -85,6 +87,10 @@ public class AdobeTest {
 
   @Test
   public void identify() {
+    integration.identify(new IdentifyPayloadBuilder().traits(createTraits("123")).build());
+
+    verifyStatic();
+    Config.setUserIdentifier("123");
   }
 
   @Test
