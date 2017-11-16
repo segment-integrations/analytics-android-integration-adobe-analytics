@@ -204,7 +204,7 @@ public class AdobeTest {
         .build()
     );
 
-    String joinedlVars = "item1, item2";
+    String joinedlVars = "item1,item2";
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("joinedString", joinedlVars);
     verifyStatic();

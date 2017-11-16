@@ -98,7 +98,7 @@ public class AdobeIntegration extends Integration<Void> {
       return;
     }
 
-    Properties mappedProperties = mapProperties(properties);
+    Map<String, Object> mappedProperties = mapProperties(properties);
     com.adobe.mobile.Analytics.trackState(screen.name(), mappedProperties);
     logger.verbose("Analytics.trackState(%s, %s);", screen.name(), mappedProperties);
   }
