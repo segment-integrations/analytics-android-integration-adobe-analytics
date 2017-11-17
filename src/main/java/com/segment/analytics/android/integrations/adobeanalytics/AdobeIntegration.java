@@ -3,6 +3,7 @@ package com.segment.analytics.android.integrations.adobeanalytics;
 import android.app.Activity;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
+import com.segment.analytics.Properties.Product;
 import com.adobe.mobile.Config;
 import com.segment.analytics.Properties;
 import com.segment.analytics.ValueMap;
@@ -50,6 +51,17 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> contextValues;
   Map<String, Object> lVars;
   private final Logger logger;
+  private static final Map<String, String> ECOMMERCE_MAPPER = createEcommerceMap();
+
+  private static Map<String, String> createEcommerceMap() {
+    Map<String, String> map = new HashMap<>();
+    map.put("Product Added", "scAdd");
+    map.put("Product Removed", "scRemove");
+    map.put("Cart Viewed", "scView");
+    map.put("Checkout Started", "scCheckout");
+    map.put("Order Completed", "purchase");
+    return map;
+  }
 
   AdobeIntegration(ValueMap settings, Logger logger) {
     this.eventsV2 = settings.getValueMap("eventsV2");
@@ -110,6 +122,11 @@ public class AdobeIntegration extends Integration<Void> {
 
     String eventName = track.event();
 
+    if (ECOMMERCE_MAPPER.containsKey(eventName)) {
+      trackEcommerce(track);
+      return;
+    }
+
     if (eventsV2.containsKey(eventName)) {
       eventName = String.valueOf(eventsV2.get(eventName));
     }
@@ -123,6 +140,28 @@ public class AdobeIntegration extends Integration<Void> {
     }
 
     Map<String, Object> mappedProperties = mapProperties(properties);
+
+    Analytics.trackAction(eventName, mappedProperties);
+    logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
+  }
+
+  private void trackEcommerce(TrackPayload track) {
+    String eventName = ECOMMERCE_MAPPER.get(track.event());
+    Properties properties = track.properties();
+
+    if (isNullOrEmpty(properties)) {
+      Analytics.trackAction(eventName, null);
+      logger.verbose("Analytics.trackAction(%s, %s);", eventName, null);
+      return;
+    }
+
+    Properties propertiesCopy = new Properties();
+    propertiesCopy.putAll(properties);
+    Map<String, Object> ecommerceProperties = mapEcommerce(eventName, properties);
+    // pass all properties to mapper w/out products array
+    propertiesCopy.remove("products");
+    Map<String, Object> mappedProperties = mapProperties(propertiesCopy);
+    mappedProperties.putAll(ecommerceProperties);
 
     Analytics.trackAction(eventName, mappedProperties);
     logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
@@ -171,9 +210,7 @@ public class AdobeIntegration extends Integration<Void> {
                 builder.append(item);
               }
             }
-
             String joinedList = builder.toString();
-
             mappedProperties.put(String.valueOf(lVars.get(property)), joinedList);
             propertiesCopy.remove(property);
           }
@@ -183,6 +220,48 @@ public class AdobeIntegration extends Integration<Void> {
     // pass along remaining unmapped Segment properties as contextData just in case
     mappedProperties.putAll(propertiesCopy);
     return mappedProperties;
+  }
+
+  private Map<String, Object> mapEcommerce(String eventName, Properties properties) {
+    StringBuilder productStringBuilder = new StringBuilder();
+    Map<String, Object> contextData = new HashMap<>();
+    String concatenatedValues;
+
+    List<Product> products = properties.products();
+    if (!isNullOrEmpty(products)) {
+      for (int i = 0; i < products.size(); i++) {
+        Product product = products.get(i);
+        // adobe requires we pass a semicolon as a placeholder even if a value is empty
+        String category = ";";
+        String name = ";";
+        String quantity = "1;";
+        String price = ";";
+        if (product.containsKey("category")) {
+          category = product.getString("category") + ";";
+        }
+        if (product.containsKey("name")) {
+          name = product.getString("name") + ";";
+        }
+        if (product.containsKey("quantity")) {
+          quantity = product.getString("quantity") + ";";
+        }
+        if (product.containsKey("price")) {
+          price = product.getString("price") + ";";
+        }
+        if (i < products.size() - 1) {
+          concatenatedValues = category + name + quantity + price + ",";
+        } else {
+          concatenatedValues = category + name + quantity + price;
+        }
+        productStringBuilder.append(concatenatedValues);
+      }
+      String productString = productStringBuilder.toString();
+      contextData.put("&&products", productString);
+    }
+    if (eventName.equals("purchase")) {
+      contextData.put("purchaseid", properties.getString("orderId"));
+    }
+    return contextData;
   }
 
   @Override
