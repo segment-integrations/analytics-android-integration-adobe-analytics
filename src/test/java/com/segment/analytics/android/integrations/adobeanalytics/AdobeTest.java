@@ -6,9 +6,8 @@ import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
-import com.segment.analytics.core.tests.BuildConfig;
+import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Logger;
-import com.segment.analytics.test.IdentifyPayloadBuilder;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.json.JSONObject;
@@ -24,15 +23,14 @@ import org.robolectric.RobolectricTestRunner;
 
 import static com.segment.analytics.Analytics.LogLevel.NONE;
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
-import static com.segment.analytics.Utils.createTraits;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(RobolectricTestRunner.class)
 @PrepareForTest({Analytics.class, Config.class})
-@org.robolectric.annotation.Config(constants = BuildConfig.class, sdk = 18, manifest = org.robolectric.annotation.Config.NONE)
+@org.robolectric.annotation.Config(constants = BuildConfig.class)
 public class AdobeTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
@@ -47,7 +45,7 @@ public class AdobeTest {
 
   @Test
   public void factory() {
-    assertThat(AdobeIntegration.FACTORY.key()).isEqualTo("Adobe Analytics");
+    assertTrue(AdobeIntegration.FACTORY.key().equals("Adobe Analytics"));
   }
 
   @Test
@@ -89,8 +87,10 @@ public class AdobeTest {
 
   @Test
   public void identify() {
-    Traits traits = createTraits("123");
-    integration.identify(new IdentifyPayloadBuilder().traits(traits).build());
+    integration.identify(new IdentifyPayload.Builder()
+        .userId("123")
+        .traits(new Traits())
+    .build());
 
     verifyStatic();
     Config.setUserIdentifier("123");
@@ -98,7 +98,10 @@ public class AdobeTest {
 
   @Test
   public void identifyWithNoUserId() {
-    integration.identify(new IdentifyPayloadBuilder().traits(createTraits(null)).build());
+    integration.identify(new IdentifyPayload.Builder()
+        .userId("123")
+        .traits(new Traits())
+        .build());
 
     verifyStatic(Mockito.times(0));
     Config.setUserIdentifier(null);
