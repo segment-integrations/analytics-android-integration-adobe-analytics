@@ -6,10 +6,9 @@ import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
 import com.segment.analytics.Properties;
 import com.segment.analytics.ValueMap;
-import com.segment.analytics.core.tests.BuildConfig;
 import com.segment.analytics.integrations.Logger;
-import com.segment.analytics.test.ScreenPayloadBuilder;
-import com.segment.analytics.test.TrackPayloadBuilder;
+import com.segment.analytics.integrations.ScreenPayload;
+import com.segment.analytics.integrations.TrackPayload;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +27,7 @@ import org.robolectric.RobolectricTestRunner;
 
 import static com.segment.analytics.Analytics.LogLevel.NONE;
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
@@ -50,20 +49,20 @@ public class AdobeTest {
 
   @Test
   public void factory() {
-    assertThat(AdobeIntegration.FACTORY.key()).isEqualTo("Adobe Analytics");
+    assertTrue(AdobeIntegration.FACTORY.key().equals("Adobe Analytics"));
   }
 
   @Test
   public void initialize() {
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("events", new HashMap<String, Object>())
+        .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
         .putValue("lVars", new HashMap<String, Object>()),
       Logger.with(VERBOSE));
 
-    assertThat(integration.eventsV2).isEqualTo(new HashMap<String, Object>());
-    assertThat(integration.contextValues).isEqualTo(new HashMap<String, Object>());
-    assertThat(integration.lVars).isEqualTo(new HashMap<String, Object>());
+    assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
+    assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
+    assertTrue(integration.lVars.equals(new HashMap<String, Object>()));
   }
 
   @Test
@@ -101,7 +100,8 @@ public class AdobeTest {
     integration.eventsV2 = new HashMap<>();
     integration.eventsV2.put("Testing Event", "Adobe Testing Event");
 
-    integration.track(new TrackPayloadBuilder()
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
         .event("Testing Event")
         .build()
     );
@@ -117,7 +117,8 @@ public class AdobeTest {
     integration.contextValues = new HashMap<>();
     integration.contextValues.put("testing", "myapp.testing.Testing");
 
-    integration.track(new TrackPayloadBuilder()
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
         .event("Testing Event")
         .properties(new Properties()
             .putValue("testing", "testing value"))
@@ -141,7 +142,8 @@ public class AdobeTest {
     list.add("item1");
     list.add("item2");
 
-    integration.track(new TrackPayloadBuilder()
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
         .event("Testing Event")
         .properties(new Properties()
             .putValue("testing lVars", list))
@@ -161,7 +163,8 @@ public class AdobeTest {
 
   @Test
   public void screen() {
-    integration.screen(new ScreenPayloadBuilder()
+    integration.screen(new ScreenPayload.Builder()
+        .userId("123")
         .name("Viewed a Screen")
         .build()
     );
@@ -175,7 +178,8 @@ public class AdobeTest {
     integration.contextValues = new HashMap<>();
     integration.contextValues.put("testing", "myapp.testing.Testing");
 
-    integration.screen(new ScreenPayloadBuilder()
+    integration.screen(new ScreenPayload.Builder()
+        .userId("123")
         .name("Viewed a Screen")
         .properties(new Properties()
             .putValue("testing", "testing value"))
@@ -201,7 +205,8 @@ public class AdobeTest {
     list.add("item1");
     list.add("item2");
 
-    integration.screen(new ScreenPayloadBuilder()
+    integration.screen(new ScreenPayload.Builder()
+        .userId("123")
         .name("Viewed a Screen")
         .properties(new Properties()
             .putValue("testing list", list)
