@@ -52,7 +52,7 @@ public class AdobeIntegration extends Integration<Void> {
   private final Logger logger;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
-    this.eventsV2 = settings.getValueMap("events");
+    this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.lVars = settings.getValueMap("lVars");
     this.logger = logger;
