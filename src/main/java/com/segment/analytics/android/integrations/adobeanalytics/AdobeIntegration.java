@@ -85,6 +85,11 @@ public class AdobeIntegration extends Integration<Void> {
   @Override
   public void identify(IdentifyPayload identify) {
     super.identify(identify);
+
+    String userId = identify.userId();
+    if (isNullOrEmpty(userId)) return;
+    Config.setUserIdentifier(userId);
+    logger.verbose("Config.setUserIdentifier(%s);", userId);
   }
 
   @Override

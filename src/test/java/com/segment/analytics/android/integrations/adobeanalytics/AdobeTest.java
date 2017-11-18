@@ -4,8 +4,11 @@ import android.app.Activity;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
-import com.segment.analytics.Properties;
+
+import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.integrations.IdentifyPayload;
+import com.segment.analytics.Properties;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
@@ -20,6 +23,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
@@ -34,7 +38,7 @@ import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 
 @RunWith(RobolectricTestRunner.class)
 @PrepareForTest({Analytics.class, Config.class})
-@org.robolectric.annotation.Config(constants = BuildConfig.class, sdk = 18, manifest = org.robolectric.annotation.Config.NONE)
+@org.robolectric.annotation.Config(constants = BuildConfig.class)
 public class AdobeTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
@@ -159,6 +163,24 @@ public class AdobeTest {
 
   @Test
   public void identify() {
+    integration.identify(new IdentifyPayload.Builder()
+        .userId("123")
+        .traits(new Traits())
+    .build());
+
+    verifyStatic();
+    Config.setUserIdentifier("123");
+  }
+
+  @Test
+  public void identifyWithNoUserId() {
+    integration.identify(new IdentifyPayload.Builder()
+        .userId("123")
+        .traits(new Traits())
+        .build());
+
+    verifyStatic(Mockito.times(0));
+    Config.setUserIdentifier(null);
   }
 
   @Test
