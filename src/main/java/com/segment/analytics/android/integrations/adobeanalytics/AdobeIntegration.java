@@ -49,12 +49,14 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   Map<String, Object> lVars;
+  String productIdentifier;
   private final Logger logger;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.lVars = settings.getValueMap("lVars");
+    this.productIdentifier = settings.getString("productIdentifier");
     this.logger = logger;
   }
 
