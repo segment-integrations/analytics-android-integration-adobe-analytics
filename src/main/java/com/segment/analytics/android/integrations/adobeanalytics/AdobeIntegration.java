@@ -134,7 +134,16 @@ public class AdobeIntegration extends Integration<Void> {
 
     if (!(ECOMMERCE_EVENT_LIST.containsKey(eventName)) && isNullOrEmpty(eventsV2)) {
       logger.verbose(
-          "Event must be configured in Adobe and in the EventsV2 setting in Segment before sending.");
+          "Event must be either configured in Adobe and in the Segment EventsV2 setting or "
+              + "a reserved Adobe Ecommerce event.");
+      return;
+    }
+    if ((!isNullOrEmpty(eventsV2))
+        && eventsV2.containsKey(eventName)
+        && ECOMMERCE_EVENT_LIST.containsKey(eventName)) {
+      logger.verbose(
+          "Segment currently does not support mapping specced ecommerce events to "
+              + "custom Adobe events.");
       return;
     }
     if (!isNullOrEmpty(eventsV2) && eventsV2.containsKey(eventName)) {
@@ -226,7 +235,9 @@ public class AdobeIntegration extends Integration<Void> {
           String productString = ecommerceStringBuilder(eventName, productProperties);
 
           // early return where product name is passed incorrectly
-          if (productString == null) return null;
+          if (productString.equals("")) {
+            return null;
+          }
 
           if (i < products.size() - 1) {
             productStringBuilder.append(productString).append(",");
@@ -243,7 +254,11 @@ public class AdobeIntegration extends Integration<Void> {
       if (properties.containsKey("orderId")) {
         contextData.put("purchaseid", properties.getString("orderId"));
       }
-      contextData.put("&&products", productsString);
+      contextData.put("&&events", eventName);
+      // only add the &&products variable if a product exists
+      if (productsString.length() > 0) {
+        contextData.put("&&products", productsString);
+      }
       // add all customer-mapped properties to ecommerce context data map
       contextData.putAll(mapProperties(properties));
     }
@@ -251,32 +266,28 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private String ecommerceStringBuilder(String eventName, Map<String, Object> productProperties) {
-    String name;
-    String category;
-    String quantity = "1";
-    double price = 0;
-
     if (productProperties.get(productIdentifier) == null) {
       logger.verbose(
           "You must provide a name for each product to pass an ecommerce event"
               + "to Adobe Analytics.");
-      return null;
+      return "";
     }
-    name = getString(productProperties, productIdentifier);
-    category = getString(productProperties, "category");
-    quantity = getString(productProperties, "quantity");
 
-    // only pass along total product price for order completed events
-    if (eventName.equals("purchase")) {
-      if (productProperties.containsKey("price")
-          && (productProperties.get("price") instanceof Number)) {
-        price = ((double) productProperties.get("price")) * Double.parseDouble(quantity);
-      }
-    }
+    String name = getString(productProperties, productIdentifier);
+    String category = getString(productProperties, "category");
+    String quantity =
+        (productProperties.get("quantity") == null)
+            ? "1"
+            : getString(productProperties, "quantity");
+    String price =
+        (productProperties.get("price") == null)
+            ? "0"
+            : String.valueOf(
+                Double.parseDouble((getString(productProperties, "price")))
+                    * Double.parseDouble(quantity));
     return category + ";" + name + ";" + quantity + ";" + price;
   }
 
-  // returns "" if the key does not exist
   private String getString(Map<String, Object> map, String key) {
     Object value = map.get(key);
     if (value == null) {

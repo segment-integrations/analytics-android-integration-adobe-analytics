@@ -194,6 +194,174 @@ public class AdobeTest {
     contextData.put("myapp.testing", "test!");
     contextData.put("purchaseid", "A5744855555");
     contextData.put("&&products", "athletic;shoes;2;20.0");
+    contextData.put("&&events", "purchase");
+    verifyStatic();
+    Analytics.trackAction("purchase", contextData);
+  }
+
+  @Test
+  public void trackProductAdded() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Added")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 10.0)
+                .putName("shoes")
+                .putValue("category", "athletic")
+                .putValue("quantity", 2)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0");
+    contextData.put("&&events", "scAdd");
+    verifyStatic();
+    Analytics.trackAction("scAdd", contextData);
+  }
+
+  @Test
+  public void trackProductRemoved() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Removed")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 10.0)
+                .putName("shoes")
+                .putValue("category", "athletic")
+                .putValue("quantity", 2)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0");
+    contextData.put("&&events", "scRemove");
+    verifyStatic();
+    Analytics.trackAction("scRemove", contextData);
+  }
+
+  @Test
+  public void trackCheckoutStarted() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Checkout Started")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 10.0)
+                .putName("shoes")
+                .putValue("category", "athletic")
+                .putValue("quantity", 2),
+              new Product("456", "DEF", 20.0)
+                .putName("jeans")
+                .putValue("category", "casual")
+                .putValue("quantity", 1)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0,casual;jeans;1;20.0");
+    contextData.put("&&events", "scCheckout");
+    verifyStatic();
+    Analytics.trackAction("scCheckout", contextData);
+  }
+
+  @Test
+  public void trackCartViewed() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Cart Viewed")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 10.0)
+                    .putName("shoes")
+                    .putValue("category", "athletic")
+                    .putValue("quantity", 2),
+                new Product("456", "DEF", 20.0)
+                    .putName("jeans")
+                    .putValue("category", "casual")
+                    .putValue("quantity", 1)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0,casual;jeans;1;20.0");
+    contextData.put("&&events", "scView");
+    verifyStatic();
+    Analytics.trackAction("scView", contextData);
+  }
+
+  @Test
+  public void trackEcommerceWhenProductNameIsNotSet() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Added")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 10.0)
+                .putValue("category", "athletic")
+                .putValue("quantity", 2)))
+        .build()
+    );
+
+    verifyStatic();
+    Analytics.trackAction("scAdd", null);
+  }
+
+  @Test
+  public void trackEcommerceEventWithNoProperties() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Added")
+        .properties(new Properties())
+        .build()
+    );
+
+    verifyStatic();
+    Analytics.trackAction("scAdd", null);
+  }
+
+  @Test
+  public void trackPurchaseEventToTestDefaults() {
+    integration.productIdentifier = "sku";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Order Completed")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 0)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", ";ABC;1;0.0");
+    contextData.put("&&events", "purchase");
+    verifyStatic();
+    Analytics.trackAction("purchase", contextData);
+  }
+
+  @Test
+  public void trackPurchaseWithoutProducts() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Order Completed")
+        .properties(new Properties()
+            .putOrderId("123456"))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&events", "purchase");
+    contextData.put("purchaseid", "123456");
     verifyStatic();
     Analytics.trackAction("purchase", contextData);
   }
