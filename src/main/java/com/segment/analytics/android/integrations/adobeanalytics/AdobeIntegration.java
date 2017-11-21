@@ -234,7 +234,7 @@ public class AdobeIntegration extends Integration<Void> {
           Product product = products.get(i);
           productProperties.putAll(product);
 
-          String productString = ecommerceStringBuilder(eventName, productProperties);
+          String productString = ecommerceStringBuilder(productProperties);
 
           // early return where product name is passed incorrectly
           if (productString.equals("")) {
@@ -250,7 +250,7 @@ public class AdobeIntegration extends Integration<Void> {
         productsString = productStringBuilder.toString();
       } else {
         productProperties.putAll(properties);
-        productsString = ecommerceStringBuilder(eventName, productProperties);
+        productsString = ecommerceStringBuilder(productProperties);
       }
       //finally, add a purchaseid to context data if it's been mapped by customer
       if (properties.containsKey("orderId")) {
@@ -269,8 +269,9 @@ public class AdobeIntegration extends Integration<Void> {
     return contextData;
   }
 
-  private String ecommerceStringBuilder(String eventName, Map<String, Object> productProperties) {
-    if (productProperties.get(productIdentifier) == null) {
+  private String ecommerceStringBuilder(Map<String, Object> productProperties) {
+    if (productProperties.get(productIdentifier) == null
+        && productProperties.get("productId") == null) {
       logger.verbose(
           "You must provide a name for each product to pass an ecommerce event"
               + "to Adobe Analytics.");

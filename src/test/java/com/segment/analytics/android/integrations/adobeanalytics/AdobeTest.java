@@ -207,10 +207,11 @@ public class AdobeTest {
         .userId("123")
         .event("Product Added")
         .properties(new Properties()
-            .putProducts(new Product("123", "ABC", 10.0)
-                .putName("shoes")
-                .putValue("category", "athletic")
-                .putValue("quantity", 2)))
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putName("shoes")
+            .putCategory("athletic")
+            .putValue("quantity", 2))
         .build()
     );
 
@@ -229,10 +230,11 @@ public class AdobeTest {
         .userId("123")
         .event("Product Removed")
         .properties(new Properties()
-            .putProducts(new Product("123", "ABC", 10.0)
-                .putName("shoes")
-                .putValue("category", "athletic")
-                .putValue("quantity", 2)))
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putName("shoes")
+            .putCategory("athletic")
+            .putValue("quantity", 2))
         .build()
     );
 
@@ -245,21 +247,22 @@ public class AdobeTest {
 
   @Test
   public void trackProductViewed() {
-    integration.productIdentifier = "id";
+    integration.productIdentifier = "name";
 
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event("Product Viewed")
         .properties(new Properties()
-            .putProducts(new Product("123", "ABC", 10.0)
-                .putName("shoes")
-                .putValue("category", "athletic")
-                .putValue("quantity", 2)))
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putName("shoes")
+            .putCategory("athletic")
+            .putValue("quantity", 2))
         .build()
     );
 
     Map<String, Object> contextData = new HashMap<>();
-    contextData.put("&&products", "athletic;123;2;20.0");
+    contextData.put("&&products", "athletic;shoes;2;20.0");
     contextData.put("&&events", "prodView");
     verifyStatic();
     Analytics.trackAction("prodView", contextData);
@@ -273,16 +276,17 @@ public class AdobeTest {
         .userId("123")
         .event("Product Viewed")
         .properties(new Properties()
-            .putProducts(new Product("123", "ABC", 10.0)
-                .putValue("productId", "prod555")
-                .putName("shoes")
-                .putValue("category", "athletic")
-                .putValue("quantity", 2)))
+            .putValue("productId", "XYZ")
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putName("shoes")
+            .putCategory("athletic")
+            .putValue("quantity", 2))
         .build()
     );
 
     Map<String, Object> contextData = new HashMap<>();
-    contextData.put("&&products", "athletic;prod555;2;20.0");
+    contextData.put("&&products", "athletic;XYZ;2;20.0");
     contextData.put("&&events", "prodView");
     verifyStatic();
     Analytics.trackAction("prodView", contextData);
@@ -346,16 +350,20 @@ public class AdobeTest {
 
     integration.track(new TrackPayload.Builder()
         .userId("123")
-        .event("Product Added")
+        .event("Product Removed")
         .properties(new Properties()
-            .putProducts(new Product("123", "ABC", 10.0)
-                .putValue("category", "athletic")
-                .putValue("quantity", 2)))
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putCategory("athletic")
+            .putValue("quantity", 2))
         .build()
     );
 
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&events", "scRemove");
+
     verifyStatic();
-    Analytics.trackAction("scAdd", null);
+    Analytics.trackAction("scRemove", contextData);
   }
 
   @Test
