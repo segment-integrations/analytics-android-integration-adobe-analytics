@@ -139,7 +139,7 @@ public class AdobeIntegration extends Integration<Void> {
     }
     if (!isNullOrEmpty(eventsV2) && eventsV2.containsKey(eventName)) {
       eventName = String.valueOf(eventsV2.get(eventName));
-      mappedProperties = (isNullOrEmpty(properties)) ? null : mapEcommerce(eventName, properties);
+      mappedProperties = (isNullOrEmpty(properties)) ? null : mapProperties(properties);
     }
     if (ECOMMERCE_EVENT_LIST.containsKey(eventName)) {
       eventName = ECOMMERCE_EVENT_LIST.get(eventName);
