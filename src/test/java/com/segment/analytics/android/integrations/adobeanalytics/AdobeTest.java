@@ -9,6 +9,7 @@ import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.Properties;
+import com.segment.analytics.Properties.Product;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
@@ -159,6 +160,43 @@ public class AdobeTest {
     contextData.put("joinedString", joinedlVars);
     verifyStatic();
     Analytics.trackAction("Adobe Testing Event", contextData);
+  }
+
+  @Test
+  public void trackOrderCompleted() {
+    integration.productIdentifier = "name";
+    integration.contextValues = new HashMap<>();
+    integration.contextValues.put("testing", "myapp.testing");
+    integration.lVars = new HashMap<>();
+    integration.lVars.put("testing lVars", "joinedString");
+
+    List<Object> list = new ArrayList<>();
+    list.add("item1");
+    list.add("item2");
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Order Completed")
+        .properties(new Properties()
+            .putValue("orderId", "A5744855555")
+            .putValue("testing lVars", list)
+            .putValue("testing", "test!")
+            .putProducts(new Product("123", "ABC", 10.0)
+                .putName("shoes")
+                .putValue("category", "athletic")
+                .putValue("quantity", 2)))
+        .build()
+    );
+
+    String joinedlVars = "item1,item2";
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("joinedString", joinedlVars);
+    contextData.put("myapp.testing", "test!");
+    contextData.put("purchaseid", "A5744855555");
+    contextData.put("orderId", "A5744855555");
+    contextData.put("&&products", "athletic;shoes;2;20.0");
+    verifyStatic();
+    Analytics.trackAction("purchase", contextData);
   }
 
   @Test

@@ -14,10 +14,8 @@ import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.segment.analytics.internal.Utils.isNullOrEmpty;
 
@@ -132,13 +130,17 @@ public class AdobeIntegration extends Integration<Void> {
     String eventName = track.event();
     Properties properties = track.properties();
 
-    if (ECOMMERCE_EVENT_LIST.containsKey(eventName)) {
-      eventName = ECOMMERCE_EVENT_LIST.get(eventName);
+    if (!(ECOMMERCE_EVENT_LIST.containsKey(eventName)) && isNullOrEmpty(eventsV2)) {
+      logger.verbose(
+          "Event must be configured in Adobe and in the EventsV2 setting in Segment before sending.");
+      return;
+    }
+    if (!isNullOrEmpty(eventsV2) && eventsV2.containsKey(eventName)) {
+      eventName = String.valueOf(eventsV2.get(eventName));
       mappedProperties = (isNullOrEmpty(properties)) ? null : mapEcommerce(eventName, properties);
     }
-
-    if (eventsV2.containsKey(eventName)) {
-      eventName = String.valueOf(eventsV2.get(eventName));
+    if (ECOMMERCE_EVENT_LIST.containsKey(eventName)) {
+      eventName = ECOMMERCE_EVENT_LIST.get(eventName);
       mappedProperties = (isNullOrEmpty(properties)) ? null : mapEcommerce(eventName, properties);
     }
 
@@ -149,6 +151,12 @@ public class AdobeIntegration extends Integration<Void> {
   private Map<String, Object> mapProperties(Properties properties) {
     Properties propertiesCopy = new Properties();
     propertiesCopy.putAll(properties);
+
+    // if a products array exists, remove it now because we'll have already mapped it in ecommerce properties
+    if (propertiesCopy.containsKey("products")) {
+      propertiesCopy.remove("products");
+    }
+
     Map<String, Object> mappedProperties = new HashMap<>();
 
     if (!isNullOrEmpty(contextValues)) {
@@ -204,15 +212,11 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private Map<String, Object> mapEcommerce(String eventName, Properties properties) {
-    StringBuilder productStringBuilder;
-    Map<String, Object> contextData = null;
-    Map<String, Object> productProperties;
-    String productsString = null;
-
+    Map<String, Object> contextData = new HashMap<>();
     if (!isNullOrEmpty(properties)) {
-      productStringBuilder = new StringBuilder();
-      contextData = new HashMap<>();
-      productProperties = new HashMap<>();
+      StringBuilder productStringBuilder = new StringBuilder();
+      Map<String, Object> productProperties = new HashMap<>();
+      String productsString;
 
       List<Product> products = properties.products();
 
@@ -222,7 +226,7 @@ public class AdobeIntegration extends Integration<Void> {
           productProperties.putAll(product);
 
           String productString = ecommerceStringBuilder(eventName, productProperties);
-          if (i < product.size() - 1) {
+          if (i < products.size() - 1) {
             productStringBuilder.append(productString).append(",");
           } else {
             productStringBuilder.append(productString);
@@ -234,8 +238,8 @@ public class AdobeIntegration extends Integration<Void> {
         productsString = ecommerceStringBuilder(eventName, productProperties);
       }
       //finally, add a purchaseid to context data if it's been mapped by customer
-      if (properties.containsKey("orderId") && contextValues.containsKey("orderId")) {
-        contextData.put(String.valueOf(contextValues.get("orderId")), properties.getString("orderId"));
+      if (properties.containsKey("orderId")) {
+        contextData.put("purchaseid", properties.getString("orderId"));
       }
       contextData.put("&&products", productsString);
       // add all customer-mapped properties to ecommerce context data map
@@ -245,32 +249,37 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private String ecommerceStringBuilder(String eventName, Map <String, Object> productProperties) {
-    String category = "";
     String name = "";
+    String category = "";
     int quantity = 1;
     double price = 0;
 
-    if (productProperties.containsKey("category")) {
-      category = String.valueOf(productProperties.get("category"));
-    }
-
-    // product "name" is determined by a user setting
+    // product "name" is determined by a user setting and is required by Adobe
     if (productProperties.containsKey("name") && productIdentifier.equals("name")) {
       name = String.valueOf(productProperties.get("name"));
     }
     if (productProperties.containsKey("sku") && productIdentifier.equals("sku")) {
       name = String.valueOf(productProperties.get("sku"));
     }
-    if (productProperties.containsKey("id") && productIdentifier.equals("name")) {
+    if (productProperties.containsKey("id") && productIdentifier.equals("id")) {
       name = String.valueOf(productProperties.get("id"));
     }
+    // return if "name" remains an empty string for this product
+    // this would resut in a &&products variable containing a string of commas
+    if (name.equals("")) {
+      logger.verbose("You must provide a name for each product to pass an ecommerce event"
+          + "to Adobe Analytics.");
+      return "";
+    }
 
+    if (productProperties.containsKey("category")) {
+      category = String.valueOf(productProperties.get("category"));
+    }
     if (productProperties.containsKey("quantity") && (productProperties.get("quantity") instanceof Integer)) {
       quantity = (int) productProperties.get("quantity");
     }
-
     // only pass along total product price for order completed events
-    if (eventName.equals("Order Completed")) {
+    if (eventName.equals("purchase")) {
       if (productProperties.containsKey("price") && (productProperties.get("price") instanceof Number)) {
         price = ((double) productProperties.get("price")) * (double) quantity;
       }
