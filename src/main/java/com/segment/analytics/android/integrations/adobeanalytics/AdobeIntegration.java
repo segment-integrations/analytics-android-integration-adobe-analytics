@@ -52,14 +52,14 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> contextValues;
   Map<String, Object> lVars;
   String productIdentifier;
-  private static final Set<String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
-  private static Set<String> getEcommerceEventList() {
-    Set<String> ecommerceEventList = new HashSet<>();
-    ecommerceEventList.add("Order Completed");
-    ecommerceEventList.add("Product Added");
-    ecommerceEventList.add("Product Removed");
-    ecommerceEventList.add("Checkout Started");
-    ecommerceEventList.add("Cart Viewed");
+  private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
+  private static Map<String, String> getEcommerceEventList() {
+    Map<String, String> ecommerceEventList = new HashMap<>();
+    ecommerceEventList.put("Order Completed", "purchase");
+    ecommerceEventList.put("Product Added", "scAdd");
+    ecommerceEventList.put("Product Removed", "scRemove");
+    ecommerceEventList.put("Checkout Started", "scCheckout");
+    ecommerceEventList.put("Cart Viewed", "scView");
     return ecommerceEventList;
   }
   private final Logger logger;
@@ -127,25 +127,20 @@ public class AdobeIntegration extends Integration<Void> {
   public void track(TrackPayload track) {
     super.track(track);
 
+    Map<String, Object> mappedProperties = null;
+
     String eventName = track.event();
     Properties properties = track.properties();
 
-    if (eventsV2.containsKey(eventName) && ECOMMERCE_EVENT_LIST.contains(eventName)) {
-      mapEcommerce(eventName, properties);
-      return;
+    if (ECOMMERCE_EVENT_LIST.containsKey(eventName)) {
+      eventName = ECOMMERCE_EVENT_LIST.get(eventName);
+      mappedProperties = (isNullOrEmpty(properties)) ? null : mapEcommerce(eventName, properties);
     }
 
     if (eventsV2.containsKey(eventName)) {
       eventName = String.valueOf(eventsV2.get(eventName));
+      mappedProperties = (isNullOrEmpty(properties)) ? null : mapEcommerce(eventName, properties);
     }
-
-    if (isNullOrEmpty(properties)) {
-      Analytics.trackAction(eventName, null);
-      logger.verbose("Analytics.trackAction(%s, %s);", eventName, null);
-      return;
-    }
-
-    Map<String, Object> mappedProperties = mapProperties(properties);
 
     Analytics.trackAction(eventName, mappedProperties);
     logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
@@ -208,53 +203,50 @@ public class AdobeIntegration extends Integration<Void> {
     return mappedProperties;
   }
 
-  private void mapEcommerce(String eventName, Properties properties) {
-    StringBuilder productStringBuilder = new StringBuilder();
-    Map<String, Object> contextData = new HashMap<>();
-    Map<String, Object> productProperties = new HashMap<>();
+  private Map<String, Object> mapEcommerce(String eventName, Properties properties) {
+    StringBuilder productStringBuilder;
+    Map<String, Object> contextData = null;
+    Map<String, Object> productProperties;
     String productsString = null;
 
     if (!isNullOrEmpty(properties)) {
-      if (eventName.equals("Order Completed") || eventName.equals("Cart Viewed") || eventName.equals("Checkout Started")) {
-        List<Product> products = properties.products();
-        if (!isNullOrEmpty(products)) {
-          for (int i = 0; i < products.size(); i++) {
-            Product product = products.get(i);
-            productProperties.putAll(product);
+      productStringBuilder = new StringBuilder();
+      contextData = new HashMap<>();
+      productProperties = new HashMap<>();
 
-            String productString = ecommerceStringBuilder(eventName, productProperties);
-            if (i < product.size() - 1) {
-              productStringBuilder.append(productString).append(",");
-            } else {
-              productStringBuilder.append(productString);
-            }
+      List<Product> products = properties.products();
+
+      if (!isNullOrEmpty(products)) {
+        for (int i = 0; i < products.size(); i++) {
+          Product product = products.get(i);
+          productProperties.putAll(product);
+
+          String productString = ecommerceStringBuilder(eventName, productProperties);
+          if (i < product.size() - 1) {
+            productStringBuilder.append(productString).append(",");
+          } else {
+            productStringBuilder.append(productString);
           }
-          productsString = productStringBuilder.toString();
         }
-        //finally, add a purchaseid to context data if it's been mapped by customer
-        if (properties.containsKey("orderId") && contextValues.containsKey("orderId")) {
-          contextData.put(String.valueOf(contextValues.get("orderId")), properties.getString("orderId"));
-        }
-      }
-
-      if (eventName.equals("Product Added") || eventName.equals("Product Removed")) {
+        productsString = productStringBuilder.toString();
+      } else {
         productProperties.putAll(properties);
         productsString = ecommerceStringBuilder(eventName, productProperties);
       }
-
-      // TO DO: iterate through all properties to see if user has mapped any of these as order-wide currency events
-
+      //finally, add a purchaseid to context data if it's been mapped by customer
+      if (properties.containsKey("orderId") && contextValues.containsKey("orderId")) {
+        contextData.put(String.valueOf(contextValues.get("orderId")), properties.getString("orderId"));
+      }
       contextData.put("&&products", productsString);
+      // add all customer-mapped properties to ecommerce context data map
+      contextData.putAll(mapProperties(properties));
     }
-
-      eventName = String.valueOf(eventsV2.get(eventName));
-      Analytics.trackAction(eventName, contextData);
-      logger.verbose("Analytics.trackAction(%s, %s);", eventName, contextData);
+    return contextData;
   }
 
   private String ecommerceStringBuilder(String eventName, Map <String, Object> productProperties) {
-    String category = null;
-    String name = "product";
+    String category = "";
+    String name = "";
     int quantity = 1;
     double price = 0;
 
@@ -277,13 +269,12 @@ public class AdobeIntegration extends Integration<Void> {
       quantity = (int) productProperties.get("quantity");
     }
 
-    // only pass along price for order completed events
+    // only pass along total product price for order completed events
     if (eventName.equals("Order Completed")) {
       if (productProperties.containsKey("price") && (productProperties.get("price") instanceof Number)) {
         price = ((double) productProperties.get("price")) * (double) quantity;
       }
     }
-    // is String.valueOf implicitly invoked when concatendating numbers with strings?
     return category + ";" + name + ";" + quantity + ";" + price;
   }
 
