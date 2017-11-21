@@ -225,6 +225,7 @@ public class AdobeIntegration extends Integration<Void> {
       StringBuilder productStringBuilder = new StringBuilder();
       Map<String, Object> productProperties = new HashMap<>();
       String productsString;
+      String eventString;
 
       List<Product> products = properties.products();
 
@@ -255,7 +256,9 @@ public class AdobeIntegration extends Integration<Void> {
       if (properties.containsKey("orderId")) {
         contextData.put("purchaseid", properties.getString("orderId"));
       }
-      contextData.put("&&events", eventName);
+      // build a string of Adobe target events and order-wide currency events
+      eventString = eventStringBuilder(eventName, properties);
+      contextData.put("&&events", eventString);
       // only add the &&products variable if a product exists
       if (productsString.length() > 0) {
         contextData.put("&&products", productsString);
@@ -273,8 +276,15 @@ public class AdobeIntegration extends Integration<Void> {
               + "to Adobe Analytics.");
       return "";
     }
-
-    String name = getString(productProperties, productIdentifier);
+    String name;
+    if (productIdentifier.equals("id")) {
+      name =
+          getString(productProperties, "productId") != null
+              ? getString(productProperties, "productId")
+              : getString(productProperties, "id");
+    } else {
+      name = getString(productProperties, productIdentifier);
+    }
     String category = getString(productProperties, "category");
     String quantity =
         (productProperties.get("quantity") == null)
@@ -287,6 +297,21 @@ public class AdobeIntegration extends Integration<Void> {
                 Double.parseDouble((getString(productProperties, "price")))
                     * Double.parseDouble(quantity));
     return category + ";" + name + ";" + quantity + ";" + price;
+  }
+
+  private String eventStringBuilder(String eventName, Map<String, Object> productProperties) {
+    String tax =
+        (productProperties.get("tax") == null) ? "" : ",tax=" + getString(productProperties, "tax");
+    String shipping =
+        (productProperties.get("shipping") == null)
+            ? ""
+            : ",shipping=" + getString(productProperties, "shipping");
+    String discount =
+        (productProperties.get("discount") == null)
+            ? ""
+            : ",discount=" + getString(productProperties, "discount");
+
+    return eventName + tax + shipping + discount;
   }
 
   private String getString(Map<String, Object> map, String key) {

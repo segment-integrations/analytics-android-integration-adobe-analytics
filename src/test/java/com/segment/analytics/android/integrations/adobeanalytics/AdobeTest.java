@@ -244,6 +244,51 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackProductViewed() {
+    integration.productIdentifier = "id";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Viewed")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 10.0)
+                .putName("shoes")
+                .putValue("category", "athletic")
+                .putValue("quantity", 2)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;123;2;20.0");
+    contextData.put("&&events", "prodView");
+    verifyStatic();
+    Analytics.trackAction("prodView", contextData);
+  }
+
+  @Test
+  public void trackEcommerceEventWithProductId() {
+    integration.productIdentifier = "id";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Viewed")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 10.0)
+                .putValue("productId", "prod555")
+                .putName("shoes")
+                .putValue("category", "athletic")
+                .putValue("quantity", 2)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;prod555;2;20.0");
+    contextData.put("&&events", "prodView");
+    verifyStatic();
+    Analytics.trackAction("prodView", contextData);
+  }
+
+  @Test
   public void trackCheckoutStarted() {
     integration.productIdentifier = "name";
 
@@ -362,6 +407,35 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&events", "purchase");
     contextData.put("purchaseid", "123456");
+    verifyStatic();
+    Analytics.trackAction("purchase", contextData);
+  }
+
+  @Test
+  public void trackPurchaseWithOrderWideCurrencyEvents() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Order Completed")
+        .properties(new Properties()
+            .putTax(10)
+            .putShipping(10)
+            .putDiscount(10)
+            .putProducts(new Product("123", "ABC", 10.0)
+                    .putName("shoes")
+                    .putValue("category", "athletic")
+                    .putValue("quantity", 2),
+                new Product("456", "DEF", 20.0)
+                    .putName("jeans")
+                    .putValue("category", "casual")
+                    .putValue("quantity", 1)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0,casual;jeans;1;20.0");
+    contextData.put("&&events", "purchase,tax=10.0,shipping=10.0,discount=10.0");
     verifyStatic();
     Analytics.trackAction("purchase", contextData);
   }
