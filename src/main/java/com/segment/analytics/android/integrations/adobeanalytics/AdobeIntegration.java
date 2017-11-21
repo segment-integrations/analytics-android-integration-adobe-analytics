@@ -59,6 +59,7 @@ public class AdobeIntegration extends Integration<Void> {
     ecommerceEventList.put("Product Removed", "scRemove");
     ecommerceEventList.put("Checkout Started", "scCheckout");
     ecommerceEventList.put("Cart Viewed", "scView");
+    ecommerceEventList.put("Product Viewed", "prodView");
     return ecommerceEventList;
   }
 
