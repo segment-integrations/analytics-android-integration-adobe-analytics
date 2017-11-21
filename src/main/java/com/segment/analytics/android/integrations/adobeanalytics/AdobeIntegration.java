@@ -224,6 +224,10 @@ public class AdobeIntegration extends Integration<Void> {
           productProperties.putAll(product);
 
           String productString = ecommerceStringBuilder(eventName, productProperties);
+          // early return where product name is passed correctly
+          if (productString.equals("")) {
+            return null;
+          }
           if (i < products.size() - 1) {
             productStringBuilder.append(productString).append(",");
           } else {
