@@ -224,10 +224,10 @@ public class AdobeIntegration extends Integration<Void> {
           productProperties.putAll(product);
 
           String productString = ecommerceStringBuilder(eventName, productProperties);
-          // early return where product name is passed correctly
-          if (productString.equals("")) {
-            return null;
-          }
+
+          // early return where product name is passed incorrectly
+          if (productString == null) return null;
+
           if (i < products.size() - 1) {
             productStringBuilder.append(productString).append(",");
           } else {
@@ -251,45 +251,38 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private String ecommerceStringBuilder(String eventName, Map<String, Object> productProperties) {
-    String name = "";
-    String category = "";
-    int quantity = 1;
+    String name;
+    String category;
+    String quantity = "1";
     double price = 0;
 
-    // product "name" is determined by a user setting and is required by Adobe
-    if (productProperties.containsKey("name") && productIdentifier.equals("name")) {
-      name = String.valueOf(productProperties.get("name"));
-    }
-    if (productProperties.containsKey("sku") && productIdentifier.equals("sku")) {
-      name = String.valueOf(productProperties.get("sku"));
-    }
-    if (productProperties.containsKey("id") && productIdentifier.equals("id")) {
-      name = String.valueOf(productProperties.get("id"));
-    }
-    // return if "name" remains an empty string for this product
-    // this would resut in a &&products variable containing a string of commas
-    if (name.equals("")) {
+    if (productProperties.get(productIdentifier) == null) {
       logger.verbose(
           "You must provide a name for each product to pass an ecommerce event"
               + "to Adobe Analytics.");
-      return "";
+      return null;
     }
+    name = getString(productProperties, productIdentifier);
+    category = getString(productProperties, "category");
+    quantity = getString(productProperties, "quantity");
 
-    if (productProperties.containsKey("category")) {
-      category = String.valueOf(productProperties.get("category"));
-    }
-    if (productProperties.containsKey("quantity")
-        && (productProperties.get("quantity") instanceof Integer)) {
-      quantity = (int) productProperties.get("quantity");
-    }
     // only pass along total product price for order completed events
     if (eventName.equals("purchase")) {
       if (productProperties.containsKey("price")
           && (productProperties.get("price") instanceof Number)) {
-        price = ((double) productProperties.get("price")) * (double) quantity;
+        price = ((double) productProperties.get("price")) * Double.parseDouble(quantity);
       }
     }
     return category + ";" + name + ";" + quantity + ";" + price;
+  }
+
+  // returns "" if the key does not exist
+  private String getString(Map<String, Object> map, String key) {
+    Object value = map.get(key);
+    if (value == null) {
+      return "";
+    }
+    return String.valueOf(value);
   }
 
   @Override
