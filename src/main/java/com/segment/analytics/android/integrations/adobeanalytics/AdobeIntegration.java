@@ -128,8 +128,6 @@ public class AdobeIntegration extends Integration<Void> {
   public void track(TrackPayload track) {
     super.track(track);
 
-    Map<String, Object> mappedProperties = null;
-
     String eventName = track.event();
     Properties properties = track.properties();
 
@@ -147,6 +145,7 @@ public class AdobeIntegration extends Integration<Void> {
               + "custom Adobe events.");
       return;
     }
+    Map<String, Object> mappedProperties = null;
     if (!isNullOrEmpty(eventsV2) && eventsV2.containsKey(eventName)) {
       eventName = String.valueOf(eventsV2.get(eventName));
       mappedProperties = (isNullOrEmpty(properties)) ? null : mapProperties(properties);
@@ -269,6 +268,13 @@ public class AdobeIntegration extends Integration<Void> {
     return contextData;
   }
 
+  /**
+   * Builds a string out of product properties category, name, quantity and price to send to Adobe.
+   *
+   * @param productProperties A map of product properties.
+   * @return A single string of product properties, in the format `category;name;quantity;price;
+   *     examples: `athletic;shoes;1;10.0`, `;shoes;1;0.0`
+   */
   private String ecommerceStringBuilder(Map<String, Object> productProperties) {
     if (productProperties.get(productIdentifier) == null
         && productProperties.get("productId") == null) {
@@ -300,6 +306,15 @@ public class AdobeIntegration extends Integration<Void> {
     return category + ";" + name + ";" + quantity + ";" + price;
   }
 
+  /**
+   * Builds an "order-wide currency event" string from tax, shipping and discount top-level Segment
+   * properties.
+   *
+   * @param productProperties A map of product properties.
+   * @return A single string of "order-wide" event properties for Adobe, in the format
+   *     `eventName;tax;shipping;discount`;
+   *     examples:`purchase;tax=10.0;shipping=10.0;discount=10.0`, `purchase;discount=10.0`.
+   */
   private String eventStringBuilder(String eventName, Map<String, Object> productProperties) {
     String tax =
         (productProperties.get("tax") == null) ? "" : ",tax=" + getString(productProperties, "tax");
