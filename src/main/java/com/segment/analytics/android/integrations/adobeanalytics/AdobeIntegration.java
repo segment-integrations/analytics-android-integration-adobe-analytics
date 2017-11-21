@@ -51,6 +51,7 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> lVars;
   String productIdentifier;
   private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
+
   private static Map<String, String> getEcommerceEventList() {
     Map<String, String> ecommerceEventList = new HashMap<>();
     ecommerceEventList.put("Order Completed", "purchase");
@@ -60,6 +61,7 @@ public class AdobeIntegration extends Integration<Void> {
     ecommerceEventList.put("Cart Viewed", "scView");
     return ecommerceEventList;
   }
+
   private final Logger logger;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
@@ -244,7 +246,7 @@ public class AdobeIntegration extends Integration<Void> {
     return contextData;
   }
 
-  private String ecommerceStringBuilder(String eventName, Map <String, Object> productProperties) {
+  private String ecommerceStringBuilder(String eventName, Map<String, Object> productProperties) {
     String name = "";
     String category = "";
     int quantity = 1;
@@ -263,20 +265,23 @@ public class AdobeIntegration extends Integration<Void> {
     // return if "name" remains an empty string for this product
     // this would resut in a &&products variable containing a string of commas
     if (name.equals("")) {
-      logger.verbose("You must provide a name for each product to pass an ecommerce event"
-          + "to Adobe Analytics.");
+      logger.verbose(
+          "You must provide a name for each product to pass an ecommerce event"
+              + "to Adobe Analytics.");
       return "";
     }
 
     if (productProperties.containsKey("category")) {
       category = String.valueOf(productProperties.get("category"));
     }
-    if (productProperties.containsKey("quantity") && (productProperties.get("quantity") instanceof Integer)) {
+    if (productProperties.containsKey("quantity")
+        && (productProperties.get("quantity") instanceof Integer)) {
       quantity = (int) productProperties.get("quantity");
     }
     // only pass along total product price for order completed events
     if (eventName.equals("purchase")) {
-      if (productProperties.containsKey("price") && (productProperties.get("price") instanceof Number)) {
+      if (productProperties.containsKey("price")
+          && (productProperties.get("price") instanceof Number)) {
         price = ((double) productProperties.get("price")) * (double) quantity;
       }
     }
