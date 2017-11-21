@@ -153,6 +153,7 @@ public class AdobeIntegration extends Integration<Void> {
     propertiesCopy.putAll(properties);
 
     // if a products array exists, remove it now because we'll have already mapped it in ecommerce properties
+    // if not, it shouldn't exist because a products array is only specced for ecommerce events
     if (propertiesCopy.containsKey("products")) {
       propertiesCopy.remove("products");
     }
@@ -166,7 +167,6 @@ public class AdobeIntegration extends Integration<Void> {
 
         if (contextValues.containsKey(property)) {
           mappedProperties.put(String.valueOf(contextValues.get(property)), value);
-          propertiesCopy.remove(property);
         }
       }
     }
@@ -183,7 +183,6 @@ public class AdobeIntegration extends Integration<Void> {
               || value instanceof Long) {
             mappedProperties.put(
                 String.valueOf(lVars.get(property)), String.valueOf(String.valueOf(value)));
-            propertiesCopy.remove(property);
           }
           if (value instanceof List) {
             StringBuilder builder = new StringBuilder();
@@ -201,13 +200,10 @@ public class AdobeIntegration extends Integration<Void> {
             String joinedList = builder.toString();
 
             mappedProperties.put(String.valueOf(lVars.get(property)), joinedList);
-            propertiesCopy.remove(property);
           }
         }
       }
     }
-    // pass along remaining unmapped Segment properties as contextData just in case
-    mappedProperties.putAll(propertiesCopy);
     return mappedProperties;
   }
 
