@@ -4,17 +4,15 @@ import android.app.Activity;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
-
+import com.segment.analytics.Properties;
+import com.segment.analytics.Properties.Product;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.integrations.IdentifyPayload;
-import com.segment.analytics.Properties;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -61,12 +59,11 @@ public class AdobeTest {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
-        .putValue("lVars", new HashMap<String, Object>()),
+        .putValue("productIdentifier", "id"),
       Logger.with(VERBOSE));
 
     assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
     assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
-    assertTrue(integration.lVars.equals(new HashMap<String, Object>()));
   }
 
   @Test
@@ -136,29 +133,251 @@ public class AdobeTest {
   }
 
   @Test
-  public void trackWithlVars() {
-    integration.eventsV2 = new HashMap<>();
-    integration.eventsV2.put("Testing Event", "Adobe Testing Event");
-    integration.lVars = new HashMap<>();
-    integration.lVars.put("testing lVars", "joinedString");
-
-    List<Object> list = new ArrayList<>();
-    list.add("item1");
-    list.add("item2");
+  public void trackOrderCompleted() {
+    integration.productIdentifier = "name";
+    integration.contextValues = new HashMap<>();
+    integration.contextValues.put("testing", "myapp.testing");
 
     integration.track(new TrackPayload.Builder()
         .userId("123")
-        .event("Testing Event")
+        .event("Order Completed")
         .properties(new Properties()
-            .putValue("testing lVars", list))
+            .putOrderId("A5744855555")
+            .putValue("testing", "test!")
+            .putProducts(new Product("123", "ABC", 10.0)
+                .putName("shoes")
+                .putValue("category", "athletic")
+                .putValue("quantity", 2)))
         .build()
     );
 
-    String joinedlVars = "item1,item2";
     Map<String, Object> contextData = new HashMap<>();
-    contextData.put("joinedString", joinedlVars);
+    contextData.put("myapp.testing", "test!");
+    contextData.put("purchaseid", "A5744855555");
+    contextData.put("&&products", "athletic;shoes;2;20.0");
+    contextData.put("&&events", "purchase");
     verifyStatic();
-    Analytics.trackAction("Adobe Testing Event", contextData);
+    Analytics.trackAction("purchase", contextData);
+  }
+
+  @Test
+  public void trackProductAdded() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Added")
+        .properties(new Properties()
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putName("shoes")
+            .putCategory("athletic")
+            .putValue("quantity", 2))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0");
+    contextData.put("&&events", "scAdd");
+    verifyStatic();
+    Analytics.trackAction("scAdd", contextData);
+  }
+
+  @Test
+  public void trackProductRemoved() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Removed")
+        .properties(new Properties()
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putName("shoes")
+            .putCategory("athletic")
+            .putValue("quantity", 2))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0");
+    contextData.put("&&events", "scRemove");
+    verifyStatic();
+    Analytics.trackAction("scRemove", contextData);
+  }
+
+  @Test
+  public void trackProductViewed() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Viewed")
+        .properties(new Properties()
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putName("shoes")
+            .putCategory("athletic")
+            .putValue("quantity", 2))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0");
+    contextData.put("&&events", "prodView");
+    verifyStatic();
+    Analytics.trackAction("prodView", contextData);
+  }
+
+  @Test
+  public void trackEcommerceEventWithProductId() {
+    integration.productIdentifier = "id";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Viewed")
+        .properties(new Properties()
+            .putValue("productId", "XYZ")
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putName("shoes")
+            .putCategory("athletic")
+            .putValue("quantity", 2))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;XYZ;2;20.0");
+    contextData.put("&&events", "prodView");
+    verifyStatic();
+    Analytics.trackAction("prodView", contextData);
+  }
+
+  @Test
+  public void trackCheckoutStarted() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Checkout Started")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 10.0)
+                .putName("shoes")
+                .putValue("category", "athletic")
+                .putValue("quantity", 2),
+              new Product("456", "DEF", 20.0)
+                .putName("jeans")
+                .putValue("category", "casual")
+                .putValue("quantity", 1)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0,casual;jeans;1;20.0");
+    contextData.put("&&events", "scCheckout");
+    verifyStatic();
+    Analytics.trackAction("scCheckout", contextData);
+  }
+
+  @Test
+  public void trackCartViewed() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Cart Viewed")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 10.0)
+                    .putName("shoes")
+                    .putValue("category", "athletic")
+                    .putValue("quantity", 2),
+                new Product("456", "DEF", 20.0)
+                    .putName("jeans")
+                    .putValue("category", "casual")
+                    .putValue("quantity", 1)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", "athletic;shoes;2;20.0,casual;jeans;1;20.0");
+    contextData.put("&&events", "scView");
+    verifyStatic();
+    Analytics.trackAction("scView", contextData);
+  }
+
+  @Test
+  public void trackEcommerceWhenProductNameIsNotSet() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Removed")
+        .properties(new Properties()
+            .putSku("ABC")
+            .putPrice(10.0)
+            .putCategory("athletic")
+            .putValue("quantity", 2))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&events", "scRemove");
+
+    verifyStatic();
+    Analytics.trackAction("scRemove", contextData);
+  }
+
+  @Test
+  public void trackEcommerceEventWithNoProperties() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Product Added")
+        .properties(new Properties())
+        .build()
+    );
+
+    verifyStatic();
+    Analytics.trackAction("scAdd", null);
+  }
+
+  @Test
+  public void trackPurchaseEventToTestDefaults() {
+    integration.productIdentifier = "sku";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Order Completed")
+        .properties(new Properties()
+            .putProducts(new Product("123", "ABC", 0)))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&products", ";ABC;1;0.0");
+    contextData.put("&&events", "purchase");
+    verifyStatic();
+    Analytics.trackAction("purchase", contextData);
+  }
+
+  @Test
+  public void trackPurchaseWithoutProducts() {
+    integration.productIdentifier = "name";
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Order Completed")
+        .properties(new Properties()
+            .putOrderId("123456"))
+        .build()
+    );
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("&&events", "purchase");
+    contextData.put("purchaseid", "123456");
+    verifyStatic();
+    Analytics.trackAction("purchase", contextData);
   }
 
   @Test
@@ -210,46 +429,6 @@ public class AdobeTest {
 
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
-    verifyStatic();
-    Analytics.trackState("Viewed a Screen", contextData);
-  }
-
-  @Test
-  public void screenWithlVars() {
-    integration.lVars = new HashMap<>();
-    integration.lVars.put("testing list", "joinedList");
-    integration.lVars.put("testing string", "string");
-    integration.lVars.put("testing integer", "integer");
-    integration.lVars.put("testing double", "double");
-    integration.lVars.put("testing long", "long");
-
-    List<Object> list = new ArrayList<>();
-    list.add("item1");
-    list.add("item2");
-
-    integration.screen(new ScreenPayload.Builder()
-        .userId("123")
-        .name("Viewed a Screen")
-        .properties(new Properties()
-            .putValue("testing list", list)
-            .putValue("testing string", "string")
-            .putValue("testing integer", 1)
-            .putValue("testing double", 2.55)
-            .putValue("testing long", 1000L))
-        .build()
-    );
-
-    String joinedlVars = "item1,item2";
-    String string = "string";
-    String integer = "1";
-    String doubleValue = "2.55";
-    String longValue = "1000";
-    Map<String, Object> contextData = new HashMap<>();
-    contextData.put("joinedList", joinedlVars);
-    contextData.put("string", string);
-    contextData.put("integer", integer);
-    contextData.put("double", doubleValue);
-    contextData.put("long", longValue);
     verifyStatic();
     Analytics.trackState("Viewed a Screen", contextData);
   }
