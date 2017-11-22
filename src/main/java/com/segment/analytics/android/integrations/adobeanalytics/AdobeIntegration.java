@@ -48,13 +48,13 @@ public class AdobeIntegration extends Integration<Void> {
   private static final String ADOBE_KEY = "Adobe Analytics";
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
-  Map<String, Object> lVars;
+  Map<String, Object> lVarsV2;
   private final Logger logger;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
-    this.lVars = settings.getValueMap("lVars");
+    this.lVarsV2 = settings.getValueMap("lVarsV2");
     this.logger = logger;
   }
 
@@ -150,18 +150,18 @@ public class AdobeIntegration extends Integration<Void> {
       }
     }
 
-    if (!isNullOrEmpty(lVars)) {
+    if (!isNullOrEmpty(lVarsV2)) {
       for (Map.Entry<String, Object> entry : properties.entrySet()) {
         String property = entry.getKey();
         Object value = entry.getValue();
 
-        if (lVars.containsKey(property)) {
+        if (lVarsV2.containsKey(property)) {
           if (value instanceof String
               || value instanceof Integer
               || value instanceof Double
               || value instanceof Long) {
             mappedProperties.put(
-                String.valueOf(lVars.get(property)), String.valueOf(String.valueOf(value)));
+                String.valueOf(lVarsV2.get(property)), String.valueOf(String.valueOf(value)));
             propertiesCopy.remove(property);
           }
           if (value instanceof List) {
@@ -179,7 +179,7 @@ public class AdobeIntegration extends Integration<Void> {
 
             String joinedList = builder.toString();
 
-            mappedProperties.put(String.valueOf(lVars.get(property)), joinedList);
+            mappedProperties.put(String.valueOf(lVarsV2.get(property)), joinedList);
             propertiesCopy.remove(property);
           }
         }

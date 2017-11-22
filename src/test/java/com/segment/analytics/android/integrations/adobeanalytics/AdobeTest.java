@@ -61,12 +61,12 @@ public class AdobeTest {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
-        .putValue("lVars", new HashMap<String, Object>()),
+        .putValue("lVarsV2", new HashMap<String, Object>()),
       Logger.with(VERBOSE));
 
     assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
     assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
-    assertTrue(integration.lVars.equals(new HashMap<String, Object>()));
+    assertTrue(integration.lVarsV2.equals(new HashMap<String, Object>()));
   }
 
   @Test
@@ -136,11 +136,11 @@ public class AdobeTest {
   }
 
   @Test
-  public void trackWithlVars() {
+  public void trackWithlVarsV2() {
     integration.eventsV2 = new HashMap<>();
     integration.eventsV2.put("Testing Event", "Adobe Testing Event");
-    integration.lVars = new HashMap<>();
-    integration.lVars.put("testing lVars", "joinedString");
+    integration.lVarsV2 = new HashMap<>();
+    integration.lVarsV2.put("testing lVarsV2", "joinedString");
 
     List<Object> list = new ArrayList<>();
     list.add("item1");
@@ -150,13 +150,13 @@ public class AdobeTest {
         .userId("123")
         .event("Testing Event")
         .properties(new Properties()
-            .putValue("testing lVars", list))
+            .putValue("testing lVarsV2", list))
         .build()
     );
 
-    String joinedlVars = "item1,item2";
+    String joinedlVarsV2 = "item1,item2";
     Map<String, Object> contextData = new HashMap<>();
-    contextData.put("joinedString", joinedlVars);
+    contextData.put("joinedString", joinedlVarsV2);
     verifyStatic();
     Analytics.trackAction("Adobe Testing Event", contextData);
   }
@@ -215,13 +215,13 @@ public class AdobeTest {
   }
 
   @Test
-  public void screenWithlVars() {
-    integration.lVars = new HashMap<>();
-    integration.lVars.put("testing list", "joinedList");
-    integration.lVars.put("testing string", "string");
-    integration.lVars.put("testing integer", "integer");
-    integration.lVars.put("testing double", "double");
-    integration.lVars.put("testing long", "long");
+  public void screenWithlVarsV2() {
+    integration.lVarsV2 = new HashMap<>();
+    integration.lVarsV2.put("testing list", "joinedList");
+    integration.lVarsV2.put("testing string", "string");
+    integration.lVarsV2.put("testing integer", "integer");
+    integration.lVarsV2.put("testing double", "double");
+    integration.lVarsV2.put("testing long", "long");
 
     List<Object> list = new ArrayList<>();
     list.add("item1");
@@ -239,13 +239,13 @@ public class AdobeTest {
         .build()
     );
 
-    String joinedlVars = "item1,item2";
+    String joinedlVarsV2 = "item1,item2";
     String string = "string";
     String integer = "1";
     String doubleValue = "2.55";
     String longValue = "1000";
     Map<String, Object> contextData = new HashMap<>();
-    contextData.put("joinedList", joinedlVars);
+    contextData.put("joinedList", joinedlVarsV2);
     contextData.put("string", string);
     contextData.put("integer", integer);
     contextData.put("double", doubleValue);
