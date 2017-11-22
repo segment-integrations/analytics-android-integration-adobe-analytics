@@ -49,6 +49,7 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   String productIdentifier;
+  Map<String, Object> lVarsV2;
   private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
 
   private static Map<String, String> getEcommerceEventList() {
@@ -68,6 +69,7 @@ public class AdobeIntegration extends Integration<Void> {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
+    this.lVarsV2 = settings.getValueMap("lVarsV2");
     this.logger = logger;
   }
 
@@ -176,6 +178,42 @@ public class AdobeIntegration extends Integration<Void> {
 
         if (contextValues.containsKey(property)) {
           mappedProperties.put(String.valueOf(contextValues.get(property)), value);
+        }
+      }
+    }
+
+    if (!isNullOrEmpty(lVarsV2)) {
+      for (Map.Entry<String, Object> entry : properties.entrySet()) {
+        String property = entry.getKey();
+        Object value = entry.getValue();
+
+        if (lVarsV2.containsKey(property)) {
+          if (value instanceof String
+              || value instanceof Integer
+              || value instanceof Double
+              || value instanceof Long) {
+            mappedProperties.put(
+                String.valueOf(lVarsV2.get(property)), String.valueOf(String.valueOf(value)));
+            propertiesCopy.remove(property);
+          }
+          if (value instanceof List) {
+            StringBuilder builder = new StringBuilder();
+            List<Object> list = (List) value;
+
+            for (int i = 0; i < list.size(); i++) {
+              String item = String.valueOf(list.get(i));
+              if (i < list.size() - 1) {
+                builder.append(item).append(",");
+              } else {
+                builder.append(item);
+              }
+            }
+
+            String joinedList = builder.toString();
+
+            mappedProperties.put(String.valueOf(lVarsV2.get(property)), joinedList);
+            propertiesCopy.remove(property);
+          }
         }
       }
     }
