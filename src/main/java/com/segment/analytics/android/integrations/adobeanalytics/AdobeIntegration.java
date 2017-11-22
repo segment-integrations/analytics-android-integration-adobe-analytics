@@ -255,9 +255,7 @@ public class AdobeIntegration extends Integration<Void> {
       if (properties.containsKey("orderId")) {
         contextData.put("purchaseid", properties.getString("orderId"));
       }
-      // build a string of Adobe target events and order-wide currency events
-      eventString = eventStringBuilder(eventName, properties);
-      contextData.put("&&events", eventString);
+      contextData.put("&&events", eventName);
       // only add the &&products variable if a product exists
       if (productsString.length() > 0) {
         contextData.put("&&products", productsString);
@@ -304,30 +302,6 @@ public class AdobeIntegration extends Integration<Void> {
                 Double.parseDouble((getString(productProperties, "price")))
                     * Double.parseDouble(quantity));
     return category + ";" + name + ";" + quantity + ";" + price;
-  }
-
-  /**
-   * Builds an "order-wide currency event" string from tax, shipping and discount top-level Segment
-   * properties.
-   *
-   * @param productProperties A map of product properties.
-   * @return A single string of "order-wide" event properties for Adobe, in the format
-   *     `eventName;tax;shipping;discount`;
-   *     examples:`purchase;tax=10.0;shipping=10.0;discount=10.0`, `purchase;discount=10.0`.
-   */
-  private String eventStringBuilder(String eventName, Map<String, Object> productProperties) {
-    String tax =
-        (productProperties.get("tax") == null) ? "" : ",tax=" + getString(productProperties, "tax");
-    String shipping =
-        (productProperties.get("shipping") == null)
-            ? ""
-            : ",shipping=" + getString(productProperties, "shipping");
-    String discount =
-        (productProperties.get("discount") == null)
-            ? ""
-            : ",discount=" + getString(productProperties, "discount");
-
-    return eventName + tax + shipping + discount;
   }
 
   private String getString(Map<String, Object> map, String key) {
