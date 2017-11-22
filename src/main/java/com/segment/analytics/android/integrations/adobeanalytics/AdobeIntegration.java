@@ -48,7 +48,6 @@ public class AdobeIntegration extends Integration<Void> {
   private static final String ADOBE_KEY = "Adobe Analytics";
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
-  Map<String, Object> lVarsV2;
   String productIdentifier;
   private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
 
@@ -68,7 +67,6 @@ public class AdobeIntegration extends Integration<Void> {
   AdobeIntegration(ValueMap settings, Logger logger) {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
-    this.lVarsV2 = settings.getValueMap("lVarsV2");
     this.productIdentifier = settings.getString("productIdentifier");
     this.logger = logger;
   }
@@ -181,40 +179,6 @@ public class AdobeIntegration extends Integration<Void> {
         }
       }
     }
-
-    if (!isNullOrEmpty(lVarsV2)) {
-      for (Map.Entry<String, Object> entry : properties.entrySet()) {
-        String property = entry.getKey();
-        Object value = entry.getValue();
-
-        if (lVarsV2.containsKey(property)) {
-          if (value instanceof String
-              || value instanceof Integer
-              || value instanceof Double
-              || value instanceof Long) {
-            mappedProperties.put(
-                String.valueOf(lVarsV2.get(property)), String.valueOf(String.valueOf(value)));
-          }
-          if (value instanceof List) {
-            StringBuilder builder = new StringBuilder();
-            List<Object> list = (List) value;
-
-            for (int i = 0; i < list.size(); i++) {
-              String item = String.valueOf(list.get(i));
-              if (i < list.size() - 1) {
-                builder.append(item).append(",");
-              } else {
-                builder.append(item);
-              }
-            }
-
-            String joinedList = builder.toString();
-
-            mappedProperties.put(String.valueOf(lVarsV2.get(property)), joinedList);
-          }
-        }
-      }
-    }
     return mappedProperties;
   }
 
@@ -224,7 +188,6 @@ public class AdobeIntegration extends Integration<Void> {
       StringBuilder productStringBuilder = new StringBuilder();
       Map<String, Object> productProperties = new HashMap<>();
       String productsString;
-      String eventString;
 
       List<Product> products = properties.products();
 
