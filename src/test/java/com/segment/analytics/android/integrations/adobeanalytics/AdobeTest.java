@@ -62,7 +62,8 @@ public class AdobeTest {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
-        .putValue("lVarsV2", new HashMap<String, Object>()),
+        .putValue("lVarsV2", new HashMap<String, Object>())
+        .putValue("productIdentifier", "id"),
       Logger.with(VERBOSE));
 
     assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
