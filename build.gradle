@@ -44,6 +44,7 @@ dependencies {
         jcenter()
         mavenCentral()
     }
+    compile fileTree(dir: 'libs', include: ['*.jar'])
 
     compile 'com.segment.analytics.android:analytics:4.3.0'
 
