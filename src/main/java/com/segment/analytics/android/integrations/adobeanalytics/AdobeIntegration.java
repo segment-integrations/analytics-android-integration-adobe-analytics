@@ -84,7 +84,7 @@ public class AdobeIntegration extends Integration<Void> {
 
       config = new MediaHeartbeatConfig();
 
-      config.trackingServer = settings.getString("heartbeatTrackingSever");
+      config.trackingServer = settings.getString("heartbeatTrackingServer");
       config.channel = settings.getString("heartbeatChannel");
       // default app version to 0.0 if not otherwise present b/c Adobe requires this value
       config.appVersion = (!isNullOrEmpty(context.getPackageName())) ? context.getPackageName() : "0.0";

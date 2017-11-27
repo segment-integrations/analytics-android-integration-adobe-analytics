@@ -1,6 +1,7 @@
 package com.segment.analytics.android.integrations.adobeanalytics;
 
 import android.app.Activity;
+import android.app.Application;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
@@ -21,8 +22,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.rule.PowerMockRule;
 import org.robolectric.RobolectricTestRunner;
@@ -32,21 +35,28 @@ import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(RobolectricTestRunner.class)
 @PrepareForTest({Analytics.class, Config.class})
 @org.robolectric.annotation.Config(constants = BuildConfig.class)
+@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "org.json.*" })
 public class AdobeTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
   private AdobeIntegration integration;
+  @Mock com.segment.analytics.Analytics analytics;
+  @Mock Application context;
 
   @Before
   public void setUp() {
+    initMocks(this);
     PowerMockito.mockStatic(Config.class);
     PowerMockito.mockStatic(Analytics.class);
-    integration = new AdobeIntegration(new ValueMap(), Logger.with(NONE));
+    when(analytics.getApplication()).thenReturn(context);
+    integration = new AdobeIntegration(new ValueMap(), analytics, Logger.with(NONE));
   }
 
   @Test
@@ -59,11 +69,39 @@ public class AdobeTest {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
-        .putValue("productIdentifier", "id"),
+        .putValue("productIdentifier", "id")
+        .putValue("adobeVerboseLogging", true),
+      analytics,
       Logger.with(VERBOSE));
 
     assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
     assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
+    assertTrue(integration.productIdentifier.equals("id"));
+    assertTrue(integration.adobeVerboseLogging);
+  }
+
+  @Test
+  public void initializeWithAdobeHeartbeat() {
+    integration = new AdobeIntegration(new ValueMap()
+        .putValue("adobeVerboseLogging", true)
+        .putValue("videoHeartbeatEnabled", true)
+        .putValue("heartbeatTrackingServer", "exchangepartnersegment.hb.omtrdc.net")
+        .putValue("heartbeatChannel", "Video Channel")
+        .putValue("heartbeatOnlineVideoPlatform", "HTML 5")
+        .putValue("heartbeatPlayerName", "HTML 5 Basic")
+        .putValue("heartbeatEnableSsl", true),
+        analytics,
+        Logger.with(VERBOSE));
+
+    assertTrue(integration.adobeVerboseLogging);
+    assertTrue(integration.videoHeartbeatEnabled);
+    assertTrue(integration.config.debugLogging);
+    assertTrue(integration.config.trackingServer.equals("exchangepartnersegment.hb.omtrdc.net"));
+    assertTrue(integration.config.channel.equals("Video Channel"));
+    assertTrue(integration.config.appVersion.equals("0.0"));
+    assertTrue(integration.config.ovp.equals("HTML 5"));
+    assertTrue(integration.config.playerName.equals("HTML 5 Basic"));
+    assertTrue(integration.config.ssl);
   }
 
   @Test
