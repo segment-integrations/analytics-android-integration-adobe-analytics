@@ -1,9 +1,11 @@
 package com.segment.analytics.android.integrations.adobeanalytics;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
+import com.adobe.primetime.va.simple.MediaHeartbeatConfig;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Properties.Product;
 import com.segment.analytics.ValueMap;
@@ -36,7 +38,7 @@ public class AdobeIntegration extends Integration<Void> {
         @Override
         public Integration<?> create(ValueMap settings, com.segment.analytics.Analytics analytics) {
           Logger logger = analytics.logger(ADOBE_KEY);
-          return new AdobeIntegration(settings, logger);
+          return new AdobeIntegration(settings, analytics, logger);
         }
 
         @Override
@@ -45,10 +47,15 @@ public class AdobeIntegration extends Integration<Void> {
         }
       };
 
+  //settings
   private static final String ADOBE_KEY = "Adobe Analytics";
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   String productIdentifier;
+  boolean adobeVerboseLogging;
+  boolean videoHeartbeatEnabled;
+  private final Logger logger;
+
   private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
 
   private static Map<String, String> getEcommerceEventList() {
@@ -62,13 +69,30 @@ public class AdobeIntegration extends Integration<Void> {
     return ecommerceEventList;
   }
 
-  private final Logger logger;
+  MediaHeartbeatConfig config;
 
-  AdobeIntegration(ValueMap settings, Logger logger) {
+  AdobeIntegration(ValueMap settings, com.segment.analytics.Analytics analytics, Logger logger) {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
+    this.adobeVerboseLogging = settings.getBoolean("adobeVerboseLogging", false);
+    this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", false);
     this.logger = logger;
+
+    if (videoHeartbeatEnabled) {
+      Context context = analytics.getApplication();
+
+      config = new MediaHeartbeatConfig();
+
+      config.trackingServer = settings.getString("heartbeatTrackingSever");
+      config.channel = settings.getString("heartbeatChannel");
+      // default app version to 0.0 if not otherwise present b/c Adobe requires this value
+      config.appVersion = (!isNullOrEmpty(context.getPackageName())) ? context.getPackageName() : "0.0";
+      config.ovp = settings.getString("heartbeatOnlineVideoPlatform");
+      config.playerName = settings.getString("heartbeatPlayerName");
+      config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
+      config.debugLogging = adobeVerboseLogging;
+    }
   }
 
   @Override
