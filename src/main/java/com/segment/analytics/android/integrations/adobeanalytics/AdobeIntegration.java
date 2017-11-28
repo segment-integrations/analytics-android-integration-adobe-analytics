@@ -48,13 +48,13 @@ public class AdobeIntegration extends Integration<Void> {
   private static final String ADOBE_KEY = "Adobe Analytics";
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
-  Map<String, Object> lVarsV2;
+  List<ValueMap> lVarsV2;
   private final Logger logger;
 
   AdobeIntegration(ValueMap settings, Logger logger) {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
-    this.lVarsV2 = settings.getValueMap("lVarsV2");
+    this.lVarsV2 = settings.getList("lVarsV2", ValueMap.class);
     this.logger = logger;
   }
 
@@ -134,8 +134,6 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private Map<String, Object> mapProperties(Properties properties) {
-    Properties propertiesCopy = new Properties();
-    propertiesCopy.putAll(properties);
     Map<String, Object> mappedProperties = new HashMap<>();
 
     if (!isNullOrEmpty(contextValues)) {
@@ -145,48 +143,41 @@ public class AdobeIntegration extends Integration<Void> {
 
         if (contextValues.containsKey(property)) {
           mappedProperties.put(String.valueOf(contextValues.get(property)), value);
-          propertiesCopy.remove(property);
         }
       }
     }
 
     if (!isNullOrEmpty(lVarsV2)) {
-      for (Map.Entry<String, Object> entry : properties.entrySet()) {
-        String property = entry.getKey();
-        Object value = entry.getValue();
+      for (ValueMap mappedLVar: lVarsV2) {
+        ValueMap map = mappedLVar.getValueMap("value");
+        String segmentProperty = map.getString("property");
 
-        if (lVarsV2.containsKey(property)) {
-          if (value instanceof String
-              || value instanceof Integer
-              || value instanceof Double
-              || value instanceof Long) {
-            mappedProperties.put(
-                String.valueOf(lVarsV2.get(property)), String.valueOf(String.valueOf(value)));
-            propertiesCopy.remove(property);
+        if (properties.containsKey(segmentProperty)) {
+          String newKey = map.getString("lVar");
+
+          if (properties.get(segmentProperty) instanceof String) {
+            mappedProperties.put(newKey, properties.getString(segmentProperty));
           }
-          if (value instanceof List) {
+
+          if (properties.get(segmentProperty) instanceof List) {
             StringBuilder builder = new StringBuilder();
-            List<Object> list = (List) value;
+            List<Object> list = (List) mappedLVar;
+            String delimiter = map.getString("delimiter");
 
             for (int i = 0; i < list.size(); i++) {
               String item = String.valueOf(list.get(i));
               if (i < list.size() - 1) {
-                builder.append(item).append(",");
+                builder.append(item).append(map.getString(delimiter));
               } else {
                 builder.append(item);
               }
             }
-
             String joinedList = builder.toString();
-
-            mappedProperties.put(String.valueOf(lVarsV2.get(property)), joinedList);
-            propertiesCopy.remove(property);
+            mappedProperties.put(newKey, joinedList);
           }
         }
       }
     }
-    // pass along remaining unmapped Segment properties as contextData just in case
-    mappedProperties.putAll(propertiesCopy);
     return mappedProperties;
   }
 
