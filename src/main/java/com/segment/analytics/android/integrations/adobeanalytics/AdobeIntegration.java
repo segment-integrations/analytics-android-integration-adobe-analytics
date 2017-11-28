@@ -147,8 +147,33 @@ public class AdobeIntegration extends Integration<Void> {
       }
     }
 
+    /**
+     * List Variables
+     *
+     * <p>You can choose which Segment Property to send as a list variable via Segment's UI by
+     * providing the Segment Property, the expected Adobe lVar key, and the delimiter. The Segment
+     * lVarsV2 setting has the following structure:
+     *
+     * <p>"lVarsV2":[ { "value":{ "property":"filters", "lVar":"myapp.filters", "delimiter":";" } }
+     * ]
+     *
+     * <p>Segment will only send property values of type List<Object> or String. If a String is
+     * passed as a property value, Segment assumes that the value has been formatted with the proper
+     * delimiter. If a List<Object> is passed in, Segment will transform the List to a delimited
+     * String. List Variables may be passed like this:
+     *
+     * <p>List<String> lists = new Array List<>(): lists.add("list1", "list2");
+     *
+     * <p>Analytics.with(this).track("Clicked a link", new Properties().putValue("list items",
+     * lists));
+     *
+     * <p>The resulting value of "list items" property would be a String (assuming the customer set
+     * a comma as her delimiter):
+     *
+     * <p>`"list values": "list1,list2"`
+     */
     if (!isNullOrEmpty(lVarsV2)) {
-      for (ValueMap mappedLVar: lVarsV2) {
+      for (ValueMap mappedLVar : lVarsV2) {
         ValueMap map = mappedLVar.getValueMap("value");
         String segmentProperty = map.getString("property");
 
@@ -161,13 +186,13 @@ public class AdobeIntegration extends Integration<Void> {
 
           if (properties.get(segmentProperty) instanceof List) {
             StringBuilder builder = new StringBuilder();
-            List<Object> list = (List) mappedLVar;
+            List<Object> list = (List) properties.get(segmentProperty);
             String delimiter = map.getString("delimiter");
 
             for (int i = 0; i < list.size(); i++) {
               String item = String.valueOf(list.get(i));
               if (i < list.size() - 1) {
-                builder.append(item).append(map.getString(delimiter));
+                builder.append(item).append(delimiter);
               } else {
                 builder.append(item);
               }
