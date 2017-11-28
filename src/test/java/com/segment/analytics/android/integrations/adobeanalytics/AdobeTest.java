@@ -224,8 +224,6 @@ public class AdobeTest {
 
   @Test
   public void screenWithlVarsV2() {
-    integration.eventsV2 = new HashMap<>();
-    integration.eventsV2.put("Viewed a Screen", "myapp.screen");
     integration.lVarsV2 = new ArrayList<>();
 
     ValueMap setting = new ValueMap();
@@ -241,9 +239,9 @@ public class AdobeTest {
     list.add("item1");
     list.add("item2");
 
-    integration.track(new TrackPayload.Builder()
+    integration.screen(new ScreenPayload.Builder()
         .userId("123")
-        .event("Viewed a Screen")
+        .name("Viewed a Screen")
         .properties(new Properties()
             .putValue("filters", list))
       .build()
@@ -253,7 +251,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.filters", joinedlVarsV2);
     verifyStatic();
-    Analytics.trackAction("myapp.screen", contextData);
+    Analytics.trackState("Viewed a Screen", contextData);
   }
 
   @Test
