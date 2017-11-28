@@ -5,7 +5,10 @@ import android.content.Context;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
+import com.adobe.primetime.va.simple.MediaHeartbeat;
+import com.adobe.primetime.va.simple.MediaHeartbeat.MediaHeartbeatDelegate;
 import com.adobe.primetime.va.simple.MediaHeartbeatConfig;
+import com.adobe.primetime.va.simple.MediaObject;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Properties.Product;
 import com.segment.analytics.ValueMap;
@@ -70,6 +73,7 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   MediaHeartbeatConfig config;
+  MediaHeartbeat heartbeat;
 
   AdobeIntegration(ValueMap settings, com.segment.analytics.Analytics analytics, Logger logger) {
     this.eventsV2 = settings.getValueMap("eventsV2");
@@ -92,6 +96,24 @@ public class AdobeIntegration extends Integration<Void> {
       config.playerName = settings.getString("heartbeatPlayerName");
       config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
       config.debugLogging = adobeVerboseLogging;
+
+      heartbeat = new MediaHeartbeat(new HeartbeatProvider(), config);
+    }
+  }
+
+  class HeartbeatProvider implements MediaHeartbeatDelegate {
+
+    public HeartbeatProvider() {
+    }
+
+    @Override
+    public MediaObject getQoSObject() {
+      return null;
+    }
+
+    @Override
+    public Double getCurrentPlaybackTime() {
+      return null;
     }
   }
 
