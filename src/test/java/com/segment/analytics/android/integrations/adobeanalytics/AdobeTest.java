@@ -69,21 +69,21 @@ public class AdobeTest {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
-        .putValue("productIdentifier", "id")
-        .putValue("adobeVerboseLogging", true),
+        .putValue("productIdentifier", "id"),
       analytics,
       Logger.with(VERBOSE));
+
+    verifyStatic();
+    Config.setDebugLogging(true);
 
     assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
     assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
     assertTrue(integration.productIdentifier.equals("id"));
-    assertTrue(integration.adobeVerboseLogging);
   }
 
   @Test
   public void initializeWithAdobeHeartbeat() {
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("adobeVerboseLogging", true)
         .putValue("videoHeartbeatEnabled", true)
         .putValue("heartbeatTrackingServer", "exchangepartnersegment.hb.omtrdc.net")
         .putValue("heartbeatChannel", "Video Channel")
@@ -93,7 +93,9 @@ public class AdobeTest {
         analytics,
         Logger.with(VERBOSE));
 
-    assertTrue(integration.adobeVerboseLogging);
+    verifyStatic();
+    Config.setDebugLogging(true);
+
     assertTrue(integration.videoHeartbeatEnabled);
     assertTrue(integration.config.debugLogging);
     assertTrue(integration.config.trackingServer.equals("exchangepartnersegment.hb.omtrdc.net"));
@@ -102,6 +104,7 @@ public class AdobeTest {
     assertTrue(integration.config.ovp.equals("HTML 5"));
     assertTrue(integration.config.playerName.equals("HTML 5 Basic"));
     assertTrue(integration.config.ssl);
+    assertTrue(integration.config.debugLogging);
   }
 
   @Test
