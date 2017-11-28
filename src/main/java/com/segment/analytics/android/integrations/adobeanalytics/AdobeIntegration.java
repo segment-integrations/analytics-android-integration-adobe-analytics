@@ -360,7 +360,7 @@ public class AdobeIntegration extends Integration<Void> {
 
   private void trackVideo(String eventName, Properties properties) {
     switch (eventName) {
-      case "Video Playback Started":
+      case "Video Content Started":
 
         videoProperties = new Properties();
         videoProperties.putAll(properties);
@@ -381,11 +381,8 @@ public class AdobeIntegration extends Integration<Void> {
         mediaInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
 
         heartbeat.trackSessionStart(mediaInfo, videoMetadata);
-        videoProperties = null;
-        break;
-
-      case "Video Content Started":
         heartbeat.trackPlay();
+        videoProperties = null;
         break;
 
       case "Video Content Completed":
