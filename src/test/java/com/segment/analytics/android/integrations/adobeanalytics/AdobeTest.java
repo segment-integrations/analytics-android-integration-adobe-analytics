@@ -6,6 +6,8 @@ import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
 import com.adobe.primetime.va.simple.MediaHeartbeat;
+import com.adobe.primetime.va.simple.MediaHeartbeat.MediaHeartbeatDelegate;
+import com.adobe.primetime.va.simple.MediaHeartbeatConfig;
 import com.adobe.primetime.va.simple.MediaObject;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Properties.Product;
@@ -55,7 +57,7 @@ public class AdobeTest {
   private @Mock Application context;
   private AdobeIntegration.Provider mockProvider = new AdobeIntegration.Provider() {
     @Override
-    public MediaHeartbeat get() {
+    public MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config) {
       return heartbeat;
     }
   };
@@ -98,7 +100,6 @@ public class AdobeTest {
   @Test
   public void initializeWithAdobeHeartbeat() {
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("adobeVerboseLogging", true)
         .putValue("videoHeartbeatEnabled", true)
         .putValue("heartbeatTrackingServer", "exchangepartnersegment.hb.omtrdc.net")
         .putValue("heartbeatChannel", "Video Channel")

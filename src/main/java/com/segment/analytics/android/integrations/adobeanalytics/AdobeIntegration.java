@@ -44,7 +44,7 @@ public class AdobeIntegration extends Integration<Void> {
         @Override
         public Integration<?> create(ValueMap settings, com.segment.analytics.Analytics analytics) {
           Logger logger = analytics.logger(ADOBE_KEY);
-          return new AdobeIntegration(settings, analytics, logger, Provider.MOCK);
+          return new AdobeIntegration(settings, analytics, logger, Provider.REAL);
         }
 
         @Override
@@ -132,11 +132,7 @@ public class AdobeIntegration extends Integration<Void> {
       config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
       config.debugLogging = adobeLogLevel;
 
-      if (provider == null) {
-        heartbeat = new MediaHeartbeat(new NoOpDelegate(), config);
-      } else {
-        heartbeat = provider.get();
-      }
+      heartbeat = provider.get(new NoOpDelegate(), config);
     }
   }
 
@@ -157,13 +153,13 @@ public class AdobeIntegration extends Integration<Void> {
 
   interface Provider {
 
-    MediaHeartbeat get();
+    MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config);
 
-    Provider MOCK =
+    Provider REAL =
         new Provider() {
           @Override
-          public MediaHeartbeat get() {
-            return null;
+          public MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config) {
+            return new MediaHeartbeat(delegate, config);
           }
         };
   }
