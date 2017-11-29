@@ -1,7 +1,7 @@
 version: 2
  jobs:
    build:
-     working_directory: ~/analytics-android
+     working_directory: ~/analytics-android-integration-adobe-analytics
      docker:
        - image: circleci/android:api-26-alpha
      environment:
