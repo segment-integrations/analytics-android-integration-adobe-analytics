@@ -186,8 +186,8 @@ public class AdobeIntegration extends Integration<Void> {
 
           if (properties.get(segmentProperty) instanceof List) {
             StringBuilder builder = new StringBuilder();
+            String delimiter = delimiter = map.getString("delimiter");
             List<Object> list = (List) properties.get(segmentProperty);
-            String delimiter = map.getString("delimiter");
 
             for (int i = 0; i < list.size(); i++) {
               String item = String.valueOf(list.get(i));
