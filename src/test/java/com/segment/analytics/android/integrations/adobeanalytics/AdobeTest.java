@@ -49,9 +49,9 @@ public class AdobeTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
   private AdobeIntegration integration;
-  @Mock MediaHeartbeat heartbeat;
-  @Mock com.segment.analytics.Analytics analytics;
-  @Mock Application context;
+  private @Mock MediaHeartbeat heartbeat;
+  private @Mock com.segment.analytics.Analytics analytics;
+  private @Mock Application context;
   private AdobeIntegration.Provider mockProvider = new AdobeIntegration.Provider() {
     @Override
     public MediaHeartbeat get() {
@@ -471,7 +471,6 @@ public class AdobeTest {
     videoMetadata.put("title", "You Win or You Die");
     videoMetadata.put("sessionId", "123");
     videoMetadata.put("totalLength", "100.0");
-    videoMetadata.put("livestream", "false");
     videoMetadata.put("random metadata", "something super random");
 
     // create a media object; values can be null
