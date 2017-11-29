@@ -57,7 +57,6 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   String productIdentifier;
-  boolean adobeVerboseLogging;
   boolean videoHeartbeatEnabled;
   private final Logger logger;
 
@@ -94,9 +93,11 @@ public class AdobeIntegration extends Integration<Void> {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
-    this.adobeVerboseLogging = settings.getBoolean("adobeVerboseLogging", false);
     this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", true);
     this.logger = logger;
+
+    boolean adobeLogLevel = logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
+    Config.setDebugLogging(adobeLogLevel);
 
     if (videoHeartbeatEnabled) {
       Context context = analytics.getApplication();
@@ -111,7 +112,7 @@ public class AdobeIntegration extends Integration<Void> {
       config.ovp = settings.getString("heartbeatOnlineVideoPlatform");
       config.playerName = settings.getString("heartbeatPlayerName");
       config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
-      config.debugLogging = adobeVerboseLogging;
+      config.debugLogging = adobeLogLevel;
 
       heartbeat = (provider != null) ? provider.get() : new MediaHeartbeat(new NoOpDelegate(), config);
     }

@@ -85,10 +85,12 @@ public class AdobeTest {
       Logger.with(VERBOSE),
         mockProvider);
 
+    verifyStatic();
+    Config.setDebugLogging(true);
+
     assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
     assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
     assertTrue(integration.productIdentifier.equals("id"));
-    assertTrue(integration.adobeVerboseLogging);
   }
 
   @Test
@@ -105,7 +107,9 @@ public class AdobeTest {
         Logger.with(VERBOSE),
         mockProvider);
 
-    assertTrue(integration.adobeVerboseLogging);
+    verifyStatic();
+    Config.setDebugLogging(true);
+
     assertTrue(integration.videoHeartbeatEnabled);
     assertTrue(integration.config.debugLogging);
     assertTrue(integration.config.trackingServer.equals("exchangepartnersegment.hb.omtrdc.net"));
