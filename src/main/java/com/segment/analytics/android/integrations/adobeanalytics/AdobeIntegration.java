@@ -44,7 +44,7 @@ public class AdobeIntegration extends Integration<Void> {
         @Override
         public Integration<?> create(ValueMap settings, com.segment.analytics.Analytics analytics) {
           Logger logger = analytics.logger(ADOBE_KEY);
-          return new AdobeIntegration(settings, analytics, logger);
+          return new AdobeIntegration(settings, analytics, logger, Provider.REAL);
         }
 
         @Override
@@ -77,19 +77,25 @@ public class AdobeIntegration extends Integration<Void> {
   MediaHeartbeatConfig config;
   MediaHeartbeat heartbeat;
 
-  private static Set<String> videoEventList = new HashSet<>(Arrays.asList(
-      "Video Playback Started",
-      "Video Playback Paused",
-      "Video Playback Resumed",
-      "Video Playback Completed"
-  ));
+  private static Set<String> videoEventList =
+      new HashSet<>(
+          Arrays.asList(
+              "Video Content Started",
+              "Video Playback Paused",
+              "Video Playback Resumed",
+              "Video Content Completed",
+              "Video Playback Completed"));
 
-  AdobeIntegration(ValueMap settings, com.segment.analytics.Analytics analytics, Logger logger) {
+  AdobeIntegration(
+      ValueMap settings,
+      com.segment.analytics.Analytics analytics,
+      Logger logger,
+      Provider provider) {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
     this.adobeVerboseLogging = settings.getBoolean("adobeVerboseLogging", false);
-    this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", false);
+    this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", true);
     this.logger = logger;
 
     if (videoHeartbeatEnabled) {
@@ -100,20 +106,20 @@ public class AdobeIntegration extends Integration<Void> {
       config.trackingServer = settings.getString("heartbeatTrackingServer");
       config.channel = settings.getString("heartbeatChannel");
       // default app version to 0.0 if not otherwise present b/c Adobe requires this value
-      config.appVersion = (!isNullOrEmpty(context.getPackageName())) ? context.getPackageName() : "0.0";
+      config.appVersion =
+          (!isNullOrEmpty(context.getPackageName())) ? context.getPackageName() : "0.0";
       config.ovp = settings.getString("heartbeatOnlineVideoPlatform");
       config.playerName = settings.getString("heartbeatPlayerName");
       config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
       config.debugLogging = adobeVerboseLogging;
 
-      heartbeat = new MediaHeartbeat(new HeartbeatProvider(), config);
+      heartbeat = (provider != null) ? provider.get() : new MediaHeartbeat(new NoOpDelegate(), config);
     }
   }
 
-  class HeartbeatProvider implements MediaHeartbeatDelegate {
+  static class NoOpDelegate implements MediaHeartbeatDelegate {
 
-    public HeartbeatProvider() {
-    }
+    private NoOpDelegate() {}
 
     @Override
     public MediaObject getQoSObject() {
@@ -124,6 +130,19 @@ public class AdobeIntegration extends Integration<Void> {
     public Double getCurrentPlaybackTime() {
       return null;
     }
+  }
+
+  interface Provider {
+
+    MediaHeartbeat get();
+
+    Provider REAL =
+        new Provider() {
+          @Override
+          public MediaHeartbeat get() {
+            return null;
+          }
+        };
   }
 
   @Override
@@ -361,32 +380,29 @@ public class AdobeIntegration extends Integration<Void> {
   private void trackVideo(String eventName, Properties properties) {
     switch (eventName) {
       case "Video Content Started":
-
         videoProperties = new Properties();
         videoProperties.putAll(properties);
 
-        Map <String, String> standardVideoMetadata = mapStandardVideoMetadata(properties);
+        Map<String, String> standardVideoMetadata = mapStandardVideoMetadata(properties);
         HashMap<String, String> videoMetadata = new HashMap<>();
         videoMetadata.putAll(videoProperties.toStringMap());
 
         // create a media object; values can be null
-        MediaObject mediaInfo = MediaHeartbeat.createMediaObject(
-            properties.getString("title"),
-            properties.getString("sessionId"),
-            properties.getDouble("totalLength", 0),
-            properties.getBoolean("livestream", false) ? MediaHeartbeat.StreamType.LIVE
-                : MediaHeartbeat.StreamType.VOD
-        );
+        MediaObject mediaInfo =
+            MediaHeartbeat.createMediaObject(
+                properties.getString("title"),
+                properties.getString("sessionId"),
+                properties.getDouble("totalLength", 0),
+                properties.getBoolean("livestream", false)
+                    ? MediaHeartbeat.StreamType.LIVE
+                    : MediaHeartbeat.StreamType.VOD);
 
-        mediaInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
+        mediaInfo.setValue(
+            MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
 
         heartbeat.trackSessionStart(mediaInfo, videoMetadata);
         heartbeat.trackPlay();
         videoProperties = null;
-        break;
-
-      case "Video Content Completed":
-        heartbeat.trackComplete();
         break;
 
       case "Video Playback Paused":
@@ -397,43 +413,56 @@ public class AdobeIntegration extends Integration<Void> {
         heartbeat.trackPlay();
         break;
 
+      case "Video Content Completed":
+        heartbeat.trackComplete();
+        break;
+
       case "Video Playback Completed":
         heartbeat.trackSessionEnd();
     }
   }
 
   private Map<String, String> mapStandardVideoMetadata(Properties properties) {
-    Map <String, String> standardVideoMetadata = new HashMap<>();
+    Map<String, String> standardVideoMetadata = new HashMap<>();
     if (properties.getString("assetId") != null) {
-      standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, properties.getString("assetId"));
+      standardVideoMetadata.put(
+          MediaHeartbeat.VideoMetadataKeys.ASSET_ID, properties.getString("assetId"));
       videoProperties.remove("assetId");
     }
     if (properties.getString("program") != null) {
-      standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, properties.getString("program"));
+      standardVideoMetadata.put(
+          MediaHeartbeat.VideoMetadataKeys.SHOW, properties.getString("program"));
       videoProperties.remove("program");
     }
     if (properties.getString("season") != null) {
-      standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, properties.getString("season"));
+      standardVideoMetadata.put(
+          MediaHeartbeat.VideoMetadataKeys.SEASON, properties.getString("season"));
       videoProperties.remove("season");
     }
     if (properties.getString("episode") != null) {
-      standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.EPISODE, properties.getString("episode"));
+      standardVideoMetadata.put(
+          MediaHeartbeat.VideoMetadataKeys.EPISODE, properties.getString("episode"));
       videoProperties.remove("episode");
     }
     if (properties.getString("genre") != null) {
-      standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, properties.getString("genre"));
+      standardVideoMetadata.put(
+          MediaHeartbeat.VideoMetadataKeys.GENRE, properties.getString("genre"));
       videoProperties.remove("genre");
     }
     if (properties.getString("channel") != null) {
-      standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, properties.getString("channel"));
+      standardVideoMetadata.put(
+          MediaHeartbeat.VideoMetadataKeys.NETWORK, properties.getString("channel"));
       videoProperties.remove("channel");
     }
     if (properties.getString("airdate") != null) {
-      standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, properties.getString("airdate"));
+      standardVideoMetadata.put(
+          MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, properties.getString("airdate"));
       videoProperties.remove("airdate");
     }
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT,
-        videoProperties.getBoolean("livestream", false) ? MediaHeartbeat.StreamType.LIVE
+    standardVideoMetadata.put(
+        MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT,
+        videoProperties.getBoolean("livestream", false)
+            ? MediaHeartbeat.StreamType.LIVE
             : MediaHeartbeat.StreamType.VOD);
     return standardVideoMetadata;
   }

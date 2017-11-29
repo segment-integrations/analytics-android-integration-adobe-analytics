@@ -5,6 +5,8 @@ import android.app.Application;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
+import com.adobe.primetime.va.simple.MediaHeartbeat;
+import com.adobe.primetime.va.simple.MediaObject;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Properties.Product;
 import com.segment.analytics.Traits;
@@ -15,9 +17,7 @@ import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
 import java.util.HashMap;
 import java.util.Map;
-import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
-import org.json.JSONObject;
+import org.assertj.core.matcher.AssertionMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,23 +32,32 @@ import org.robolectric.RobolectricTestRunner;
 
 import static com.segment.analytics.Analytics.LogLevel.NONE;
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
+import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.powermock.api.mockito.PowerMockito.verifyStatic;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(RobolectricTestRunner.class)
-@PrepareForTest({Analytics.class, Config.class})
+@PrepareForTest({Analytics.class, Config.class, MediaHeartbeat.class})
 @org.robolectric.annotation.Config(constants = BuildConfig.class)
 @PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "org.json.*" })
 public class AdobeTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
   private AdobeIntegration integration;
+  @Mock MediaHeartbeat heartbeat;
   @Mock com.segment.analytics.Analytics analytics;
   @Mock Application context;
+  private AdobeIntegration.Provider mockProvider = new AdobeIntegration.Provider() {
+    @Override
+    public MediaHeartbeat get() {
+      return heartbeat;
+    }
+  };
 
   @Before
   public void setUp() {
@@ -56,7 +65,7 @@ public class AdobeTest {
     PowerMockito.mockStatic(Config.class);
     PowerMockito.mockStatic(Analytics.class);
     when(analytics.getApplication()).thenReturn(context);
-    integration = new AdobeIntegration(new ValueMap(), analytics, Logger.with(NONE));
+    integration = new AdobeIntegration(new ValueMap(), analytics, Logger.with(NONE), mockProvider);
   }
 
   @Test
@@ -70,9 +79,11 @@ public class AdobeTest {
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
         .putValue("productIdentifier", "id")
+        .putValue("videoHeartbeatEnabled", true)
         .putValue("adobeVerboseLogging", true),
       analytics,
-      Logger.with(VERBOSE));
+      Logger.with(VERBOSE),
+        mockProvider);
 
     assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
     assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
@@ -91,7 +102,8 @@ public class AdobeTest {
         .putValue("heartbeatPlayerName", "HTML 5 Basic")
         .putValue("heartbeatEnableSsl", true),
         analytics,
-        Logger.with(VERBOSE));
+        Logger.with(VERBOSE),
+        mockProvider);
 
     assertTrue(integration.adobeVerboseLogging);
     assertTrue(integration.videoHeartbeatEnabled);
@@ -419,6 +431,108 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackVideoContentStarted() {
+    integration.videoHeartbeatEnabled = true;
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Content Started")
+        .properties(new Properties()
+        .putValue("title", "You Win or You Die")
+        .putValue("sessionId", "123")
+        .putValue("totalLength", 100D)
+        .putValue("assetId", "123")
+        .putValue("program", "Game of Thrones")
+        .putValue("season", "1")
+        .putValue("episode", "7")
+        .putValue("genre", "fantasy")
+        .putValue("channel", "HBO")
+        .putValue("airdate", "2011")
+        .putValue("livestream", false)
+        .putValue("random metadata", "something super random"))
+        .build()
+    );
+
+    Map <String, String> standardVideoMetadata = new HashMap<>();
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, "123");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, "Game of Thrones");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, "1");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.EPISODE, "7");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, "fantasy");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, "HBO");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, "2011");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT, MediaHeartbeat.StreamType.VOD);
+
+    HashMap<String, String> videoMetadata = new HashMap<>();
+    videoMetadata.put("title", "You Win or You Die");
+    videoMetadata.put("sessionId", "123");
+    videoMetadata.put("totalLength", "100.0");
+    videoMetadata.put("livestream", "false");
+    videoMetadata.put("random metadata", "something super random");
+
+    // create a media object; values can be null
+    MediaObject mediaInfo = MediaHeartbeat.createMediaObject(
+        "You Win or You Die",
+        "123",
+        100D,
+        MediaHeartbeat.StreamType.VOD
+    );
+
+    mediaInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
+
+    verify(heartbeat).trackSessionStart(isEqualToComparingFieldByFieldRecursively(mediaInfo),
+        isEqualToComparingFieldByFieldRecursively(videoMetadata));
+    verify(heartbeat).trackPlay();
+  }
+
+  @Test
+  public void trackVideoPlaybackPaused() {
+    integration.videoHeartbeatEnabled = true;
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Playback Paused")
+        .build()
+    );
+
+    verify(heartbeat).trackPause();
+  }
+
+  @Test
+  public void trackVideoPlaybackResumed() {
+    integration.videoHeartbeatEnabled = true;
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Playback Resumed")
+        .build()
+    );
+
+    verify(heartbeat).trackPlay();
+  }
+
+  @Test
+  public void trackVideoContentComplete() {
+    integration.videoHeartbeatEnabled = true;
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Content Completed")
+        .build()
+    );
+
+    verify(heartbeat).trackComplete();
+  }
+
+  @Test
+  public void trackVideoPlaybackComplete() {
+    integration.videoHeartbeatEnabled = true;
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Playback Completed")
+        .build()
+    );
+
+    verify(heartbeat).trackSessionEnd();
+  }
+
+  @Test
   public void identify() {
     integration.identify(new IdentifyPayload.Builder()
         .userId("123")
@@ -489,28 +603,12 @@ public class AdobeTest {
     Config.setUserIdentifier(null);
   }
 
-  // json matcher
-  public static JSONObject jsonEq(JSONObject expected) {
-    return argThat(new JSONObjectMatcher(expected));
-  }
-
-  private static class JSONObjectMatcher extends TypeSafeMatcher<JSONObject> {
-
-    private final JSONObject expected;
-
-    private JSONObjectMatcher(JSONObject expected) {
-      this.expected = expected;
-    }
-
-    @Override
-    public boolean matchesSafely(JSONObject jsonObject) {
-      // todo: this relies on having the same order
-      return expected.toString().equals(jsonObject.toString());
-    }
-
-    @Override
-    public void describeTo(Description description) {
-      description.appendText(expected.toString());
-    }
+  private static <T> T isEqualToComparingFieldByFieldRecursively(final T expected) {
+    return argThat(new AssertionMatcher<T>(){
+      @Override
+      public void assertion(T actual) throws AssertionError {
+        assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
+      }
+    });
   }
 }
