@@ -93,10 +93,11 @@ public class AdobeIntegration extends Integration<Void> {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
-    this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", true);
+    this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", false);
     this.logger = logger;
 
-    boolean adobeLogLevel = logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
+    boolean adobeLogLevel =
+        logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
     Config.setDebugLogging(adobeLogLevel);
 
     if (videoHeartbeatEnabled) {
@@ -114,7 +115,8 @@ public class AdobeIntegration extends Integration<Void> {
       config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
       config.debugLogging = adobeLogLevel;
 
-      heartbeat = (provider != null) ? provider.get() : new MediaHeartbeat(new NoOpDelegate(), config);
+      heartbeat =
+          (provider != null) ? provider.get() : new MediaHeartbeat(new NoOpDelegate(), config);
     }
   }
 
@@ -420,6 +422,7 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Completed":
         heartbeat.trackSessionEnd();
+        break;
     }
   }
 

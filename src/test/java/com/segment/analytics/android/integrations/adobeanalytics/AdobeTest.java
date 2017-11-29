@@ -65,7 +65,8 @@ public class AdobeTest {
     PowerMockito.mockStatic(Config.class);
     PowerMockito.mockStatic(Analytics.class);
     when(analytics.getApplication()).thenReturn(context);
-    integration = new AdobeIntegration(new ValueMap(), analytics, Logger.with(NONE), mockProvider);
+    integration = new AdobeIntegration(new ValueMap()
+        .putValue("videoHeartbeatEnabled", true), analytics, Logger.with(NONE), mockProvider);
   }
 
   @Test
@@ -490,7 +491,6 @@ public class AdobeTest {
 
   @Test
   public void trackVideoPlaybackPaused() {
-    integration.videoHeartbeatEnabled = true;
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event("Video Playback Paused")
@@ -502,7 +502,6 @@ public class AdobeTest {
 
   @Test
   public void trackVideoPlaybackResumed() {
-    integration.videoHeartbeatEnabled = true;
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event("Video Playback Resumed")
@@ -514,7 +513,6 @@ public class AdobeTest {
 
   @Test
   public void trackVideoContentComplete() {
-    integration.videoHeartbeatEnabled = true;
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event("Video Content Completed")
@@ -526,7 +524,6 @@ public class AdobeTest {
 
   @Test
   public void trackVideoPlaybackComplete() {
-    integration.videoHeartbeatEnabled = true;
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event("Video Playback Completed")
