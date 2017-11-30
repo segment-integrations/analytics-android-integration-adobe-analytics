@@ -78,7 +78,7 @@ public class AdobeIntegration extends Integration<Void> {
   MediaHeartbeatConfig config;
   private MediaHeartbeat heartbeat;
 
-  private static Set<String> videoEventList =
+  private static final Set<String> VIDEO_EVENT_LIST =
       new HashSet<>(
           Arrays.asList(
               "Video Content Started",
@@ -229,7 +229,7 @@ public class AdobeIntegration extends Integration<Void> {
     String eventName = track.event();
     Properties properties = track.properties();
 
-    if (videoHeartbeatEnabled && videoEventList.contains(eventName)) {
+    if (videoHeartbeatEnabled && VIDEO_EVENT_LIST.contains(eventName)) {
       trackVideo(eventName, properties);
       return;
     }
