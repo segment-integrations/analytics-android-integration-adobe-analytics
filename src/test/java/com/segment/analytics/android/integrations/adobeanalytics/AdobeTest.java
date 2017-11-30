@@ -13,7 +13,9 @@ import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -69,7 +71,7 @@ public class AdobeTest {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
-        .putValue("lVarsV2", new ArrayList<ValueMap>()),
+        .putValue("lVarsV2", new ArrayList<ValueMap>())
         .putValue("productIdentifier", "id"),
       analytics,
       Logger.with(VERBOSE));
@@ -175,6 +177,7 @@ public class AdobeTest {
     Analytics.trackAction("Adobe Testing Event", contextData);
   }
 
+  @Test
   public void trackOrderCompleted() {
     integration.productIdentifier = "name";
     integration.contextValues = new HashMap<>();

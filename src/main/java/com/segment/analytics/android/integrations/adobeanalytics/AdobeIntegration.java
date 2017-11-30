@@ -79,7 +79,8 @@ public class AdobeIntegration extends Integration<Void> {
     this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", false);
     this.logger = logger;
 
-    boolean adobeLogLevel = logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
+    boolean adobeLogLevel =
+        logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
     Config.setDebugLogging(adobeLogLevel);
 
     if (videoHeartbeatEnabled) {
@@ -90,7 +91,8 @@ public class AdobeIntegration extends Integration<Void> {
       config.trackingServer = settings.getString("heartbeatTrackingServer");
       config.channel = settings.getString("heartbeatChannel");
       // default app version to 0.0 if not otherwise present b/c Adobe requires this value
-      config.appVersion = (!isNullOrEmpty(context.getPackageName())) ? context.getPackageName() : "0.0";
+      config.appVersion =
+          (!isNullOrEmpty(context.getPackageName())) ? context.getPackageName() : "0.0";
       config.ovp = settings.getString("heartbeatOnlineVideoPlatform");
       config.playerName = settings.getString("heartbeatPlayerName");
       config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
@@ -206,8 +208,6 @@ public class AdobeIntegration extends Integration<Void> {
         }
       }
     }
-    return mappedProperties;
-  }
 
     /**
      * List Variables
