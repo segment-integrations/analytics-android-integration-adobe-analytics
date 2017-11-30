@@ -13,7 +13,9 @@ import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -69,6 +71,7 @@ public class AdobeTest {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
+        .putValue("lVarsV2", new ArrayList<ValueMap>())
         .putValue("productIdentifier", "id"),
       analytics,
       Logger.with(VERBOSE));
@@ -78,6 +81,7 @@ public class AdobeTest {
 
     assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
     assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
+    assertTrue(integration.lVarsV2.equals(new ArrayList<ValueMap>()));
     assertTrue(integration.productIdentifier.equals("id"));
   }
 
@@ -420,6 +424,40 @@ public class AdobeTest {
     verifyStatic();
     Analytics.trackAction("purchase", contextData);
   }
+  
+  @Test
+  public void trackWithlVarsV2() {
+    integration.eventsV2 = new HashMap<>();
+    integration.eventsV2.put("Testing Event", "Adobe Testing Event");
+    integration.lVarsV2 = new ArrayList<>();
+
+    ValueMap setting = new ValueMap();
+    Map<String, String> values = new HashMap<>();
+    values.put("property", "filters");
+    values.put("lVar", "myapp.filters");
+    values.put("delimiter", ",");
+    setting.put("value", values);
+
+    integration.lVarsV2.add(setting);
+
+    List<Object> list = new ArrayList<>();
+    list.add("item1");
+    list.add("item2");
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Testing Event")
+        .properties(new Properties()
+            .putValue("filters", list))
+        .build()
+    );
+
+    String joinedlVarsV2 = "item1,item2";
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("myapp.filters", joinedlVarsV2);
+    verifyStatic();
+    Analytics.trackAction("Adobe Testing Event", contextData);
+  }
 
   @Test
   public void identify() {
@@ -470,6 +508,38 @@ public class AdobeTest {
 
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
+    verifyStatic();
+    Analytics.trackState("Viewed a Screen", contextData);
+  }
+
+  @Test
+  public void screenWithlVarsV2() {
+    integration.lVarsV2 = new ArrayList<>();
+
+    ValueMap setting = new ValueMap();
+    Map<String, String> values = new HashMap<>();
+    values.put("property", "filters");
+    values.put("lVar", "myapp.filters");
+    values.put("delimiter", ",");
+    setting.put("value", values);
+
+    integration.lVarsV2.add(setting);
+
+    List<Object> list = new ArrayList<>();
+    list.add("item1");
+    list.add("item2");
+
+    integration.screen(new ScreenPayload.Builder()
+        .userId("123")
+        .name("Viewed a Screen")
+        .properties(new Properties()
+            .putValue("filters", list))
+      .build()
+    );
+
+    String joinedlVarsV2 = "item1,item2";
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("myapp.filters", joinedlVarsV2);
     verifyStatic();
     Analytics.trackState("Viewed a Screen", contextData);
   }
