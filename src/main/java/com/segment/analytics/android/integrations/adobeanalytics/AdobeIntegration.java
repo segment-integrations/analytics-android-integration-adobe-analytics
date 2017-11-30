@@ -493,6 +493,22 @@ public class AdobeIntegration extends Integration<Void> {
       case "Video Playback Completed":
         heartbeat.trackSessionEnd();
         break;
+
+      case "Video Playback Buffer Started":
+        heartbeat.trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
+        break;
+
+      case "Video Playback Buffer Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
+        break;
+
+      case "Video Playback Seek Started":
+        heartbeat.trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
+        break;
+
+      case "Video Playback Seek Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
+        break;
     }
   }
 
