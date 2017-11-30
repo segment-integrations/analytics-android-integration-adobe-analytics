@@ -5,7 +5,10 @@ import android.content.Context;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
+import com.adobe.primetime.va.simple.MediaHeartbeat;
+import com.adobe.primetime.va.simple.MediaHeartbeat.MediaHeartbeatDelegate;
 import com.adobe.primetime.va.simple.MediaHeartbeatConfig;
+import com.adobe.primetime.va.simple.MediaObject;
 import com.segment.analytics.Properties;
 import com.segment.analytics.Properties.Product;
 import com.segment.analytics.ValueMap;
@@ -15,18 +18,21 @@ import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.segment.analytics.internal.Utils.isNullOrEmpty;
 
 /**
  * Adobe Analytics is an analytics tracking tool and dashboard that helps you understand your
- * customers segments via activity and video tracking.
+ * customer segments via activity and video tracking.
  *
  * @see <a href="http://www.adobe.com/data-analytics-cloud/analytics.html">Adobe Analytics</a>
- * @see <a href="https://segment.com/docs/integrations/amplitude/">Adobe Integration</a>
+ * @see <a href="https://segment.com/docs/integrations/adobe-analytics/">Adobe Integration</a>
  * @see <a
  *     href="https://github.com/Adobe-Marketing-Cloud/mobile-services/releases/tag/v4.14.0-Android">Adobe
  *     Android SDK</a>
@@ -38,7 +44,7 @@ public class AdobeIntegration extends Integration<Void> {
         @Override
         public Integration<?> create(ValueMap settings, com.segment.analytics.Analytics analytics) {
           Logger logger = analytics.logger(ADOBE_KEY);
-          return new AdobeIntegration(settings, analytics, logger);
+          return new AdobeIntegration(settings, analytics, logger, Provider.REAL);
         }
 
         @Override
@@ -51,6 +57,7 @@ public class AdobeIntegration extends Integration<Void> {
   private static final String ADOBE_KEY = "Adobe Analytics";
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
+  List<ValueMap> lVarsV2;
   String productIdentifier;
   boolean videoHeartbeatEnabled;
   private final Logger logger;
@@ -69,10 +76,43 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   MediaHeartbeatConfig config;
+  private MediaHeartbeat heartbeat;
 
-  AdobeIntegration(ValueMap settings, com.segment.analytics.Analytics analytics, Logger logger) {
+  private static final Set<String> VIDEO_EVENT_LIST =
+      new HashSet<>(
+          Arrays.asList(
+              "Video Content Started",
+              "Video Playback Paused",
+              "Video Playback Resumed",
+              "Video Content Completed",
+              "Video Playback Completed",
+              "Video Playback Buffer Started",
+              "Video Playback Buffer Completed",
+              "Video Playback Seek Started",
+              "Video Playback Seek Completed"));
+
+  private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
+
+  private static Map<String, String> getStandardVideoMetadataMap() {
+    Map<String, String> videoPropertyList = new HashMap<>();
+    videoPropertyList.put("assetId", MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
+    videoPropertyList.put("program", MediaHeartbeat.VideoMetadataKeys.SHOW);
+    videoPropertyList.put("season", MediaHeartbeat.VideoMetadataKeys.SEASON);
+    videoPropertyList.put("episode", MediaHeartbeat.VideoMetadataKeys.EPISODE);
+    videoPropertyList.put("genre", MediaHeartbeat.VideoMetadataKeys.GENRE);
+    videoPropertyList.put("channel", MediaHeartbeat.VideoMetadataKeys.NETWORK);
+    videoPropertyList.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
+    return videoPropertyList;
+  }
+
+  AdobeIntegration(
+      ValueMap settings,
+      com.segment.analytics.Analytics analytics,
+      Logger logger,
+      Provider provider) {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
+    this.lVarsV2 = settings.getList("lVarsV2", ValueMap.class);
     this.productIdentifier = settings.getString("productIdentifier");
     this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", false);
     this.logger = logger;
@@ -89,13 +129,46 @@ public class AdobeIntegration extends Integration<Void> {
       config.trackingServer = settings.getString("heartbeatTrackingServer");
       config.channel = settings.getString("heartbeatChannel");
       // default app version to 0.0 if not otherwise present b/c Adobe requires this value
-      config.appVersion =
-          (!isNullOrEmpty(context.getPackageName())) ? context.getPackageName() : "0.0";
+      if (!isNullOrEmpty(context.getPackageName())) {
+        config.appVersion = context.getPackageName();
+      } else {
+        config.appVersion = "0.0";
+      }
       config.ovp = settings.getString("heartbeatOnlineVideoPlatform");
       config.playerName = settings.getString("heartbeatPlayerName");
       config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
       config.debugLogging = adobeLogLevel;
+
+      heartbeat = provider.get(new NoOpDelegate(), config);
     }
+  }
+
+  static class NoOpDelegate implements MediaHeartbeatDelegate {
+
+    private NoOpDelegate() {}
+
+    @Override
+    public MediaObject getQoSObject() {
+      return null;
+    }
+
+    @Override
+    public Double getCurrentPlaybackTime() {
+      return null;
+    }
+  }
+
+  interface Provider {
+
+    MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config);
+
+    Provider REAL =
+        new Provider() {
+          @Override
+          public MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config) {
+            return new MediaHeartbeat(delegate, config);
+          }
+        };
   }
 
   @Override
@@ -156,6 +229,11 @@ public class AdobeIntegration extends Integration<Void> {
     String eventName = track.event();
     Properties properties = track.properties();
 
+    if (videoHeartbeatEnabled && VIDEO_EVENT_LIST.contains(eventName)) {
+      trackVideo(eventName, properties);
+      return;
+    }
+
     if (!(ECOMMERCE_EVENT_LIST.containsKey(eventName)) && isNullOrEmpty(eventsV2)) {
       logger.verbose(
           "Event must be either configured in Adobe and in the Segment EventsV2 setting or "
@@ -203,6 +281,63 @@ public class AdobeIntegration extends Integration<Void> {
 
         if (contextValues.containsKey(property)) {
           mappedProperties.put(String.valueOf(contextValues.get(property)), value);
+        }
+      }
+    }
+
+    /*
+     * List Variables
+     *
+     * <p>You can choose which Segment Property to send as a list variable via Segment's UI by
+     * providing the Segment Property, the expected Adobe lVar key, and the delimiter. The Segment
+     * lVarsV2 setting has the following structure:
+     *
+     * <p>"lVarsV2":[ { "value":{ "property":"filters", "lVar":"myapp.filters", "delimiter":";" } }
+     * ]
+     *
+     * <p>Segment will only send property values of type List<Object> or String. If a String is
+     * passed as a property value, Segment assumes that the value has been formatted with the proper
+     * delimiter. If a List<Object> is passed in, Segment will transform the List to a delimited
+     * String. List Variables may be passed like this:
+     *
+     * <p>List<String> lists = new Array List<>(): lists.add("list1", "list2");
+     *
+     * <p>Analytics.with(this).track("Clicked a link", new Properties().putValue("list items",
+     * lists));
+     *
+     * <p>The resulting value of "list items" property would be a String (assuming the customer set
+     * a comma as her delimiter):
+     *
+     * <p>`"list values": "list1,list2"`
+     */
+    if (!isNullOrEmpty(lVarsV2)) {
+      for (ValueMap mappedLVar : lVarsV2) {
+        ValueMap map = mappedLVar.getValueMap("value");
+        String segmentProperty = map.getString("property");
+
+        if (properties.containsKey(segmentProperty)) {
+          String newKey = map.getString("lVar");
+
+          if (properties.get(segmentProperty) instanceof String) {
+            mappedProperties.put(newKey, properties.getString(segmentProperty));
+          }
+
+          if (properties.get(segmentProperty) instanceof List) {
+            StringBuilder builder = new StringBuilder();
+            String delimiter = map.getString("delimiter");
+            List<Object> list = (List) properties.get(segmentProperty);
+
+            for (int i = 0; i < list.size(); i++) {
+              String item = String.valueOf(list.get(i));
+              if (i < list.size() - 1) {
+                builder.append(item).append(delimiter);
+              } else {
+                builder.append(item);
+              }
+            }
+            String joinedList = builder.toString();
+            mappedProperties.put(newKey, joinedList);
+          }
         }
       }
     }
@@ -321,5 +456,87 @@ public class AdobeIntegration extends Integration<Void> {
 
     Config.setUserIdentifier(null);
     logger.verbose("Config.setUserIdentifier(null);");
+  }
+
+  private void trackVideo(String eventName, Properties properties) {
+    switch (eventName) {
+      case "Video Content Started":
+        Map<String, String> standardVideoMetadata = new HashMap<>();
+        Properties videoProperties = mapStandardVideoMetadata(properties, standardVideoMetadata);
+        HashMap<String, String> videoMetadata = new HashMap<>();
+        videoMetadata.putAll(videoProperties.toStringMap());
+
+        MediaObject mediaInfo =
+            MediaHeartbeat.createMediaObject(
+                properties.getString("title"),
+                properties.getString("sessionId"),
+                properties.getDouble("totalLength", 0),
+                properties.getBoolean("livestream", false)
+                    ? MediaHeartbeat.StreamType.LIVE
+                    : MediaHeartbeat.StreamType.VOD);
+
+        mediaInfo.setValue(
+            MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
+
+        heartbeat.trackSessionStart(mediaInfo, videoMetadata);
+        heartbeat.trackPlay();
+        break;
+
+      case "Video Playback Paused":
+        heartbeat.trackPause();
+        break;
+
+      case "Video Playback Resumed":
+        heartbeat.trackPlay();
+        break;
+
+      case "Video Content Completed":
+        heartbeat.trackComplete();
+        break;
+
+      case "Video Playback Completed":
+        heartbeat.trackSessionEnd();
+        break;
+
+      case "Video Playback Buffer Started":
+        heartbeat.trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
+        break;
+
+      case "Video Playback Buffer Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
+        break;
+
+      case "Video Playback Seek Started":
+        heartbeat.trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
+        break;
+
+      case "Video Playback Seek Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
+        break;
+    }
+  }
+
+  private Properties mapStandardVideoMetadata(
+      Properties properties, Map<String, String> standardVideoMetadata) {
+    Properties propertiesCopy = new Properties();
+    propertiesCopy.putAll(properties);
+    for (Map.Entry<String, Object> entry : properties.entrySet()) {
+      String propertyKey = entry.getKey();
+      String value = String.valueOf(entry.getValue());
+
+      if (VIDEO_METADATA_MAP.containsKey(propertyKey)) {
+        standardVideoMetadata.put(VIDEO_METADATA_MAP.get(propertyKey), value);
+        propertiesCopy.remove(propertyKey);
+      }
+    }
+    if (properties.containsKey("livestream")) {
+      standardVideoMetadata.put(
+          MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT,
+          properties.getBoolean("livestream", false)
+              ? MediaHeartbeat.StreamType.LIVE
+              : MediaHeartbeat.StreamType.VOD);
+      propertiesCopy.remove("livestream");
+    }
+    return propertiesCopy;
   }
 }
