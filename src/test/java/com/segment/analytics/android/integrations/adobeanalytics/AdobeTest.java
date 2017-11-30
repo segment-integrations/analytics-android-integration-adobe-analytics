@@ -574,6 +574,50 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackVideoBufferStarted() {
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Playback Buffer Started")
+        .build()
+    );
+
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
+  }
+
+  @Test
+  public void trackVideoBufferComplete() {
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Playback Buffer Completed")
+        .build()
+    );
+
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
+  }
+
+  @Test
+  public void trackVideoSeekStarted() {
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Playback Seek Started")
+        .build()
+    );
+
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
+  }
+
+  @Test
+  public void trackVideoSeekComplete() {
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Playback Seek Completed")
+        .build()
+    );
+
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
+  }
+
+  @Test
   public void identify() {
     integration.identify(new IdentifyPayload.Builder()
         .userId("123")

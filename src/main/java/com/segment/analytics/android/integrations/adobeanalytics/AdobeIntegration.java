@@ -78,14 +78,18 @@ public class AdobeIntegration extends Integration<Void> {
   MediaHeartbeatConfig config;
   private MediaHeartbeat heartbeat;
 
-  private static Set<String> videoEventList =
+  private static final Set<String> VIDEO_EVENT_LIST =
       new HashSet<>(
           Arrays.asList(
               "Video Content Started",
               "Video Playback Paused",
               "Video Playback Resumed",
               "Video Content Completed",
-              "Video Playback Completed"));
+              "Video Playback Completed",
+              "Video Playback Buffer Started",
+              "Video Playback Buffer Completed",
+              "Video Playback Seek Started",
+              "Video Playback Seek Completed"));
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
@@ -225,7 +229,7 @@ public class AdobeIntegration extends Integration<Void> {
     String eventName = track.event();
     Properties properties = track.properties();
 
-    if (videoHeartbeatEnabled && videoEventList.contains(eventName)) {
+    if (videoHeartbeatEnabled && VIDEO_EVENT_LIST.contains(eventName)) {
       trackVideo(eventName, properties);
       return;
     }
@@ -492,6 +496,22 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Completed":
         heartbeat.trackSessionEnd();
+        break;
+
+      case "Video Playback Buffer Started":
+        heartbeat.trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
+        break;
+
+      case "Video Playback Buffer Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
+        break;
+
+      case "Video Playback Seek Started":
+        heartbeat.trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
+        break;
+
+      case "Video Playback Seek Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
         break;
     }
   }
