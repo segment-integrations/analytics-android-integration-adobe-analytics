@@ -281,7 +281,7 @@ public class AdobeIntegration extends Integration<Void> {
       }
     }
 
-    /**
+    /*
      * List Variables
      *
      * <p>You can choose which Segment Property to send as a list variable via Segment's UI by
@@ -320,7 +320,7 @@ public class AdobeIntegration extends Integration<Void> {
 
           if (properties.get(segmentProperty) instanceof List) {
             StringBuilder builder = new StringBuilder();
-            String delimiter = delimiter = map.getString("delimiter");
+            String delimiter = map.getString("delimiter");
             List<Object> list = (List) properties.get(segmentProperty);
 
             for (int i = 0; i < list.size(); i++) {
