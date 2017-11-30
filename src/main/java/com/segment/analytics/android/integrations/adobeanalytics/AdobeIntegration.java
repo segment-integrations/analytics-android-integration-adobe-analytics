@@ -85,7 +85,11 @@ public class AdobeIntegration extends Integration<Void> {
               "Video Playback Paused",
               "Video Playback Resumed",
               "Video Content Completed",
-              "Video Playback Completed"));
+              "Video Playback Completed",
+              "Video Playback Buffer Started",
+              "Video Playback Buffer Completed",
+              "Video Playback Seek Started",
+              "Video Playback Seek Completed"));
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
