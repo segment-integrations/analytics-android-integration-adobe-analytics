@@ -57,7 +57,6 @@ public class AdobeIntegration extends Integration<Void> {
   private static final String ADOBE_KEY = "Adobe Analytics";
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
-  List<ValueMap> lVarsV2;
   String productIdentifier;
   boolean videoHeartbeatEnabled;
   private final Logger logger;
@@ -112,7 +111,6 @@ public class AdobeIntegration extends Integration<Void> {
       Provider provider) {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
-    this.lVarsV2 = settings.getList("lVarsV2", ValueMap.class);
     this.productIdentifier = settings.getString("productIdentifier");
     this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", false);
     this.logger = logger;
@@ -281,63 +279,6 @@ public class AdobeIntegration extends Integration<Void> {
 
         if (contextValues.containsKey(property)) {
           mappedProperties.put(String.valueOf(contextValues.get(property)), value);
-        }
-      }
-    }
-
-    /*
-     * List Variables
-     *
-     * <p>You can choose which Segment Property to send as a list variable via Segment's UI by
-     * providing the Segment Property, the expected Adobe lVar key, and the delimiter. The Segment
-     * lVarsV2 setting has the following structure:
-     *
-     * <p>"lVarsV2":[ { "value":{ "property":"filters", "lVar":"myapp.filters", "delimiter":";" } }
-     * ]
-     *
-     * <p>Segment will only send property values of type List<Object> or String. If a String is
-     * passed as a property value, Segment assumes that the value has been formatted with the proper
-     * delimiter. If a List<Object> is passed in, Segment will transform the List to a delimited
-     * String. List Variables may be passed like this:
-     *
-     * <p>List<String> lists = new Array List<>(): lists.add("list1", "list2");
-     *
-     * <p>Analytics.with(this).track("Clicked a link", new Properties().putValue("list items",
-     * lists));
-     *
-     * <p>The resulting value of "list items" property would be a String (assuming the customer set
-     * a comma as her delimiter):
-     *
-     * <p>`"list values": "list1,list2"`
-     */
-    if (!isNullOrEmpty(lVarsV2)) {
-      for (ValueMap mappedLVar : lVarsV2) {
-        ValueMap map = mappedLVar.getValueMap("value");
-        String segmentProperty = map.getString("property");
-
-        if (properties.containsKey(segmentProperty)) {
-          String newKey = map.getString("lVar");
-
-          if (properties.get(segmentProperty) instanceof String) {
-            mappedProperties.put(newKey, properties.getString(segmentProperty));
-          }
-
-          if (properties.get(segmentProperty) instanceof List) {
-            StringBuilder builder = new StringBuilder();
-            String delimiter = map.getString("delimiter");
-            List<Object> list = (List) properties.get(segmentProperty);
-
-            for (int i = 0; i < list.size(); i++) {
-              String item = String.valueOf(list.get(i));
-              if (i < list.size() - 1) {
-                builder.append(item).append(delimiter);
-              } else {
-                builder.append(item);
-              }
-            }
-            String joinedList = builder.toString();
-            mappedProperties.put(newKey, joinedList);
-          }
         }
       }
     }
