@@ -388,19 +388,19 @@ public class AdobeIntegration extends Integration<Void> {
           Context context = analytics.getApplication();
           Properties properties = track.properties();
           config = new MediaHeartbeatConfig();
-          ValueMap eventOptions = track.getValueMap("Adobe Analytics");
+          ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
 
           config.trackingServer = heartbeatTrackingServer;
-          config.channel = eventOptions.getString("heartbeatChannel");
+          config.channel = eventOptions.getString("channel");
           // default app version to 0.0 if not otherwise present b/c Adobe requires this value
           if (!isNullOrEmpty(context.getPackageName())) {
             config.appVersion = context.getPackageName();
           } else {
             config.appVersion = "0.0";
           }
-          config.ovp = eventOptions.getString("heartbeatOnlineVideoPlatform");
-          config.playerName = eventOptions.getString("heartbeatPlayerName");
-          config.ssl = eventOptions.getBoolean("heartbeatEnableSsl", false);
+          config.ovp = eventOptions.getString("ovp");
+          config.playerName = eventOptions.getString("playerName");
+          config.ssl = eventOptions.getBoolean("ssl", false);
 
           heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
 
