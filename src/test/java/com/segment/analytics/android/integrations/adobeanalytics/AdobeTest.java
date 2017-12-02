@@ -57,7 +57,7 @@ public class AdobeTest {
   private @Mock MediaHeartbeat heartbeat;
   private @Mock com.segment.analytics.Analytics analytics;
   private @Mock Application context;
-  private AdobeIntegration.Provider mockProvider = new AdobeIntegration.Provider() {
+  private AdobeIntegration.HeartbeatFactory mockHeartbeatFactory = new AdobeIntegration.HeartbeatFactory() {
     @Override
     public MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config) {
       return heartbeat;
@@ -71,7 +71,7 @@ public class AdobeTest {
     PowerMockito.mockStatic(Analytics.class);
     when(analytics.getApplication()).thenReturn(context);
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("videoHeartbeatEnabled", true), analytics, Logger.with(NONE), mockProvider);
+        .putValue("videoHeartbeatEnabled", true), analytics, Logger.with(NONE), mockHeartbeatFactory);
   }
 
   @Test
@@ -89,7 +89,7 @@ public class AdobeTest {
         .putValue("adobeVerboseLogging", true),
       analytics,
       Logger.with(VERBOSE),
-        mockProvider);
+        mockHeartbeatFactory);
 
     verifyStatic();
     Config.setDebugLogging(true);
@@ -110,7 +110,7 @@ public class AdobeTest {
         .putValue("heartbeatEnableSsl", true),
         analytics,
         Logger.with(VERBOSE),
-        mockProvider);
+        mockHeartbeatFactory);
 
     verifyStatic();
     Config.setDebugLogging(true);
