@@ -69,7 +69,7 @@ public class AdobeTest {
     PowerMockito.mockStatic(Analytics.class);
     when(analytics.getApplication()).thenReturn(context);
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("heartbeatTrackingServer", "exchangepartnersegment.hb.omtrdc.net"), analytics, Logger.with(NONE), mockHeartbeatFactory);
+        .putValue("heartbeatTrackingServer", "tracking server url"), analytics, Logger.with(NONE), mockHeartbeatFactory);
   }
 
   @Test
@@ -101,7 +101,7 @@ public class AdobeTest {
   public void initializeWithAdobeHeartbeat() {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("videoHeartbeatEnabled", true)
-        .putValue("heartbeatTrackingServer", "exchangepartnersegment.hb.omtrdc.net")
+        .putValue("heartbeatTrackingServer", "tracking server url")
         .putValue("heartbeatChannel", "Video Channel")
         .putValue("heartbeatOnlineVideoPlatform", "HTML 5")
         .putValue("heartbeatPlayerName", "HTML 5 Basic")
@@ -457,7 +457,7 @@ public class AdobeTest {
 
     mediaInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
 
-    assertTrue(integration.config.trackingServer.equals("exchangepartnersegment.hb.omtrdc.net"));
+    assertTrue(integration.config.trackingServer.equals("tracking server url"));
     assertTrue(integration.config.channel.equals("Video Channel"));
     assertTrue(integration.config.appVersion.equals("0.0"));
     assertTrue(integration.config.ovp.equals("HTML 5"));
