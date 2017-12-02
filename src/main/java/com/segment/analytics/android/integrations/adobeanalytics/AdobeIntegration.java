@@ -44,7 +44,7 @@ public class AdobeIntegration extends Integration<Void> {
         @Override
         public Integration<?> create(ValueMap settings, com.segment.analytics.Analytics analytics) {
           Logger logger = analytics.logger(ADOBE_KEY);
-          return new AdobeIntegration(settings, analytics, logger, Provider.REAL);
+          return new AdobeIntegration(settings, analytics, logger, HeartbeatFactory.REAL);
         }
 
         @Override
@@ -108,7 +108,7 @@ public class AdobeIntegration extends Integration<Void> {
       ValueMap settings,
       com.segment.analytics.Analytics analytics,
       Logger logger,
-      Provider provider) {
+      HeartbeatFactory heartbeatFactory) {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
@@ -137,13 +137,13 @@ public class AdobeIntegration extends Integration<Void> {
       config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
       config.debugLogging = adobeLogLevel;
 
-      heartbeat = provider.get(new NoOpDelegate(), config);
+      heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
     }
   }
 
-  static class NoOpDelegate implements MediaHeartbeatDelegate {
+  static class PlaybackDelegate implements MediaHeartbeatDelegate {
 
-    private NoOpDelegate() {}
+    private PlaybackDelegate() {}
 
     @Override
     public MediaObject getQoSObject() {
@@ -156,12 +156,12 @@ public class AdobeIntegration extends Integration<Void> {
     }
   }
 
-  interface Provider {
+  interface HeartbeatFactory {
 
     MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config);
 
-    Provider REAL =
-        new Provider() {
+    HeartbeatFactory REAL =
+        new HeartbeatFactory() {
           @Override
           public MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config) {
             return new MediaHeartbeat(delegate, config);
