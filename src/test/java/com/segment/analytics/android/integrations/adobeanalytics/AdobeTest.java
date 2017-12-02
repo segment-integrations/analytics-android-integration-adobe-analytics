@@ -582,6 +582,68 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackVideoAdStarted() {
+    Properties properties = new Properties();
+    properties.putValue("title", "You Win or You Die");
+    properties.putValue("sessionId", "123");
+    properties.putValue("totalLength", 100D);
+    properties.putValue("assetId", "123");
+    properties.putValue("program", "Game of Thrones");
+    properties.putValue("season", "1");
+    properties.putValue("episode", "7");
+    properties.putValue("genre", "fantasy");
+    properties.putValue("channel", "HBO");
+    properties.putValue("airdate", "2011");
+    properties.putValue("position", 100);
+    properties.putValue("livestream", false);
+    properties.putValue("random metadata", "something super random");
+
+
+    integration.videoHeartbeatEnabled = true;
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Ad Started")
+        .properties(new Properties()
+            .putValue("title", "You Win or You Die")
+            .putValue("sessionId", "123")
+            .putValue("totalLength", 100D)
+            .putValue("assetId", "123")
+            .putValue("program", "Game of Thrones")
+            .putValue("season", "1")
+            .putValue("episode", "7")
+            .putValue("genre", "fantasy")
+            .putValue("channel", "HBO")
+            .putValue("airdate", "2011")
+            .putValue("position", 100)
+            .putValue("livestream", false)
+            .putValue("random metadata", "something super random"))
+        .build()
+    );
+
+    // create a media object; values can be null
+    MediaObject mediaInfo = MediaHeartbeat.createAdObject(
+        "You Win or You Die",
+        "123",
+        100L,
+        100D
+    );
+
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdStart), isEqualToComparingFieldByFieldRecursively(mediaInfo),
+        eq(properties.toStringMap()));
+  }
+
+  @Test
+  public void trackVideoAdComplete() {
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Ad Completed")
+        .build()
+    );
+
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
+  }
+
+  @Test
   public void identify() {
     integration.identify(new IdentifyPayload.Builder()
         .userId("123")
