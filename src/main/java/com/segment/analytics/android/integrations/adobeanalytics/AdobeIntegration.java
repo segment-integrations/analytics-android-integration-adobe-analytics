@@ -383,26 +383,44 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private void trackVideo(String eventName, TrackPayload track) {
+    if (heartbeatTrackingServer == null) {
+      logger.verbose(
+          "Please enter a Heartbeat Tracking Server URL in your Segment UI"
+              + "Settings in order to send video events to Adobe Analytics");
+      return;
+    }
     switch (eventName) {
       case "Video Content Started":
-          Context context = analytics.getApplication();
-          Properties properties = track.properties();
-          config = new MediaHeartbeatConfig();
-          ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
+        Context context = analytics.getApplication();
+        Properties properties = track.properties();
+        config = new MediaHeartbeatConfig();
+        ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
 
-          config.trackingServer = heartbeatTrackingServer;
+        config.trackingServer = heartbeatTrackingServer;
+        if (eventOptions.getString("channel") != null) {
           config.channel = eventOptions.getString("channel");
-          // default app version to 0.0 if not otherwise present b/c Adobe requires this value
-          if (!isNullOrEmpty(context.getPackageName())) {
-            config.appVersion = context.getPackageName();
-          } else {
-            config.appVersion = "0.0";
-          }
+        } else {
+          config.channel = "";
+        }
+        // default app version to 0.0 if not otherwise present b/c Adobe requires this value
+        if (!isNullOrEmpty(context.getPackageName())) {
+          config.appVersion = context.getPackageName();
+        } else {
+          config.appVersion = "0.0";
+        }
+        if (eventOptions.getString("ovp") != null) {
           config.ovp = eventOptions.getString("ovp");
+        } else {
+          config.ovp = "";
+        }
+        if (eventOptions.getString("playerName") != null) {
           config.playerName = eventOptions.getString("playerName");
-          config.ssl = eventOptions.getBoolean("ssl", false);
+        } else {
+          config.playerName = "unknown video player";
+        }
+        config.ssl = eventOptions.getBoolean("ssl", false);
 
-          heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
+        heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
 
         Map<String, String> standardVideoMetadata = new HashMap<>();
         Properties videoProperties = mapStandardVideoMetadata(properties, standardVideoMetadata);
