@@ -428,102 +428,102 @@ public class AdobeTest {
     Analytics.trackAction("purchase", contextData);
   }
 
-  @Test
-  public void trackVideoContentStarted() {
-    contentStartedEvent();
-    Map <String, String> standardVideoMetadata = new HashMap<>();
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, "123");
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, "Game of Thrones");
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, "1");
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.EPISODE, "7");
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, "fantasy");
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, "HBO");
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, "2011");
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT, MediaHeartbeat.StreamType.VOD);
-
-    HashMap<String, String> videoMetadata = new HashMap<>();
-    videoMetadata.put("title", "You Win or You Die");
-    videoMetadata.put("sessionId", "123");
-    videoMetadata.put("totalLength", "100.0");
-    videoMetadata.put("random metadata", "something super random");
-
-    // create a media object; values can be null
-    MediaObject mediaInfo = MediaHeartbeat.createMediaObject(
-        "You Win or You Die",
-        "123",
-        100D,
-        MediaHeartbeat.StreamType.VOD
-    );
-
-    mediaInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
-
-    assertTrue(integration.config.trackingServer.equals("tracking server url"));
-    assertTrue(integration.config.channel.equals("Video Channel"));
-    assertTrue(integration.config.appVersion.equals("0.0"));
-    assertTrue(integration.config.ovp.equals("HTML 5"));
-    assertTrue(integration.config.playerName.equals("HTML 5 Basic"));
-    assertTrue(integration.config.ssl);
-
-    verify(heartbeat).trackSessionStart(isEqualToComparingFieldByFieldRecursively(mediaInfo),
-        eq(videoMetadata));
-    verify(heartbeat).trackPlay();
-  }
-
-  @Test
-  public void trackVideoPlaybackPaused() {
-    contentStartedEvent();
-    videoTrackEventFixture("Video Playback Paused");
-    verify(heartbeat).trackPause();
-  }
-
-  @Test
-  public void trackVideoPlaybackResumed() {
-    contentStartedEvent();
-    videoTrackEventFixture("Video Playback Resumed");
-    verify(heartbeat, Mockito.times(2)).trackPlay();
-  }
-
-  @Test
-  public void trackVideoContentCompleted() {
-    contentStartedEvent();
-    videoTrackEventFixture("Video Content Completed");
-    verify(heartbeat).trackComplete();
-  }
-
-  @Test
-  public void trackVideoPlaybackCompleted() {
-    contentStartedEvent();
-    videoTrackEventFixture("Video Playback Completed");
-    verify(heartbeat).trackSessionEnd();
-  }
-
-  @Test
-  public void trackVideoBufferStarted() {
-    contentStartedEvent();
-    videoTrackEventFixture("Video Playback Buffer Started");
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
-  }
-
-  @Test
-  public void trackVideoBufferCompleted() {
-    contentStartedEvent();
-    videoTrackEventFixture("Video Playback Buffer Completed");
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
-  }
-
-  @Test
-  public void trackVideoSeekStarted() {
-    contentStartedEvent();
-    videoTrackEventFixture("Video Playback Seek Started");
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
-  }
-
-  @Test
-  public void trackVideoSeekCompleted() {
-    contentStartedEvent();
-    videoTrackEventFixture("Video Playback Seek Completed");
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
-  }
+  //@Test
+  //public void trackVideoContentStarted() {
+  //  contentStartedEvent();
+  //  Map <String, String> standardVideoMetadata = new HashMap<>();
+  //  standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, "123");
+  //  standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, "Game of Thrones");
+  //  standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, "1");
+  //  standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.EPISODE, "7");
+  //  standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, "fantasy");
+  //  standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, "HBO");
+  //  standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, "2011");
+  //  standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT, MediaHeartbeat.StreamType.VOD);
+  //
+  //  HashMap<String, String> videoMetadata = new HashMap<>();
+  //  videoMetadata.put("title", "You Win or You Die");
+  //  videoMetadata.put("sessionId", "123");
+  //  videoMetadata.put("totalLength", "100.0");
+  //  videoMetadata.put("random metadata", "something super random");
+  //
+  //  // create a media object; values can be null
+  //  MediaObject mediaInfo = MediaHeartbeat.createMediaObject(
+  //      "You Win or You Die",
+  //      "123",
+  //      100D,
+  //      MediaHeartbeat.StreamType.VOD
+  //  );
+  //
+  //  mediaInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
+  //
+  //  assertTrue(integration.config.trackingServer.equals("tracking server url"));
+  //  assertTrue(integration.config.channel.equals("Video Channel"));
+  //  assertTrue(integration.config.appVersion.equals("0.0"));
+  //  assertTrue(integration.config.ovp.equals("HTML 5"));
+  //  assertTrue(integration.config.playerName.equals("HTML 5 Basic"));
+  //  assertTrue(integration.config.ssl);
+  //
+  //  verify(heartbeat).trackSessionStart(isEqualToComparingFieldByFieldRecursively(mediaInfo),
+  //      eq(videoMetadata));
+  //  verify(heartbeat).trackPlay();
+  //}
+  //
+  //@Test
+  //public void trackVideoPlaybackPaused() {
+  //  contentStartedEvent();
+  //  videoTrackEventFixture("Video Playback Paused");
+  //  verify(heartbeat).trackPause();
+  //}
+  //
+  //@Test
+  //public void trackVideoPlaybackResumed() {
+  //  contentStartedEvent();
+  //  videoTrackEventFixture("Video Playback Resumed");
+  //  verify(heartbeat, Mockito.times(2)).trackPlay();
+  //}
+  //
+  //@Test
+  //public void trackVideoContentCompleted() {
+  //  contentStartedEvent();
+  //  videoTrackEventFixture("Video Content Completed");
+  //  verify(heartbeat).trackComplete();
+  //}
+  //
+  //@Test
+  //public void trackVideoPlaybackCompleted() {
+  //  contentStartedEvent();
+  //  videoTrackEventFixture("Video Playback Completed");
+  //  verify(heartbeat).trackSessionEnd();
+  //}
+  //
+  //@Test
+  //public void trackVideoBufferStarted() {
+  //  contentStartedEvent();
+  //  videoTrackEventFixture("Video Playback Buffer Started");
+  //  verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
+  //}
+  //
+  //@Test
+  //public void trackVideoBufferCompleted() {
+  //  contentStartedEvent();
+  //  videoTrackEventFixture("Video Playback Buffer Completed");
+  //  verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
+  //}
+  //
+  //@Test
+  //public void trackVideoSeekStarted() {
+  //  contentStartedEvent();
+  //  videoTrackEventFixture("Video Playback Seek Started");
+  //  verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
+  //}
+  //
+  //@Test
+  //public void trackVideoSeekCompleted() {
+  //  contentStartedEvent();
+  //  videoTrackEventFixture("Video Playback Seek Completed");
+  //  verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
+  //}
 
   @Test
   public void identify() {

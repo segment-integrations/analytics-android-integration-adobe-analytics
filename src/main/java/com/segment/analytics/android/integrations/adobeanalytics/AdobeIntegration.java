@@ -59,6 +59,7 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> contextValues;
   String productIdentifier;
   com.segment.analytics.Analytics analytics;
+  boolean adobeLogLevel;
   private final Logger logger;
 
   private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
@@ -78,6 +79,7 @@ public class AdobeIntegration extends Integration<Void> {
   private MediaHeartbeat heartbeat;
   HeartbeatFactory heartbeatFactory;
   String heartbeatTrackingServer;
+  boolean ssl;
 
   private static final Set<String> VIDEO_EVENT_LIST =
       new HashSet<>(
@@ -117,10 +119,10 @@ public class AdobeIntegration extends Integration<Void> {
     this.analytics = analytics;
     this.heartbeatFactory = heartbeatFactory;
     this.heartbeatTrackingServer = settings.getString("heartbeatTrackingServer");
+    this.ssl = settings.getBoolean("ssl", false);
     this.logger = logger;
 
-    boolean adobeLogLevel =
-        logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
+    this.adobeLogLevel = logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
     Config.setDebugLogging(adobeLogLevel);
   }
 
@@ -390,15 +392,15 @@ public class AdobeIntegration extends Integration<Void> {
       return;
     }
     switch (eventName) {
-      case "Video Content Started":
+      case "Video Playback Started":
         Context context = analytics.getApplication();
         Properties properties = track.properties();
         config = new MediaHeartbeatConfig();
         ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
 
         config.trackingServer = heartbeatTrackingServer;
-        if (eventOptions.getString("channel") != null) {
-          config.channel = eventOptions.getString("channel");
+        if (properties.get("channel") != null) {
+          config.channel = properties.getString("channel");
         } else {
           config.channel = "";
         }
@@ -408,17 +410,18 @@ public class AdobeIntegration extends Integration<Void> {
         } else {
           config.appVersion = "0.0";
         }
-        if (eventOptions.getString("ovp") != null) {
-          config.ovp = eventOptions.getString("ovp");
+        if (eventOptions.getString("ovpName") != null) {
+          config.ovp = eventOptions.getString("ovpName");
         } else {
           config.ovp = "";
         }
-        if (eventOptions.getString("playerName") != null) {
-          config.playerName = eventOptions.getString("playerName");
+        if (properties.get("playerName") != null) {
+          config.playerName = properties.getString("playerName");
         } else {
           config.playerName = "unknown video player";
         }
-        config.ssl = eventOptions.getBoolean("ssl", false);
+        config.ssl = ssl;
+        config.debugLogging = adobeLogLevel;
 
         heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
 
@@ -438,9 +441,7 @@ public class AdobeIntegration extends Integration<Void> {
 
         mediaInfo.setValue(
             MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
-
         heartbeat.trackSessionStart(mediaInfo, videoMetadata);
-        heartbeat.trackPlay();
         break;
 
       case "Video Playback Paused":
