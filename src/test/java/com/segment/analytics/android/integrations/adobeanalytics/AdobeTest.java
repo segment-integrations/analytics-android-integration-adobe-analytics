@@ -596,43 +596,43 @@ public class AdobeTest {
     Config.setUserIdentifier(null);
   }
 
-  private void contentStartedEvent() {
-    ValueMap options = new ValueMap();
-    ValueMap integrationSpecificOptions = new ValueMap();
-    integrationSpecificOptions.put("channel", "Video Channel");
-    integrationSpecificOptions.put("ovp", "HTML 5");
-    integrationSpecificOptions.put("playerName", "HTML 5 Basic");
-    integrationSpecificOptions.put("ssl", true);
-    options.put("Adobe Analytics", integrationSpecificOptions);
-
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event("Video Content Started")
-        .integrations(options)
-        .properties(new Properties()
-            .putValue("title", "You Win or You Die")
-            .putValue("sessionId", "123")
-            .putValue("totalLength", 100D)
-            .putValue("assetId", "123")
-            .putValue("program", "Game of Thrones")
-            .putValue("season", "1")
-            .putValue("episode", "7")
-            .putValue("genre", "fantasy")
-            .putValue("channel", "HBO")
-            .putValue("airdate", "2011")
-            .putValue("livestream", false)
-            .putValue("random metadata", "something super random"))
-        .build()
-    );
-  }
-
-  private void videoTrackEventFixture(String eventName) {
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event(eventName)
-        .build()
-    );
-  }
+  //private void contentStartedEvent() {
+  //  ValueMap options = new ValueMap();
+  //  ValueMap integrationSpecificOptions = new ValueMap();
+  //  integrationSpecificOptions.put("channel", "Video Channel");
+  //  integrationSpecificOptions.put("ovp", "HTML 5");
+  //  integrationSpecificOptions.put("playerName", "HTML 5 Basic");
+  //  integrationSpecificOptions.put("ssl", true);
+  //  options.put("Adobe Analytics", integrationSpecificOptions);
+  //
+  //  integration.track(new TrackPayload.Builder()
+  //      .userId("123")
+  //      .event("Video Content Started")
+  //      .integrations(options)
+  //      .properties(new Properties()
+  //          .putValue("title", "You Win or You Die")
+  //          .putValue("sessionId", "123")
+  //          .putValue("totalLength", 100D)
+  //          .putValue("assetId", "123")
+  //          .putValue("program", "Game of Thrones")
+  //          .putValue("season", "1")
+  //          .putValue("episode", "7")
+  //          .putValue("genre", "fantasy")
+  //          .putValue("channel", "HBO")
+  //          .putValue("airdate", "2011")
+  //          .putValue("livestream", false)
+  //          .putValue("random metadata", "something super random"))
+  //      .build()
+  //  );
+  //}
+  //
+  //private void videoTrackEventFixture(String eventName) {
+  //  integration.track(new TrackPayload.Builder()
+  //      .userId("123")
+  //      .event(eventName)
+  //      .build()
+  //  );
+  //}
 
   private static <T> T isEqualToComparingFieldByFieldRecursively(final T expected) {
     return argThat(new AssertionMatcher<T>(){
