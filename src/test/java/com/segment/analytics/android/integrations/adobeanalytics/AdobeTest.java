@@ -82,9 +82,7 @@ public class AdobeTest {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
-        .putValue("productIdentifier", "id")
-        .putValue("videoHeartbeatEnabled", true)
-        .putValue("adobeVerboseLogging", true),
+        .putValue("productIdentifier", "id"),
       analytics,
       Logger.with(VERBOSE),
         mockHeartbeatFactory);
@@ -100,12 +98,8 @@ public class AdobeTest {
   @Test
   public void initializeWithAdobeHeartbeat() {
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("videoHeartbeatEnabled", true)
         .putValue("heartbeatTrackingServer", "tracking server url")
-        .putValue("heartbeatChannel", "Video Channel")
-        .putValue("heartbeatOnlineVideoPlatform", "HTML 5")
-        .putValue("heartbeatPlayerName", "HTML 5 Basic")
-        .putValue("heartbeatEnableSsl", true),
+        .putValue("ssl", true),
         analytics,
         Logger.with(VERBOSE),
         mockHeartbeatFactory);
