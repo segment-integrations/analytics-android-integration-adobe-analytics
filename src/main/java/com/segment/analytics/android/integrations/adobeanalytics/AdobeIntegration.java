@@ -80,7 +80,11 @@ public class AdobeIntegration extends Integration<Void> {
               "Video Playback Buffer Started",
               "Video Playback Buffer Completed",
               "Video Playback Seek Started",
-              "Video Playback Seek Completed"));
+              "Video Playback Seek Completed",
+              "Video Ad Break Started",
+              "Video Ad Break Completed",
+              "Video Ad Started",
+              "Video Ad Completed"));
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
@@ -94,6 +98,14 @@ public class AdobeIntegration extends Integration<Void> {
     videoPropertyList.put("channel", MediaHeartbeat.VideoMetadataKeys.NETWORK);
     videoPropertyList.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
     return videoPropertyList;
+  }
+
+  private static final Map<String, String> AD_METADATA_MAP = getStandardAdMetadata();
+
+  private static final Map<String, String> getStandardAdMetadata() {
+    Map<String, String> adPropertyList = new HashMap<>();
+    adPropertyList.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
+    return adPropertyList;
   }
 
   private final com.segment.analytics.Analytics analytics;
@@ -503,6 +515,47 @@ public class AdobeIntegration extends Integration<Void> {
       case "Video Playback Seek Completed":
         heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
         break;
+
+      case "Video Ad Break Started":
+        Properties videoAdBreakProperties = track.properties();
+        MediaObject mediaAdBreakInfo =
+            MediaHeartbeat.createAdBreakObject(
+                videoAdBreakProperties.getString("title"),
+                videoAdBreakProperties.getLong("indexPosition", 1), // Segment does not spec this
+                videoAdBreakProperties.getDouble("startTime", 0));
+
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, null);
+        break;
+
+      case "Video Ad Break Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
+        break;
+
+      case "Video Ad Started":
+        Properties videoAdProperties = track.properties();
+        Map<String, String> standardAdMetadata = new HashMap<>();
+        Properties adProperties = mapStandardAdMetadata(videoAdProperties, standardAdMetadata);
+        HashMap<String, String> adMetadata = new HashMap<>();
+        adMetadata.putAll(adProperties.toStringMap());
+
+        MediaObject mediaAdInfo =
+            MediaHeartbeat.createAdObject(
+                videoAdProperties.getString("title"),
+                videoAdProperties.getString("assetId"),
+                videoAdProperties.getLong("indexPosition", 0),
+                videoAdProperties.getDouble("totalLength", 0));
+
+        mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
+
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata);
+        break;
+
+      case "Video Ad Skipped":
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdSkip, null, null);
+
+      case "Video Ad Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
+        break;
     }
   }
 
@@ -526,6 +579,22 @@ public class AdobeIntegration extends Integration<Void> {
               ? MediaHeartbeat.StreamType.LIVE
               : MediaHeartbeat.StreamType.VOD);
       propertiesCopy.remove("livestream");
+    }
+    return propertiesCopy;
+  }
+
+  private Properties mapStandardAdMetadata(
+      Properties properties, Map<String, String> standardAdMetadata) {
+    Properties propertiesCopy = new Properties();
+    propertiesCopy.putAll(properties);
+    for (Map.Entry<String, Object> entry : properties.entrySet()) {
+      String propertyKey = entry.getKey();
+      String value = String.valueOf(entry.getValue());
+
+      if (AD_METADATA_MAP.containsKey(propertyKey)) {
+        standardAdMetadata.put(AD_METADATA_MAP.get(propertyKey), value);
+        propertiesCopy.remove(propertyKey);
+      }
     }
     return propertiesCopy;
   }

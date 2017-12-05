@@ -559,6 +559,77 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackVideoAdBreakStarted() {
+    newVideoSession();
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Ad Break Started")
+        .properties(new Properties()
+            .putValue("title", "Car Commercial") // should this be pre-roll, mid-roll or post-roll instead?
+            .putValue("startTime", 10D)
+            .putValue("indexPosition", 1L))
+        .build()
+    );
+
+    MediaObject mediaAdBreakInfo = MediaHeartbeat.createAdBreakObject(
+        "Car Commercial",
+        1L,
+        10D
+    );
+
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart), isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq((Map) null));
+  }
+
+  @Test
+  public void trackVideoAdBreakCompleted() {
+    newVideoSession();
+    heartbeatTestFixture("Video Ad Break Completed");
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
+  }
+
+  @Test
+  public void trackVideoAdStarted() {
+    newVideoSession();
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Ad Started")
+        .properties(new Properties()
+            .putValue("title", "Car Commercial")
+            .putValue("assetId", "123")
+            .putValue("totalLength", 10D)
+            .putValue("indexPosition", 1L)
+            .putValue("publisher", "Lexus"))
+        .build()
+    );
+
+    MediaObject mediaAdInfo = MediaHeartbeat.createAdObject(
+        "Car Commercial",
+        "123",
+        1L,
+        10D
+    );
+
+    HashMap<String, String> adMetadata = new HashMap<>();
+    adMetadata.put("title", "Car Commercial");
+    adMetadata.put("assetId", "123");
+    adMetadata.put("totalLength", "10.0");
+    adMetadata.put("indexPosition", "1");
+
+    Map<String, String> standardAdMetadata = new HashMap<>();
+    standardAdMetadata.put(MediaHeartbeat.AdMetadataKeys.ADVERTISER, "Lexus");
+    mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
+
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdStart), isEqualToComparingFieldByFieldRecursively(mediaAdInfo), eq(adMetadata));
+  }
+
+  @Test
+  public void trackVideoAdCompleted() {
+    newVideoSession();
+    heartbeatTestFixture("Video Ad Completed");
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
+  }
+
+  @Test
   public void identify() {
     integration.identify(new IdentifyPayload.Builder()
         .userId("123")
