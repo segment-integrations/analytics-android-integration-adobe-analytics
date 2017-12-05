@@ -400,7 +400,6 @@ public class AdobeIntegration extends Integration<Void> {
         Context context = analytics.getApplication();
         Properties properties = track.properties();
         config = new MediaHeartbeatConfig();
-        ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
 
         config.trackingServer = heartbeatTrackingServer;
         if (properties.get("channel") != null) {
@@ -414,7 +413,8 @@ public class AdobeIntegration extends Integration<Void> {
         } else {
           config.appVersion = "0.0";
         }
-        if (eventOptions.getString("ovpName") != null) {
+        ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
+        if (eventOptions != null && eventOptions.getString("ovpName") != null) {
           config.ovp = eventOptions.getString("ovpName");
         } else {
           config.ovp = "";

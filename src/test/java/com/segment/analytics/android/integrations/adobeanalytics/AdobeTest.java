@@ -597,15 +597,9 @@ public class AdobeTest {
   }
 
   private void newVideoSession() {
-    ValueMap options = new ValueMap();
-    ValueMap integrationSpecificOptions = new ValueMap();
-    integrationSpecificOptions.put("ovpName", "HTML 5");
-    options.put("Adobe Analytics", integrationSpecificOptions);
-
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event("Video Playback Started")
-        .integrations(options)
         .properties(new Properties()
             .putValue("title", "You Win or You Die")
             .putValue("sessionId", "123")
