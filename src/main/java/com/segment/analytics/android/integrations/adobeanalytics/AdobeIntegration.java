@@ -127,8 +127,8 @@ public class AdobeIntegration extends Integration<Void> {
     if (context.getPackageName() != null) {
       this.packageName = context.getPackageName();
     } else {
-      // default app version to 0.0 if not otherwise present b/c Adobe requires this value
-      packageName = "0.0";
+      // default app version to "unknown" if not otherwise present b/c Adobe requires this value
+      packageName = "unknown";
     }
 
     this.adobeLogLevel = logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
@@ -419,12 +419,12 @@ public class AdobeIntegration extends Integration<Void> {
         if (eventOptions != null && eventOptions.getString("ovpName") != null) {
           config.ovp = eventOptions.getString("ovpName");
         } else {
-          config.ovp = "";
+          config.ovp = "unknown";
         }
         if (properties.get("playerName") != null) {
           config.playerName = properties.getString("playerName");
         } else {
-          config.playerName = "unknown video player";
+          config.playerName = "unknown";
         }
         config.ssl = ssl;
         config.debugLogging = adobeLogLevel;
