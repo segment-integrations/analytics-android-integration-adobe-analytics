@@ -482,6 +482,41 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackVideoContentStarted() {
+    newVideoSession();
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Content Started")
+        .properties(new Properties()
+            .putValue("title", "You Win or You Die")
+            .putValue("contentAssetId", "123")
+            .putValue("totalLength", 100D)
+            .putValue("startTime", 10D)
+            .putValue("indexPosition", 1L))
+        .build()
+    );
+
+    HashMap<String, String> videoMetadata = new HashMap<>();
+    videoMetadata.put("title", "You Win or You Die");
+    videoMetadata.put("contentAssetId", "123");
+    videoMetadata.put("totalLength", "100.0");
+    videoMetadata.put("startTime", "10.0");
+    videoMetadata.put("indexPosition", "1");
+
+    MediaObject mediaChapter = MediaHeartbeat.createChapterObject(
+        "You Win or You Die",
+        1L,
+        100D,
+        10D
+    );
+
+    mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, new HashMap<String, String>());
+
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart), isEqualToComparingFieldByFieldRecursively(mediaChapter),
+        eq(videoMetadata));
+  }
+
+  @Test
   public void trackVideoContentComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Content Completed");
