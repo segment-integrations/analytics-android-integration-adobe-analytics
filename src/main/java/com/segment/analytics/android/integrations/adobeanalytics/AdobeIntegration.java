@@ -394,7 +394,6 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private void trackVideo(String eventName, TrackPayload track) {
-
     if (heartbeatTrackingServer == null) {
       logger.verbose(
           "Please enter a Heartbeat Tracking Server URL in your Segment UI "
@@ -402,10 +401,10 @@ public class AdobeIntegration extends Integration<Void> {
       return;
     }
 
+    Properties properties = track.properties();
+
     switch (eventName) {
       case "Video Playback Started":
-        Context context = analytics.getApplication();
-        Properties properties = track.properties();
         MediaHeartbeatConfig config = new MediaHeartbeatConfig();
 
         config.trackingServer = heartbeatTrackingServer;
