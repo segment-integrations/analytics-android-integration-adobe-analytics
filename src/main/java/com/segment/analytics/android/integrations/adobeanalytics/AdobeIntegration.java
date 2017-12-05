@@ -394,7 +394,6 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private void trackVideo(String eventName, TrackPayload track) {
-
     if (heartbeatTrackingServer == null) {
       logger.verbose(
           "Please enter a Heartbeat Tracking Server URL in your Segment UI "
@@ -404,13 +403,12 @@ public class AdobeIntegration extends Integration<Void> {
 
     switch (eventName) {
       case "Video Playback Started":
-        Context context = analytics.getApplication();
-        Properties properties = track.properties();
+        Properties videoPlaybackProperties = track.properties();
         MediaHeartbeatConfig config = new MediaHeartbeatConfig();
 
         config.trackingServer = heartbeatTrackingServer;
-        if (properties.get("channel") != null) {
-          config.channel = properties.getString("channel");
+        if (videoPlaybackProperties.get("channel") != null) {
+          config.channel = videoPlaybackProperties.getString("channel");
         } else {
           config.channel = "";
         }
@@ -421,8 +419,8 @@ public class AdobeIntegration extends Integration<Void> {
         } else {
           config.ovp = "unknown";
         }
-        if (properties.get("playerName") != null) {
-          config.playerName = properties.getString("playerName");
+        if (videoPlaybackProperties.get("playerName") != null) {
+          config.playerName = videoPlaybackProperties.getString("playerName");
         } else {
           config.playerName = "unknown";
         }
@@ -432,16 +430,17 @@ public class AdobeIntegration extends Integration<Void> {
         heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
 
         Map<String, String> standardVideoMetadata = new HashMap<>();
-        Properties videoProperties = mapStandardVideoMetadata(properties, standardVideoMetadata);
+        Properties videoProperties =
+            mapStandardVideoMetadata(videoPlaybackProperties, standardVideoMetadata);
         HashMap<String, String> videoMetadata = new HashMap<>();
         videoMetadata.putAll(videoProperties.toStringMap());
 
         MediaObject mediaInfo =
             MediaHeartbeat.createMediaObject(
-                properties.getString("title"),
-                properties.getString("contentAssetId"),
-                properties.getDouble("totalLength", 0),
-                properties.getBoolean("livestream", false)
+                videoPlaybackProperties.getString("title"),
+                videoPlaybackProperties.getString("contentAssetId"),
+                videoPlaybackProperties.getDouble("totalLength", 0),
+                videoPlaybackProperties.getBoolean("livestream", false)
                     ? MediaHeartbeat.StreamType.LIVE
                     : MediaHeartbeat.StreamType.VOD);
 
@@ -457,6 +456,27 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Resumed":
         heartbeat.trackPlay();
+        break;
+
+      case "Video Content Started":
+        Properties videoContentProperties = track.properties();
+        Map<String, String> standardChapterMetadata = new HashMap<>();
+        Properties chapterProperties =
+            mapStandardVideoMetadata(videoContentProperties, standardChapterMetadata);
+        HashMap<String, String> chapterMetadata = new HashMap<>();
+        chapterMetadata.putAll(chapterProperties.toStringMap());
+
+        MediaObject mediaChapter =
+            MediaHeartbeat.createChapterObject(
+                videoContentProperties.getString("title"),
+                videoContentProperties.getLong("indexPosition", 1), // Segment does not spec this
+                videoContentProperties.getDouble("totalLength", 0),
+                videoContentProperties.getDouble("startTime", 0));
+
+        mediaChapter.setValue(
+            MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardChapterMetadata);
+
+        heartbeat.trackEvent(MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata);
         break;
 
       case "Video Content Completed":
