@@ -53,14 +53,7 @@ public class AdobeIntegration extends Integration<Void> {
         }
       };
 
-  //settings
   private static final String ADOBE_KEY = "Adobe Analytics";
-  Map<String, Object> eventsV2;
-  Map<String, Object> contextValues;
-  String productIdentifier;
-  com.segment.analytics.Analytics analytics;
-  boolean adobeLogLevel;
-  private final Logger logger;
 
   private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
 
@@ -74,13 +67,6 @@ public class AdobeIntegration extends Integration<Void> {
     ecommerceEventList.put("Product Viewed", "prodView");
     return ecommerceEventList;
   }
-
-  MediaHeartbeatConfig config;
-  private MediaHeartbeat heartbeat;
-  HeartbeatFactory heartbeatFactory;
-  String heartbeatTrackingServer;
-  String packageName;
-  boolean ssl;
 
   private static final Set<String> VIDEO_EVENT_LIST =
       new HashSet<>(
@@ -109,6 +95,18 @@ public class AdobeIntegration extends Integration<Void> {
     videoPropertyList.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
     return videoPropertyList;
   }
+
+  private final com.segment.analytics.Analytics analytics;
+  private final Logger logger;
+  private MediaHeartbeat heartbeat;
+  private HeartbeatFactory heartbeatFactory;
+  final boolean adobeLogLevel;
+  final String heartbeatTrackingServer;
+  final String packageName;
+  final boolean ssl;
+  Map<String, Object> eventsV2;
+  Map<String, Object> contextValues;
+  String productIdentifier;
 
   AdobeIntegration(
       ValueMap settings,
@@ -408,7 +406,7 @@ public class AdobeIntegration extends Integration<Void> {
       case "Video Playback Started":
         Context context = analytics.getApplication();
         Properties properties = track.properties();
-        config = new MediaHeartbeatConfig();
+        MediaHeartbeatConfig config = new MediaHeartbeatConfig();
 
         config.trackingServer = heartbeatTrackingServer;
         if (properties.get("channel") != null) {
