@@ -432,7 +432,8 @@ public class AdobeIntegration extends Integration<Void> {
         heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
 
         Map<String, String> standardVideoMetadata = new HashMap<>();
-        Properties videoProperties = mapStandardVideoMetadata(videoPlaybackProperties, standardVideoMetadata);
+        Properties videoProperties =
+            mapStandardVideoMetadata(videoPlaybackProperties, standardVideoMetadata);
         HashMap<String, String> videoMetadata = new HashMap<>();
         videoMetadata.putAll(videoProperties.toStringMap());
 
@@ -462,7 +463,8 @@ public class AdobeIntegration extends Integration<Void> {
       case "Video Content Started":
         Properties videoContentProperties = track.properties();
         Map<String, String> standardChapterMetadata = new HashMap<>();
-        Properties chapterProperties = mapStandardVideoMetadata(videoContentProperties, standardChapterMetadata);
+        Properties chapterProperties =
+            mapStandardVideoMetadata(videoContentProperties, standardChapterMetadata);
         HashMap<String, String> chapterMetadata = new HashMap<>();
         chapterMetadata.putAll(chapterProperties.toStringMap());
 
