@@ -432,8 +432,7 @@ public class AdobeIntegration extends Integration<Void> {
         heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
 
         Map<String, String> standardVideoMetadata = new HashMap<>();
-        Properties videoProperties =
-            mapStandardVideoMetadata(properties, standardVideoMetadata);
+        Properties videoProperties = mapStandardVideoMetadata(properties, standardVideoMetadata);
         HashMap<String, String> videoMetadata = new HashMap<>();
         videoMetadata.putAll(videoProperties.toStringMap());
 
