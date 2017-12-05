@@ -85,6 +85,7 @@ public class AdobeIntegration extends Integration<Void> {
   private static final Set<String> VIDEO_EVENT_LIST =
       new HashSet<>(
           Arrays.asList(
+              "Video Playback Started",
               "Video Content Started",
               "Video Playback Paused",
               "Video Playback Resumed",
@@ -123,8 +124,7 @@ public class AdobeIntegration extends Integration<Void> {
     this.ssl = settings.getBoolean("ssl", false);
     this.logger = logger;
 
-    this.adobeLogLevel =
-        logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
+    this.adobeLogLevel = logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
     Config.setDebugLogging(adobeLogLevel);
   }
 
@@ -409,7 +409,7 @@ public class AdobeIntegration extends Integration<Void> {
           config.channel = "";
         }
         // default app version to 0.0 if not otherwise present b/c Adobe requires this value
-         if (!isNullOrEmpty(context.getPackageName())) {
+        if (!isNullOrEmpty(context.getPackageName())) {
           config.appVersion = context.getPackageName();
         } else {
           config.appVersion = "0.0";

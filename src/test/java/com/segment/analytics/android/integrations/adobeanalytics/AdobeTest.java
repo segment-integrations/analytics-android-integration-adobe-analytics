@@ -71,7 +71,7 @@ public class AdobeTest {
     PowerMockito.mockStatic(Analytics.class);
     when(analytics.getApplication()).thenReturn(context);
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("videoHeartbeatEnabled", true), analytics, Logger.with(NONE), mockHeartbeatFactory);
+        .putValue("heartbeatTrackingServer", "true"), analytics, Logger.with(NONE), mockHeartbeatFactory);
   }
 
   @Test
@@ -85,7 +85,6 @@ public class AdobeTest {
         .putValue("eventsV2", new HashMap<String, Object>())
         .putValue("contextValues", new HashMap<String, Object>())
         .putValue("productIdentifier", "id")
-        .putValue("videoHeartbeatEnabled", true)
         .putValue("adobeVerboseLogging", true),
       analytics,
       Logger.with(VERBOSE),
@@ -97,32 +96,6 @@ public class AdobeTest {
     assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
     assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
     assertTrue(integration.productIdentifier.equals("id"));
-  }
-
-  @Test
-  public void initializeWithAdobeHeartbeat() {
-    integration = new AdobeIntegration(new ValueMap()
-        .putValue("videoHeartbeatEnabled", true)
-        .putValue("heartbeatTrackingServer", "exchangepartnersegment.hb.omtrdc.net")
-        .putValue("heartbeatChannel", "Video Channel")
-        .putValue("heartbeatOnlineVideoPlatform", "HTML 5")
-        .putValue("heartbeatPlayerName", "HTML 5 Basic")
-        .putValue("heartbeatEnableSsl", true),
-        analytics,
-        Logger.with(VERBOSE),
-        mockHeartbeatFactory);
-
-    verifyStatic();
-    Config.setDebugLogging(true);
-
-    assertTrue(integration.config.debugLogging);
-    assertTrue(integration.config.trackingServer.equals("exchangepartnersegment.hb.omtrdc.net"));
-    assertTrue(integration.config.channel.equals("Video Channel"));
-    assertTrue(integration.config.appVersion.equals("0.0"));
-    assertTrue(integration.config.ovp.equals("HTML 5"));
-    assertTrue(integration.config.playerName.equals("HTML 5 Basic"));
-    assertTrue(integration.config.ssl);
-    assertTrue(integration.config.debugLogging);
   }
 
   @Test
@@ -440,23 +413,29 @@ public class AdobeTest {
   }
 
   @Test
-  public void trackVideoContentStarted() {
+  public void trackVideoPlaybackStarted() {
+    ValueMap options = new ValueMap();
+    ValueMap integrationSpecificOptions = new ValueMap();
+    integrationSpecificOptions.put("ovpName", "HTML 5");
+    options.put("Adobe Analytics", integrationSpecificOptions);
+
     integration.track(new TrackPayload.Builder()
         .userId("123")
-        .event("Video Content Started")
+        .integrations(options)
+        .event("Video Playback Started")
         .properties(new Properties()
-        .putValue("title", "You Win or You Die")
-        .putValue("sessionId", "123")
-        .putValue("totalLength", 100D)
-        .putValue("assetId", "123")
-        .putValue("program", "Game of Thrones")
-        .putValue("season", "1")
-        .putValue("episode", "7")
-        .putValue("genre", "fantasy")
-        .putValue("channel", "HBO")
-        .putValue("airdate", "2011")
-        .putValue("livestream", false)
-        .putValue("random metadata", "something super random"))
+            .putValue("title", "You Win or You Die")
+            .putValue("contentAssetId", "123")
+            .putValue("totalLength", 100D)
+            .putValue("assetId", "123")
+            .putValue("program", "Game of Thrones")
+            .putValue("season", "1")
+            .putValue("episode", "7")
+            .putValue("genre", "fantasy")
+            .putValue("channel", "HBO")
+            .putValue("airdate", "2011")
+            .putValue("livestream", false)
+            .putValue("random metadata", "something super random"))
         .build()
     );
 
@@ -472,7 +451,7 @@ public class AdobeTest {
 
     HashMap<String, String> videoMetadata = new HashMap<>();
     videoMetadata.put("title", "You Win or You Die");
-    videoMetadata.put("sessionId", "123");
+    videoMetadata.put("contentAssetId", "123");
     videoMetadata.put("totalLength", "100.0");
     videoMetadata.put("random metadata", "something super random");
 
@@ -488,94 +467,61 @@ public class AdobeTest {
 
     verify(heartbeat).trackSessionStart(isEqualToComparingFieldByFieldRecursively(mediaInfo),
         eq(videoMetadata));
-    verify(heartbeat).trackPlay();
   }
 
   @Test
   public void trackVideoPlaybackPaused() {
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event("Video Playback Paused")
-        .build()
-    );
-
+    newVideoSession();
+    heartbeatTestFixture("Video Playback Paused");
     verify(heartbeat).trackPause();
   }
 
   @Test
   public void trackVideoPlaybackResumed() {
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event("Video Playback Resumed")
-        .build()
-    );
-
+    newVideoSession();
+    heartbeatTestFixture("Video Playback Resumed");
     verify(heartbeat).trackPlay();
   }
 
   @Test
   public void trackVideoContentComplete() {
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event("Video Content Completed")
-        .build()
-    );
-
+    newVideoSession();
+    heartbeatTestFixture("Video Content Completed");
     verify(heartbeat).trackComplete();
   }
 
   @Test
   public void trackVideoPlaybackComplete() {
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event("Video Playback Completed")
-        .build()
-    );
-
+    newVideoSession();
+    heartbeatTestFixture("Video Playback Completed");
     verify(heartbeat).trackSessionEnd();
   }
 
   @Test
   public void trackVideoBufferStarted() {
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event("Video Playback Buffer Started")
-        .build()
-    );
-
+    newVideoSession();
+    heartbeatTestFixture("Video Playback Buffer Started");
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
   }
 
   @Test
   public void trackVideoBufferComplete() {
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event("Video Playback Buffer Completed")
-        .build()
-    );
-
+    newVideoSession();
+    heartbeatTestFixture("Video Playback Buffer Completed");
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
   }
 
   @Test
   public void trackVideoSeekStarted() {
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event("Video Playback Seek Started")
-        .build()
-    );
-
+    newVideoSession();
+    heartbeatTestFixture("Video Playback Seek Started");
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
   }
 
   @Test
   public void trackVideoSeekComplete() {
-    integration.track(new TrackPayload.Builder()
-        .userId("123")
-        .event("Video Playback Seek Completed")
-        .build()
-    );
-
+    newVideoSession();
+    heartbeatTestFixture("Video Playback Seek Completed");
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
   }
 
@@ -648,6 +594,40 @@ public class AdobeTest {
     integration.reset();
     verifyStatic();
     Config.setUserIdentifier(null);
+  }
+
+  private void newVideoSession() {
+    ValueMap options = new ValueMap();
+    ValueMap integrationSpecificOptions = new ValueMap();
+    integrationSpecificOptions.put("ovpName", "HTML 5");
+    options.put("Adobe Analytics", integrationSpecificOptions);
+
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Playback Started")
+        .integrations(options)
+        .properties(new Properties()
+            .putValue("title", "You Win or You Die")
+            .putValue("sessionId", "123")
+            .putValue("totalLength", 100D)
+            .putValue("assetId", "123")
+            .putValue("program", "Game of Thrones")
+            .putValue("season", "1")
+            .putValue("episode", "7")
+            .putValue("genre", "fantasy")
+            .putValue("channel", "HBO")
+            .putValue("airdate", "2011")
+            .putValue("livestream", false))
+        .build()
+    );
+  }
+
+  private void heartbeatTestFixture(String eventName) {
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event(eventName)
+        .build()
+    );
   }
 
   private static <T> T isEqualToComparingFieldByFieldRecursively(final T expected) {
