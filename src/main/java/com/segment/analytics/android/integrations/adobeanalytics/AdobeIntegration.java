@@ -459,6 +459,27 @@ public class AdobeIntegration extends Integration<Void> {
         heartbeat.trackPlay();
         break;
 
+      case "Video Content Started":
+        Properties videoContentProperties = track.properties();
+        Map<String, String> standardChapterMetadata = new HashMap<>();
+        Properties chapterProperties =
+            mapStandardVideoMetadata(videoContentProperties, standardChapterMetadata);
+        HashMap<String, String> chapterMetadata = new HashMap<>();
+        chapterMetadata.putAll(chapterProperties.toStringMap());
+
+        MediaObject mediaChapter =
+            MediaHeartbeat.createChapterObject(
+                videoContentProperties.getString("title"),
+                videoContentProperties.getLong("position", 1), // Segment does not spec this
+                videoContentProperties.getDouble("totalLength", 0),
+                videoContentProperties.getDouble("startTime", 0));
+
+        mediaChapter.setValue(
+            MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardChapterMetadata);
+
+        heartbeat.trackEvent(MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata);
+        break;
+
       case "Video Content Completed":
         heartbeat.trackComplete();
         break;
