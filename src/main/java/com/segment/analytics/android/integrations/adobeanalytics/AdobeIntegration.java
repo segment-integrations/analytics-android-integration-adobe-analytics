@@ -97,15 +97,8 @@ public class AdobeIntegration extends Integration<Void> {
     videoPropertyList.put("genre", MediaHeartbeat.VideoMetadataKeys.GENRE);
     videoPropertyList.put("channel", MediaHeartbeat.VideoMetadataKeys.NETWORK);
     videoPropertyList.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
+    videoPropertyList.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
     return videoPropertyList;
-  }
-
-  private static final Map<String, String> AD_METADATA_MAP = getStandardAdMetadata();
-
-  private static final Map<String, String> getStandardAdMetadata() {
-    Map<String, String> adPropertyList = new HashMap<>();
-    adPropertyList.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
-    return adPropertyList;
   }
 
   private final com.segment.analytics.Analytics analytics;
@@ -534,7 +527,7 @@ public class AdobeIntegration extends Integration<Void> {
       case "Video Ad Started":
         Properties videoAdProperties = track.properties();
         Map<String, String> standardAdMetadata = new HashMap<>();
-        Properties adProperties = mapStandardAdMetadata(videoAdProperties, standardAdMetadata);
+        Properties adProperties = mapStandardVideoMetadata(videoAdProperties, standardAdMetadata);
         HashMap<String, String> adMetadata = new HashMap<>();
         adMetadata.putAll(adProperties.toStringMap());
 
@@ -545,6 +538,10 @@ public class AdobeIntegration extends Integration<Void> {
                 videoAdProperties.getLong("indexPosition", 0),
                 videoAdProperties.getDouble("totalLength", 0));
 
+        // Delete assetId; otherwise helper function would map this incorrectly as standard video metadata
+        // Adobe handles "assetId" differently for content events and ad events
+        // This is the only property that is shared b/w ad and content events; all others are unique
+        standardAdMetadata.remove(MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
         mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
         heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata);
@@ -579,22 +576,6 @@ public class AdobeIntegration extends Integration<Void> {
               ? MediaHeartbeat.StreamType.LIVE
               : MediaHeartbeat.StreamType.VOD);
       propertiesCopy.remove("livestream");
-    }
-    return propertiesCopy;
-  }
-
-  private Properties mapStandardAdMetadata(
-      Properties properties, Map<String, String> standardAdMetadata) {
-    Properties propertiesCopy = new Properties();
-    propertiesCopy.putAll(properties);
-    for (Map.Entry<String, Object> entry : properties.entrySet()) {
-      String propertyKey = entry.getKey();
-      String value = String.valueOf(entry.getValue());
-
-      if (AD_METADATA_MAP.containsKey(propertyKey)) {
-        standardAdMetadata.put(AD_METADATA_MAP.get(propertyKey), value);
-        propertiesCopy.remove(propertyKey);
-      }
     }
     return propertiesCopy;
   }

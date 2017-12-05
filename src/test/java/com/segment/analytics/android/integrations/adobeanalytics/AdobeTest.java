@@ -611,7 +611,6 @@ public class AdobeTest {
 
     HashMap<String, String> adMetadata = new HashMap<>();
     adMetadata.put("title", "Car Commercial");
-    adMetadata.put("assetId", "123");
     adMetadata.put("totalLength", "10.0");
     adMetadata.put("indexPosition", "1");
 
