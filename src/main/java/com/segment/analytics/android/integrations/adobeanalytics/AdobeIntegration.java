@@ -80,9 +80,7 @@ public class AdobeIntegration extends Integration<Void> {
               "Video Playback Buffer Started",
               "Video Playback Buffer Completed",
               "Video Playback Seek Started",
-              "Video Playback Seek Completed",
-              "Video Ad Started",
-              "Video Ad Completed"));
+              "Video Playback Seek Completed"));
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
@@ -483,21 +481,6 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Seek Completed":
         heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
-        break;
-
-      case "Video Ad Started":
-        MediaObject adInfo =
-            MediaHeartbeat.createAdObject(
-                properties.getString("title"),
-                properties.getString("assetId"),
-                properties.getLong("position", 0),
-                properties.getDouble("totalLength", 0));
-
-        heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, adInfo, properties.toStringMap());
-        break;
-
-      case "Video Ad Completed":
-        heartbeat.trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
         break;
     }
   }
