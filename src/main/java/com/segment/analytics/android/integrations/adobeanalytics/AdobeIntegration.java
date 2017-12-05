@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
+import com.adobe.primetime.va.Heartbeat;
 import com.adobe.primetime.va.simple.MediaHeartbeat;
 import com.adobe.primetime.va.simple.MediaHeartbeat.MediaHeartbeatDelegate;
 import com.adobe.primetime.va.simple.MediaHeartbeatConfig;
@@ -58,7 +59,8 @@ public class AdobeIntegration extends Integration<Void> {
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   String productIdentifier;
-  boolean videoHeartbeatEnabled;
+  com.segment.analytics.Analytics analytics;
+  boolean adobeLogLevel;
   private final Logger logger;
 
   private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
@@ -76,6 +78,9 @@ public class AdobeIntegration extends Integration<Void> {
 
   MediaHeartbeatConfig config;
   private MediaHeartbeat heartbeat;
+  HeartbeatFactory heartbeatFactory;
+  String heartbeatTrackingServer;
+  boolean ssl;
 
   private static final Set<String> VIDEO_EVENT_LIST =
       new HashSet<>(
@@ -112,33 +117,15 @@ public class AdobeIntegration extends Integration<Void> {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
-    this.videoHeartbeatEnabled = settings.getBoolean("videoHeartbeatEnabled", false);
+    this.analytics = analytics;
+    this.heartbeatFactory = heartbeatFactory;
+    this.heartbeatTrackingServer = settings.getString("heartbeatTrackingServer");
+    this.ssl = settings.getBoolean("ssl", false);
     this.logger = logger;
 
-    boolean adobeLogLevel =
+    this.adobeLogLevel =
         logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
     Config.setDebugLogging(adobeLogLevel);
-
-    if (videoHeartbeatEnabled) {
-      Context context = analytics.getApplication();
-
-      config = new MediaHeartbeatConfig();
-
-      config.trackingServer = settings.getString("heartbeatTrackingServer");
-      config.channel = settings.getString("heartbeatChannel");
-      // default app version to 0.0 if not otherwise present b/c Adobe requires this value
-      if (!isNullOrEmpty(context.getPackageName())) {
-        config.appVersion = context.getPackageName();
-      } else {
-        config.appVersion = "0.0";
-      }
-      config.ovp = settings.getString("heartbeatOnlineVideoPlatform");
-      config.playerName = settings.getString("heartbeatPlayerName");
-      config.ssl = settings.getBoolean("heartbeatEnableSsl", false);
-      config.debugLogging = adobeLogLevel;
-
-      heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
-    }
   }
 
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
@@ -227,8 +214,8 @@ public class AdobeIntegration extends Integration<Void> {
     String eventName = track.event();
     Properties properties = track.properties();
 
-    if (videoHeartbeatEnabled && VIDEO_EVENT_LIST.contains(eventName)) {
-      trackVideo(eventName, properties);
+    if (VIDEO_EVENT_LIST.contains(eventName)) {
+      trackVideo(eventName, track);
       return;
     }
 
@@ -399,9 +386,49 @@ public class AdobeIntegration extends Integration<Void> {
     logger.verbose("Config.setUserIdentifier(null);");
   }
 
-  private void trackVideo(String eventName, Properties properties) {
+  private void trackVideo(String eventName, TrackPayload track) {
+
+    if (heartbeatTrackingServer == null) {
+      logger.verbose(
+          "Please enter a Heartbeat Tracking Server URL in your Segment UI "
+              + "Settings in order to send video events to Adobe Analytics");
+      return;
+    }
+
     switch (eventName) {
-      case "Video Content Started":
+      case "Video Playback Started":
+        Context context = analytics.getApplication();
+        Properties properties = track.properties();
+        config = new MediaHeartbeatConfig();
+        ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
+
+        config.trackingServer = heartbeatTrackingServer;
+        if (properties.get("channel") != null) {
+          config.channel = properties.getString("channel");
+        } else {
+          config.channel = "";
+        }
+        // default app version to 0.0 if not otherwise present b/c Adobe requires this value
+         if (!isNullOrEmpty(context.getPackageName())) {
+          config.appVersion = context.getPackageName();
+        } else {
+          config.appVersion = "0.0";
+        }
+        if (eventOptions.getString("ovpName") != null) {
+          config.ovp = eventOptions.getString("ovpName");
+        } else {
+          config.ovp = "";
+        }
+        if (properties.get("playerName") != null) {
+          config.playerName = properties.getString("playerName");
+        } else {
+          config.playerName = "unknown video player";
+        }
+        config.ssl = ssl;
+        config.debugLogging = adobeLogLevel;
+
+        heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
+
         Map<String, String> standardVideoMetadata = new HashMap<>();
         Properties videoProperties = mapStandardVideoMetadata(properties, standardVideoMetadata);
         HashMap<String, String> videoMetadata = new HashMap<>();
@@ -410,7 +437,7 @@ public class AdobeIntegration extends Integration<Void> {
         MediaObject mediaInfo =
             MediaHeartbeat.createMediaObject(
                 properties.getString("title"),
-                properties.getString("sessionId"),
+                properties.getString("contentAssetId"),
                 properties.getDouble("totalLength", 0),
                 properties.getBoolean("livestream", false)
                     ? MediaHeartbeat.StreamType.LIVE
@@ -420,7 +447,6 @@ public class AdobeIntegration extends Integration<Void> {
             MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
 
         heartbeat.trackSessionStart(mediaInfo, videoMetadata);
-        heartbeat.trackPlay();
         break;
 
       case "Video Playback Paused":

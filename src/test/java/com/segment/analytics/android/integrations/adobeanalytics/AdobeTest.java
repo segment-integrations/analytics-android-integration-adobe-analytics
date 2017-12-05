@@ -114,8 +114,7 @@ public class AdobeTest {
 
     verifyStatic();
     Config.setDebugLogging(true);
-    
-    assertTrue(integration.videoHeartbeatEnabled);
+
     assertTrue(integration.config.debugLogging);
     assertTrue(integration.config.trackingServer.equals("exchangepartnersegment.hb.omtrdc.net"));
     assertTrue(integration.config.channel.equals("Video Channel"));
@@ -442,7 +441,6 @@ public class AdobeTest {
 
   @Test
   public void trackVideoContentStarted() {
-    integration.videoHeartbeatEnabled = true;
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event("Video Content Started")
