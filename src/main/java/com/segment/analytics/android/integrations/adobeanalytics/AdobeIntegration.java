@@ -5,7 +5,6 @@ import android.content.Context;
 import android.os.Bundle;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
-import com.adobe.primetime.va.Heartbeat;
 import com.adobe.primetime.va.simple.MediaHeartbeat;
 import com.adobe.primetime.va.simple.MediaHeartbeat.MediaHeartbeatDelegate;
 import com.adobe.primetime.va.simple.MediaHeartbeatConfig;
@@ -80,6 +79,7 @@ public class AdobeIntegration extends Integration<Void> {
   private MediaHeartbeat heartbeat;
   HeartbeatFactory heartbeatFactory;
   String heartbeatTrackingServer;
+  String packageName;
   boolean ssl;
 
   private static final Set<String> VIDEO_EVENT_LIST =
@@ -123,6 +123,15 @@ public class AdobeIntegration extends Integration<Void> {
     this.heartbeatTrackingServer = settings.getString("heartbeatTrackingServer");
     this.ssl = settings.getBoolean("ssl", false);
     this.logger = logger;
+
+    Context context = analytics.getApplication();
+
+    if (context.getPackageName() != null) {
+      this.packageName = context.getPackageName();
+    } else {
+      // default app version to 0.0 if not otherwise present b/c Adobe requires this value
+      packageName = "0.0";
+    }
 
     this.adobeLogLevel = logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
     Config.setDebugLogging(adobeLogLevel);
@@ -407,12 +416,7 @@ public class AdobeIntegration extends Integration<Void> {
         } else {
           config.channel = "";
         }
-        // default app version to 0.0 if not otherwise present b/c Adobe requires this value
-        if (!isNullOrEmpty(context.getPackageName())) {
-          config.appVersion = context.getPackageName();
-        } else {
-          config.appVersion = "0.0";
-        }
+        config.appVersion = packageName;
         ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
         if (eventOptions != null && eventOptions.getString("ovpName") != null) {
           config.ovp = eventOptions.getString("ovpName");
