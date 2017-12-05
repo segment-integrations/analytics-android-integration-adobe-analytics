@@ -405,12 +405,12 @@ public class AdobeIntegration extends Integration<Void> {
     switch (eventName) {
       case "Video Playback Started":
         Context context = analytics.getApplication();
-        Properties videoPlaybackProperties = track.properties();
+        Properties properties = track.properties();
         MediaHeartbeatConfig config = new MediaHeartbeatConfig();
 
         config.trackingServer = heartbeatTrackingServer;
-        if (videoPlaybackProperties.get("channel") != null) {
-          config.channel = videoPlaybackProperties.getString("channel");
+        if (properties.get("channel") != null) {
+          config.channel = properties.getString("channel");
         } else {
           config.channel = "";
         }
@@ -421,8 +421,8 @@ public class AdobeIntegration extends Integration<Void> {
         } else {
           config.ovp = "unknown";
         }
-        if (videoPlaybackProperties.get("playerName") != null) {
-          config.playerName = videoPlaybackProperties.getString("playerName");
+        if (properties.get("playerName") != null) {
+          config.playerName = properties.getString("playerName");
         } else {
           config.playerName = "unknown";
         }
@@ -433,16 +433,16 @@ public class AdobeIntegration extends Integration<Void> {
 
         Map<String, String> standardVideoMetadata = new HashMap<>();
         Properties videoProperties =
-            mapStandardVideoMetadata(videoPlaybackProperties, standardVideoMetadata);
+            mapStandardVideoMetadata(properties, standardVideoMetadata);
         HashMap<String, String> videoMetadata = new HashMap<>();
         videoMetadata.putAll(videoProperties.toStringMap());
 
         MediaObject mediaInfo =
             MediaHeartbeat.createMediaObject(
-                videoPlaybackProperties.getString("title"),
-                videoPlaybackProperties.getString("contentAssetId"),
-                videoPlaybackProperties.getDouble("totalLength", 0),
-                videoPlaybackProperties.getBoolean("livestream", false)
+                properties.getString("title"),
+                properties.getString("contentAssetId"),
+                properties.getDouble("totalLength", 0),
+                properties.getBoolean("livestream", false)
                     ? MediaHeartbeat.StreamType.LIVE
                     : MediaHeartbeat.StreamType.VOD);
 
