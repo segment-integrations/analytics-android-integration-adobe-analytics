@@ -534,6 +534,7 @@ public class AdobeIntegration extends Integration<Void> {
         break;
 
       case "Video Playback Buffer Completed":
+        playbackDelegate.unPausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
         break;
 

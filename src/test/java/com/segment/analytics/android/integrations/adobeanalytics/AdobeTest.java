@@ -537,6 +537,7 @@ public class AdobeTest {
   public void trackVideoBufferStarted() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Started");
+    assertTrue(integration.playbackDelegate.isPaused);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
   }
 
@@ -544,6 +545,7 @@ public class AdobeTest {
   public void trackVideoBufferComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Completed");
+    assertTrue(!integration.playbackDelegate.isPaused);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
   }
 
@@ -551,6 +553,7 @@ public class AdobeTest {
   public void trackVideoSeekStarted() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Seek Started");
+    assertTrue(integration.playbackDelegate.isPaused);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
   }
 
