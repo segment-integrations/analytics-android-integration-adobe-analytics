@@ -136,6 +136,12 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
+    long initialTime;
+    long playheadPosition;
+    long pausedPlayheadPosition;
+    long pauseStartedTime;
+    long offset = 0;
+    boolean isPaused = false;
 
     private PlaybackDelegate() {}
 
@@ -146,7 +152,37 @@ public class AdobeIntegration extends Integration<Void> {
 
     @Override
     public Double getCurrentPlaybackTime() {
-      return null;
+      if (initialTime == 0) {
+        setInitialTime();
+      }
+      if (!isPaused) {
+        incrementPlayheadPosition();
+        return (double) playheadPosition;
+      }
+      return (double) pausedPlayheadPosition;
+    }
+
+    private void setInitialTime() {
+      this.initialTime = System.currentTimeMillis();
+    }
+
+    private void incrementPlayheadPosition() {
+      this.playheadPosition = ((System.currentTimeMillis() - initialTime) / 1000) - offset;
+    }
+
+    private void pausePlayhead() {
+      this.pausedPlayheadPosition = playheadPosition;
+      this.pauseStartedTime = System.currentTimeMillis();
+      this.isPaused = true;
+    }
+
+    private void unPausePlayhead() {
+      if (offset == 0) {
+        offset = (System.currentTimeMillis() - pauseStartedTime) / 1000;
+      } else {
+        offset = offset + (System.currentTimeMillis() - pauseStartedTime) / 1000;
+      }
+      isPaused = false;
     }
   }
 
