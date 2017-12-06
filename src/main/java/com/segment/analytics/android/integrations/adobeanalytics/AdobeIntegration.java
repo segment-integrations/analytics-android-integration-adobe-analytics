@@ -144,7 +144,9 @@ public class AdobeIntegration extends Integration<Void> {
     long offset = 0;
     boolean isPaused = false;
 
-    private PlaybackDelegate() {}
+    private PlaybackDelegate() {
+      this.initialTime = System.currentTimeMillis();
+    }
 
     @Override
     public MediaObject getQoSObject() {
@@ -153,18 +155,11 @@ public class AdobeIntegration extends Integration<Void> {
 
     @Override
     public Double getCurrentPlaybackTime() {
-      if (initialTime == 0) {
-        setInitialTime();
-      }
       if (!isPaused) {
         incrementPlayheadPosition();
         return (double) playheadPosition;
       }
       return (double) pausedPlayheadPosition;
-    }
-
-    private void setInitialTime() {
-      this.initialTime = System.currentTimeMillis();
     }
 
     private void incrementPlayheadPosition() {
