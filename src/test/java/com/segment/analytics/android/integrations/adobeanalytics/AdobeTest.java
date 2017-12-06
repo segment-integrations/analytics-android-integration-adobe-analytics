@@ -465,12 +465,14 @@ public class AdobeTest {
 
     verify(heartbeat).trackSessionStart(isEqualToComparingFieldByFieldRecursively(mediaInfo),
         eq(videoMetadata));
+    assertTrue(integration.playbackDelegate != null);
   }
 
   @Test
   public void trackVideoPlaybackPaused() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Paused");
+    assertTrue(integration.playbackDelegate.isPaused);
     verify(heartbeat).trackPause();
   }
 
@@ -478,6 +480,7 @@ public class AdobeTest {
   public void trackVideoPlaybackResumed() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Resumed");
+    assertTrue(!integration.playbackDelegate.isPaused);
     verify(heartbeat).trackPlay();
   }
 

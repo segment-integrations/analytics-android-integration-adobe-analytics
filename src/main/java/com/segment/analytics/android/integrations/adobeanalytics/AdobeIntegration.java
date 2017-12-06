@@ -100,6 +100,7 @@ public class AdobeIntegration extends Integration<Void> {
   private final Logger logger;
   private MediaHeartbeat heartbeat;
   private HeartbeatFactory heartbeatFactory;
+  PlaybackDelegate playbackDelegate;
   final boolean adobeLogLevel;
   final String heartbeatTrackingServer;
   final String packageName;
@@ -465,7 +466,8 @@ public class AdobeIntegration extends Integration<Void> {
         config.ssl = ssl;
         config.debugLogging = adobeLogLevel;
 
-        heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
+        this.playbackDelegate = new PlaybackDelegate();
+        heartbeat = heartbeatFactory.get(playbackDelegate, config);
 
         Map<String, String> standardVideoMetadata = new HashMap<>();
         Properties videoProperties = mapStandardVideoMetadata(properties, standardVideoMetadata);
@@ -488,10 +490,12 @@ public class AdobeIntegration extends Integration<Void> {
         break;
 
       case "Video Playback Paused":
+        playbackDelegate.pausePlayhead();
         heartbeat.trackPause();
         break;
 
       case "Video Playback Resumed":
+        playbackDelegate.unPausePlayhead();
         heartbeat.trackPlay();
         break;
 
@@ -525,6 +529,7 @@ public class AdobeIntegration extends Integration<Void> {
         break;
 
       case "Video Playback Buffer Started":
+        playbackDelegate.pausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
         break;
 
@@ -533,6 +538,7 @@ public class AdobeIntegration extends Integration<Void> {
         break;
 
       case "Video Playback Seek Started":
+        playbackDelegate.pausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
         break;
 
