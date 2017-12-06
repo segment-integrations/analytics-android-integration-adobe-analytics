@@ -80,7 +80,11 @@ public class AdobeIntegration extends Integration<Void> {
               "Video Playback Buffer Started",
               "Video Playback Buffer Completed",
               "Video Playback Seek Started",
-              "Video Playback Seek Completed"));
+              "Video Playback Seek Completed",
+              "Video Ad Break Started",
+              "Video Ad Break Completed",
+              "Video Ad Started",
+              "Video Ad Completed"));
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
@@ -93,6 +97,7 @@ public class AdobeIntegration extends Integration<Void> {
     videoPropertyList.put("genre", MediaHeartbeat.VideoMetadataKeys.GENRE);
     videoPropertyList.put("channel", MediaHeartbeat.VideoMetadataKeys.NETWORK);
     videoPropertyList.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
+    videoPropertyList.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
     return videoPropertyList;
   }
 
@@ -502,6 +507,51 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Seek Completed":
         heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
+        break;
+
+      case "Video Ad Break Started":
+        Properties videoAdBreakProperties = track.properties();
+        MediaObject mediaAdBreakInfo =
+            MediaHeartbeat.createAdBreakObject(
+                videoAdBreakProperties.getString("title"),
+                videoAdBreakProperties.getLong("indexPosition", 1), // Segment does not spec this
+                videoAdBreakProperties.getDouble("startTime", 0));
+
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, null);
+        break;
+
+      case "Video Ad Break Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
+        break;
+
+      case "Video Ad Started":
+        Properties videoAdProperties = track.properties();
+        Map<String, String> standardAdMetadata = new HashMap<>();
+        Properties adProperties = mapStandardVideoMetadata(videoAdProperties, standardAdMetadata);
+        HashMap<String, String> adMetadata = new HashMap<>();
+        adMetadata.putAll(adProperties.toStringMap());
+
+        MediaObject mediaAdInfo =
+            MediaHeartbeat.createAdObject(
+                videoAdProperties.getString("title"),
+                videoAdProperties.getString("assetId"),
+                videoAdProperties.getLong("indexPosition", 0),
+                videoAdProperties.getDouble("totalLength", 0));
+
+        // Delete assetId; otherwise helper function would map this incorrectly as standard video metadata
+        // Adobe handles "assetId" differently for content events and ad events
+        // This is the only property that is shared b/w ad and content events; all others are unique
+        standardAdMetadata.remove(MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
+        mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
+
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata);
+        break;
+
+      case "Video Ad Skipped":
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdSkip, null, null);
+
+      case "Video Ad Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
         break;
     }
   }
