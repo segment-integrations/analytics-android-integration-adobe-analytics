@@ -136,23 +136,39 @@ public class AdobeIntegration extends Integration<Void> {
     Config.setDebugLogging(adobeLogLevel);
   }
 
+  /*
+   * PlaybackDelegate implements Adobe's MediaHeartbeatDelegate interface. This implementation allows us
+   * to write logic and returns the position of a video playhead during a video session.
+   */
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
-    long initialTime;
+    /** The system time at which the current instance of PlaybackDelegate was instantiated * */
+    final long initialTime;
+    /** The current playhead position * */
     long playheadPosition;
+    /** The position of the playhead when the video is paused * */
     long pausedPlayheadPosition;
+    /** The system time at which pausePlayhead() was invoked * */
     long pauseStartedTime;
+    /** The total time in seconds a video has been in a paused state during a video session * */
     long offset = 0;
+
     boolean isPaused = false;
 
     private PlaybackDelegate() {
       this.initialTime = System.currentTimeMillis();
     }
 
+    /** TO DO: Implement quality of service method. */
     @Override
     public MediaObject getQoSObject() {
       return null;
     }
 
+    /**
+     * Adobe invokes this method once per second to resolve the current position of the video
+     * playhead. Unless paused, this method increments the value of `playheadPosition` by one every
+     * second by calling `incrementPlayheadPosition()`
+     */
     @Override
     public Double getCurrentPlaybackTime() {
       if (!isPaused) {
@@ -162,16 +178,39 @@ public class AdobeIntegration extends Integration<Void> {
       return (double) pausedPlayheadPosition;
     }
 
+    /**
+     * `getCurrentPlayback()` time invokes this method once per second to resolve the current
+     * location of the video playhead:
+     *
+     * <p>(currentSystemTime - videoSessionStartTime) - offset
+     */
     private void incrementPlayheadPosition() {
       this.playheadPosition = ((System.currentTimeMillis() - initialTime) / 1000) - offset;
     }
 
+    /**
+     * Stores the current playhead position in `pausedPlayheadPosition`. Also stores the system time
+     * at which the video was paused in `pauseStartedTime`. Sets `isPaused` to true so
+     * `getCurrentPlaybackTime()` knows the video is in a paused state.
+     */
     private void pausePlayhead() {
       this.pausedPlayheadPosition = playheadPosition;
       this.pauseStartedTime = System.currentTimeMillis();
       this.isPaused = true;
     }
 
+    /**
+     * This method sets the `isPaused` flag to false, as well as calculates the `offset` value.
+     * `Offset` represents the total cumulative time in seconds a video was in a paused state during
+     * a session. If no offset exists:
+     *
+     * <p>offset = currentSystemTime - timePlayerWasPaused
+     *
+     * <p>Otherwise, the offset is added to the existing offset value. This may be the case if a
+     * user pauses and unpauses the video many times during a single session:
+     *
+     * <p>offset = originalOffset + (currentSystemTime - timePlayerWasPaused)
+     */
     private void unPausePlayhead() {
       if (offset == 0) {
         offset = (System.currentTimeMillis() - pauseStartedTime) / 1000;
