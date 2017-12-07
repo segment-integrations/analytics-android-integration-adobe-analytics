@@ -540,6 +540,7 @@ public class AdobeTest {
 
     mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, new HashMap<String, String>());
 
+    verify(heartbeat).trackPlay();
     verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart), isEqualToComparingFieldByFieldRecursively(mediaChapter),
         eq(videoMetadata));
   }
