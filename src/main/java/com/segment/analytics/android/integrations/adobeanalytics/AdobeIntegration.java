@@ -154,7 +154,7 @@ public class AdobeIntegration extends Integration<Void> {
 
     boolean isPaused = false;
 
-    private PlaybackDelegate() {
+    public PlaybackDelegate() {
       this.initialTime = System.currentTimeMillis();
     }
 

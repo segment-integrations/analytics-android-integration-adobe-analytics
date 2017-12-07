@@ -411,44 +411,27 @@ public class AdobeTest {
   }
 
   @Test
-  public void videoPlaybackDelegatePlay() {
-    newVideoSession();
-    try {
-      Thread.sleep(2000);
-    }
-    catch(InterruptedException e) {
-    }
+  public void videoPlaybackDelegatePlay() throws Exception {
+    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
+    Thread.sleep(2000);
     assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(2.0));
   }
 
   @Test
-  public void videoPlaybackDelegatePaused() {
-    newVideoSession();
+  public void videoPlaybackDelegatePaused() throws Exception {
+    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
     integration.playbackDelegate.pausePlayhead();
     Double firstPlayheadPosition = integration.playbackDelegate.getCurrentPlaybackTime();
-    try {
-      Thread.sleep(2000);
-    }
-    catch(InterruptedException e) {
-    }
+    Thread.sleep(2000);
     assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(firstPlayheadPosition));
   }
 
   @Test
-  public void videoPlaybackDelegatePlayAndPause() {
-    newVideoSession();
+  public void videoPlaybackDelegatePlayAndPause() throws Exception {
+    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
     integration.playbackDelegate.pausePlayhead();
-    try {
-      Thread.sleep(1000);
-    }
-    catch(InterruptedException e) {
-    }
-    integration.playbackDelegate.unPausePlayhead();
-    try {
-      Thread.sleep(3000);
-    }
-    catch(InterruptedException e) {
-    }
+    Thread.sleep(1000);
+    integration.playbackDelegate.unPausePlayhead();Thread.sleep(3000);
     assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(3.0));
   }
 
