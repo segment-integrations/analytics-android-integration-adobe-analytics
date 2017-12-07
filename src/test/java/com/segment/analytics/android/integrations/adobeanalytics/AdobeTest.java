@@ -3,6 +3,7 @@ package com.segment.analytics.android.integrations.adobeanalytics;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import com.adobe.mobile.Analytics;
 import com.adobe.mobile.Config;
 import com.adobe.primetime.va.simple.MediaHeartbeat;
@@ -578,15 +579,19 @@ public class AdobeTest {
   @Test
   public void trackVideoSeekStarted() {
     newVideoSession();
-    heartbeatTestFixture("Video Playback Seek Started");
+    heartbeatSeekFixture("Video Playback Seek Started", null);
     assertTrue(integration.playbackDelegate.isPaused);
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == 0.0);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
   }
 
   @Test
   public void trackVideoSeekComplete() {
     newVideoSession();
-    heartbeatTestFixture("Video Playback Seek Completed");
+    Double first = integration.playbackDelegate.getCurrentPlaybackTime();
+    heartbeatSeekFixture("Video Playback Seek Completed", 50L);
+    assertTrue(!integration.playbackDelegate.isPaused);
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == first + 50.0);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
   }
 
@@ -755,6 +760,17 @@ public class AdobeTest {
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event(eventName)
+        .build()
+    );
+  }
+
+  private void heartbeatSeekFixture(String eventName, @Nullable Long position) {
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event(eventName)
+        .properties(new Properties()
+            .putValue("position", (position != null ? position : 0))
+        )
         .build()
     );
   }

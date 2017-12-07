@@ -194,10 +194,16 @@ public class AdobeIntegration extends Integration<Void> {
      * `getCurrentPlayback()` time invokes this method once per second to resolve the current
      * location of the video playhead:
      *
-     * <p>(currentSystemTime - videoSessionStartTime) - offset
+     * <p>updatedPlayheadPosition + (currentSystemTime - videoSessionStartTime) - offset
+     *
+     * <p>updatedPlayheadPosition represents a user-specified position of the playhead. This is
+     * useful for updating the playhead position after a "Video Playback Seek Completed" event. The
+     * user must provide the updated playhead position in order for this method to update the
+     * playhead position here properly.
      */
     private void incrementPlayheadPosition() {
-      this.playheadPosition = ((System.currentTimeMillis() - initialTime) / 1000) - offset;
+      this.playheadPosition =
+          updatedPlayheadPosition + ((System.currentTimeMillis() - initialTime) / 1000) - offset;
     }
 
     /**
@@ -233,8 +239,8 @@ public class AdobeIntegration extends Integration<Void> {
     }
 
     /**
-     * Resumes invocation of `getCurrentPlaybackTime()` by setting `isPaused` to false. This is
-     * only called when a customer sends a "Video Playback Seek Completed" event.
+     * Resumes invocation of `getCurrentPlaybackTime()` by setting `isPaused` to false. This is only
+     * called when a customer sends a "Video Playback Seek Completed" event.
      */
     public void resumePlayheadAfterSeeking() {
       this.isPaused = false;
@@ -249,7 +255,7 @@ public class AdobeIntegration extends Integration<Void> {
      *     Seek Completed" event. This value is required for accurate reporting in the Adobe
      *     dashboard. It defaults to 0.
      */
-    public void updatePlayhead(Long playheadPosition) {
+    public void updatePlayheadPosition(Long playheadPosition) {
       this.initialTime = System.currentTimeMillis();
       this.updatedPlayheadPosition = playheadPosition;
     }
@@ -614,7 +620,7 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Seek Completed":
         Properties seekProperties = track.properties();
-        playbackDelegate.updatePlayhead(seekProperties.getLong("position", 0));
+        playbackDelegate.updatePlayheadPosition(seekProperties.getLong("position", 0));
         playbackDelegate.resumePlayheadAfterSeeking();
         heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
         break;
