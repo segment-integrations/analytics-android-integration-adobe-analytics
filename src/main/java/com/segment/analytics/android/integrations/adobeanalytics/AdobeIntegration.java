@@ -144,14 +144,20 @@ public class AdobeIntegration extends Integration<Void> {
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
     /** The system time at which the current instance of PlaybackDelegate was instantiated * */
     final long initialTime;
-    /** The current playhead position; atomic in case this value is accessed by multiple threads * */
+    /**
+     * The current playhead position; atomic in case this value is accessed by multiple threads *
+     */
     AtomicLong playheadPosition = new AtomicLong();
-    /** The position of the playhead when the video is paused; atomic in case this value is accessed by multiple threads * */
+    /**
+     * The position of the playhead when the video is paused; atomic in case this value is accessed
+     * by multiple threads *
+     */
     AtomicLong pausedPlayheadPosition = new AtomicLong();
     /** The system time at which pausePlayhead() was invoked * */
     long pauseStartedTime;
     /** The total time in seconds a video has been in a paused state during a video session * */
     long offset = 0;
+
     boolean isPaused = false;
 
     private PlaybackDelegate() {
