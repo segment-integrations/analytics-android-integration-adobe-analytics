@@ -411,6 +411,48 @@ public class AdobeTest {
   }
 
   @Test
+  public void videoPlaybackDelegatePlay() {
+    newVideoSession();
+    try {
+      Thread.sleep(2000);
+    }
+    catch(InterruptedException e) {
+    }
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(2.0));
+  }
+
+  @Test
+  public void videoPlaybackDelegatePaused() {
+    newVideoSession();
+    integration.playbackDelegate.pausePlayhead();
+    Double firstPlayheadPosition = integration.playbackDelegate.getCurrentPlaybackTime();
+    try {
+      Thread.sleep(2000);
+    }
+    catch(InterruptedException e) {
+    }
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(firstPlayheadPosition));
+  }
+
+  @Test
+  public void videoPlaybackDelegatePlayAndPause() {
+    newVideoSession();
+    integration.playbackDelegate.pausePlayhead();
+    try {
+      Thread.sleep(1000);
+    }
+    catch(InterruptedException e) {
+    }
+    integration.playbackDelegate.unPausePlayhead();
+    try {
+      Thread.sleep(3000);
+    }
+    catch(InterruptedException e) {
+    }
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(3.0));
+  }
+
+  @Test
   public void trackVideoPlaybackStarted() {
     ValueMap options = new ValueMap();
     ValueMap integrationSpecificOptions = new ValueMap();

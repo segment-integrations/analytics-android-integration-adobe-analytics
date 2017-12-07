@@ -199,7 +199,7 @@ public class AdobeIntegration extends Integration<Void> {
      * at which the video was paused in `pauseStartedTime`. Sets `isPaused` to true so
      * `getCurrentPlaybackTime()` knows the video is in a paused state.
      */
-    private void pausePlayhead() {
+    public void pausePlayhead() {
       this.pausedPlayheadPosition.set(playheadPosition.get());
       this.pauseStartedTime = System.currentTimeMillis();
       this.isPaused = true;
@@ -217,7 +217,7 @@ public class AdobeIntegration extends Integration<Void> {
      *
      * <p>offset = originalOffset + (currentSystemTime - timePlayerWasPaused)
      */
-    private void unPausePlayhead() {
+    public void unPausePlayhead() {
       if (offset == 0) {
         offset = (System.currentTimeMillis() - pauseStartedTime) / 1000;
       } else {
