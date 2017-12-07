@@ -147,7 +147,9 @@ public class AdobeIntegration extends Integration<Void> {
    */
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
     /**
-     * The system time in millis at which the current instance of PlaybackDelegate was instantiated
+     * The system time in millis at which the playhead is first set or updated. The playhead is
+     * first set upon instantiation of the PlaybackDelegate. The value is updated whenever
+     * `updatePlayheadPosition()` is invoked.
      */
     long initialTime;
     /** The current playhead position in seconds */
