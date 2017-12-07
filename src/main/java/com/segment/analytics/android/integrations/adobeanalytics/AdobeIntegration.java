@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static com.segment.analytics.internal.Utils.isNullOrEmpty;
 
@@ -139,20 +138,15 @@ public class AdobeIntegration extends Integration<Void> {
 
   /*
    * PlaybackDelegate implements Adobe's MediaHeartbeatDelegate interface. This implementation allows us
-   * to define logic that returns the position of a video playhead during a video session.
+   * to write logic and returns the position of a video playhead during a video session.
    */
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
     /** The system time at which the current instance of PlaybackDelegate was instantiated * */
     final long initialTime;
-    /**
-     * The current playhead position; atomic in case this value is accessed by multiple threads *
-     */
-    AtomicLong playheadPosition = new AtomicLong();
-    /**
-     * The position of the playhead when the video is paused; atomic in case this value is accessed
-     * by multiple threads *
-     */
-    AtomicLong pausedPlayheadPosition = new AtomicLong();
+    /** The current playhead position * */
+    long playheadPosition;
+    /** The position of the playhead when the video is paused * */
+    long pausedPlayheadPosition;
     /** The system time at which pausePlayhead() was invoked * */
     long pauseStartedTime;
     /** The total time in seconds a video has been in a paused state during a video session * */
@@ -179,9 +173,9 @@ public class AdobeIntegration extends Integration<Void> {
     public Double getCurrentPlaybackTime() {
       if (!isPaused) {
         incrementPlayheadPosition();
-        return (double) playheadPosition.get();
+        return (double) playheadPosition;
       }
-      return (double) pausedPlayheadPosition.get();
+      return (double) pausedPlayheadPosition;
     }
 
     /**
@@ -191,7 +185,7 @@ public class AdobeIntegration extends Integration<Void> {
      * <p>(currentSystemTime - videoSessionStartTime) - offset
      */
     private void incrementPlayheadPosition() {
-      this.playheadPosition.set(((System.currentTimeMillis() - initialTime) / 1000) - offset);
+      this.playheadPosition = ((System.currentTimeMillis() - initialTime) / 1000) - offset;
     }
 
     /**
@@ -200,7 +194,7 @@ public class AdobeIntegration extends Integration<Void> {
      * `getCurrentPlaybackTime()` knows the video is in a paused state.
      */
     public void pausePlayhead() {
-      this.pausedPlayheadPosition.set(playheadPosition.get());
+      this.pausedPlayheadPosition = playheadPosition;
       this.pauseStartedTime = System.currentTimeMillis();
       this.isPaused = true;
     }
