@@ -620,7 +620,7 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Seek Completed":
         Properties seekProperties = track.properties();
-        playbackDelegate.updatePlayheadPosition(seekProperties.getLong("position", 0));
+        playbackDelegate.updatePlayheadPosition(seekProperties.getLong("seekPosition", 0));
         playbackDelegate.resumePlayheadAfterSeeking();
         heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
         break;

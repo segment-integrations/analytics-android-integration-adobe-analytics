@@ -764,12 +764,12 @@ public class AdobeTest {
     );
   }
 
-  private void heartbeatSeekFixture(String eventName, @Nullable Long position) {
+  private void heartbeatSeekFixture(String eventName, @Nullable Long seekPosition) {
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event(eventName)
         .properties(new Properties()
-            .putValue("position", (position != null ? position : 0))
+            .putValue("seekPosition", (seekPosition != null ? seekPosition : 0))
         )
         .build()
     );
