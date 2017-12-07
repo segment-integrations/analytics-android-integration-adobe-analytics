@@ -143,16 +143,15 @@ public class AdobeIntegration extends Integration<Void> {
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
     /**
      * The system time in millis at which the current instance of PlaybackDelegate was instantiated
-     * *
      */
     final long initialTime;
-    /** The current playhead position in seconds * */
+    /** The current playhead position in seconds */
     long playheadPosition;
-    /** The position of the playhead in seconds when the video was paused * */
+    /** The position of the playhead in seconds when the video was paused */
     long pausedPlayheadPosition;
-    /** The system time in millis at which pausePlayhead() was invoked * */
+    /** The system time in millis at which pausePlayhead() was invoked */
     long pauseStartedTime;
-    /** The total time in seconds a video has been in a paused state during a video session * */
+    /** The total time in seconds a video has been in a paused state during a video session */
     long offset = 0;
 
     boolean isPaused = false;
