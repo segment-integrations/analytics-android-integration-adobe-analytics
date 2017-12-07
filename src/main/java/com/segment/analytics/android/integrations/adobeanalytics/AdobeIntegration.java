@@ -105,6 +105,7 @@ public class AdobeIntegration extends Integration<Void> {
   private final Logger logger;
   private MediaHeartbeat heartbeat;
   private HeartbeatFactory heartbeatFactory;
+  PlaybackDelegate playbackDelegate;
   final boolean adobeLogLevel;
   final String heartbeatTrackingServer;
   final String packageName;
@@ -140,18 +141,90 @@ public class AdobeIntegration extends Integration<Void> {
     Config.setDebugLogging(adobeLogLevel);
   }
 
+  /*
+   * PlaybackDelegate implements Adobe's MediaHeartbeatDelegate interface. This implementation allows us
+   * to write logic and returns the position of a video playhead during a video session.
+   */
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
+    /**
+     * The system time in millis at which the current instance of PlaybackDelegate was instantiated
+     */
+    final long initialTime;
+    /** The current playhead position in seconds */
+    long playheadPosition;
+    /** The position of the playhead in seconds when the video was paused */
+    long pausedPlayheadPosition;
+    /** The system time in millis at which pausePlayhead() was invoked */
+    long pauseStartedTime;
+    /** The total time in seconds a video has been in a paused state during a video session */
+    long offset = 0;
 
-    private PlaybackDelegate() {}
+    boolean isPaused = false;
 
+    public PlaybackDelegate() {
+      this.initialTime = System.currentTimeMillis();
+    }
+
+    /** TO DO: Implement quality of service method. */
     @Override
     public MediaObject getQoSObject() {
       return null;
     }
 
+    /**
+     * Adobe invokes this method once per second to resolve the current position of the video
+     * playhead. Unless paused, this method increments the value of `playheadPosition` by one every
+     * second by calling `incrementPlayheadPosition()`
+     */
     @Override
     public Double getCurrentPlaybackTime() {
-      return null;
+      if (!isPaused) {
+        incrementPlayheadPosition();
+        return (double) playheadPosition;
+      }
+      return (double) pausedPlayheadPosition;
+    }
+
+    /**
+     * `getCurrentPlayback()` time invokes this method once per second to resolve the current
+     * location of the video playhead:
+     *
+     * <p>(currentSystemTime - videoSessionStartTime) - offset
+     */
+    private void incrementPlayheadPosition() {
+      this.playheadPosition = ((System.currentTimeMillis() - initialTime) / 1000) - offset;
+    }
+
+    /**
+     * Stores the current playhead position in `pausedPlayheadPosition`. Also stores the system time
+     * at which the video was paused in `pauseStartedTime`. Sets `isPaused` to true so
+     * `getCurrentPlaybackTime()` knows the video is in a paused state.
+     */
+    public void pausePlayhead() {
+      this.pausedPlayheadPosition = playheadPosition;
+      this.pauseStartedTime = System.currentTimeMillis();
+      this.isPaused = true;
+    }
+
+    /**
+     * This method sets the `isPaused` flag to false, as well as calculates the `offset` value.
+     * `Offset` represents the total cumulative time in seconds a video was in a paused state during
+     * a session. If no offset exists:
+     *
+     * <p>offset = currentSystemTime - timePlayerWasPaused
+     *
+     * <p>Otherwise, the offset is added to the existing offset value. This may be the case if a
+     * user pauses and unpauses the video many times during a single session:
+     *
+     * <p>offset = originalOffset + (currentSystemTime - timePlayerWasPaused)
+     */
+    public void unPausePlayhead() {
+      if (offset == 0) {
+        offset = (System.currentTimeMillis() - pauseStartedTime) / 1000;
+      } else {
+        offset = offset + (System.currentTimeMillis() - pauseStartedTime) / 1000;
+      }
+      isPaused = false;
     }
   }
 
@@ -434,7 +507,8 @@ public class AdobeIntegration extends Integration<Void> {
         config.ssl = ssl;
         config.debugLogging = adobeLogLevel;
 
-        heartbeat = heartbeatFactory.get(new PlaybackDelegate(), config);
+        this.playbackDelegate = new PlaybackDelegate();
+        heartbeat = heartbeatFactory.get(playbackDelegate, config);
 
         Map<String, String> standardVideoMetadata = new HashMap<>();
         Properties videoProperties = mapStandardVideoMetadata(properties, standardVideoMetadata);
@@ -457,10 +531,12 @@ public class AdobeIntegration extends Integration<Void> {
         break;
 
       case "Video Playback Paused":
+        playbackDelegate.pausePlayhead();
         heartbeat.trackPause();
         break;
 
       case "Video Playback Resumed":
+        playbackDelegate.unPausePlayhead();
         heartbeat.trackPlay();
         break;
 
@@ -494,14 +570,17 @@ public class AdobeIntegration extends Integration<Void> {
         break;
 
       case "Video Playback Buffer Started":
+        playbackDelegate.pausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
         break;
 
       case "Video Playback Buffer Completed":
+        playbackDelegate.unPausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
         break;
 
       case "Video Playback Seek Started":
+        playbackDelegate.pausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
         break;
 

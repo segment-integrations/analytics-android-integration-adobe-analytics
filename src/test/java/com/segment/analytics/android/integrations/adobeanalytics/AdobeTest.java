@@ -411,6 +411,31 @@ public class AdobeTest {
   }
 
   @Test
+  public void videoPlaybackDelegatePlay() throws Exception {
+    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
+    Thread.sleep(2000);
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(2.0));
+  }
+
+  @Test
+  public void videoPlaybackDelegatePaused() throws Exception {
+    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
+    integration.playbackDelegate.pausePlayhead();
+    Double firstPlayheadPosition = integration.playbackDelegate.getCurrentPlaybackTime();
+    Thread.sleep(2000);
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(firstPlayheadPosition));
+  }
+
+  @Test
+  public void videoPlaybackDelegatePlayAndPause() throws Exception {
+    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
+    integration.playbackDelegate.pausePlayhead();
+    Thread.sleep(1000);
+    integration.playbackDelegate.unPausePlayhead();Thread.sleep(3000);
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(3.0));
+  }
+
+  @Test
   public void trackVideoPlaybackStarted() {
     ValueMap options = new ValueMap();
     ValueMap integrationSpecificOptions = new ValueMap();
@@ -465,12 +490,14 @@ public class AdobeTest {
 
     verify(heartbeat).trackSessionStart(isEqualToComparingFieldByFieldRecursively(mediaInfo),
         eq(videoMetadata));
+    assertTrue(integration.playbackDelegate != null);
   }
 
   @Test
   public void trackVideoPlaybackPaused() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Paused");
+    assertTrue(integration.playbackDelegate.isPaused);
     verify(heartbeat).trackPause();
   }
 
@@ -478,6 +505,7 @@ public class AdobeTest {
   public void trackVideoPlaybackResumed() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Resumed");
+    assertTrue(!integration.playbackDelegate.isPaused);
     verify(heartbeat).trackPlay();
   }
 
@@ -534,6 +562,7 @@ public class AdobeTest {
   public void trackVideoBufferStarted() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Started");
+    assertTrue(integration.playbackDelegate.isPaused);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
   }
 
@@ -541,6 +570,7 @@ public class AdobeTest {
   public void trackVideoBufferComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Completed");
+    assertTrue(!integration.playbackDelegate.isPaused);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
   }
 
@@ -548,6 +578,7 @@ public class AdobeTest {
   public void trackVideoSeekStarted() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Seek Started");
+    assertTrue(integration.playbackDelegate.isPaused);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
   }
 
