@@ -558,6 +558,7 @@ public class AdobeIntegration extends Integration<Void> {
         mediaChapter.setValue(
             MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardChapterMetadata);
 
+        heartbeat.trackPlay();
         heartbeat.trackEvent(MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata);
         break;
 
