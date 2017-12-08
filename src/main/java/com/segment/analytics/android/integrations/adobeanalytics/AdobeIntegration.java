@@ -84,7 +84,8 @@ public class AdobeIntegration extends Integration<Void> {
               "Video Ad Break Started",
               "Video Ad Break Completed",
               "Video Ad Started",
-              "Video Ad Completed"));
+              "Video Ad Completed",
+              "Video Playback Interrupted"));
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
@@ -676,6 +677,9 @@ public class AdobeIntegration extends Integration<Void> {
       case "Video Ad Completed":
         heartbeat.trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
         break;
+
+      case "Video Playback Interrupted":
+        playbackDelegate.pausePlayhead();
     }
   }
 

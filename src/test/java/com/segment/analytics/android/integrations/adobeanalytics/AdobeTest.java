@@ -670,6 +670,15 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackVideoPlaybackInterrupted() throws Exception {
+    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
+    heartbeatTestFixture("Video Playback Interrupted");
+    Double first = integration.playbackDelegate.getCurrentPlaybackTime();
+    Thread.sleep(2000L);
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(first));
+  }
+
+  @Test
   public void identify() {
     integration.identify(new IdentifyPayload.Builder()
         .userId("123")
