@@ -523,13 +523,20 @@ public class AdobeTest {
             .putValue("totalLength", 100D)
             .putValue("startTime", 10D)
             .putValue("indexPosition", 1L)
-            .putValue("position", 35))
+            .putValue("position", 35)
+            .putValue("season", "1")
+            .putValue("program", "Game of Thrones")
+            .putValue("episode", "7")
+            .putValue("genre", "fantasy")
+            .putValue("channel", "HBO")
+            .putValue("airdate", "2011")
+            .putValue("publisher", "HBO")
+            .putValue("rating", "MA"))
         .build()
     );
 
     HashMap<String, String> videoMetadata = new HashMap<>();
     videoMetadata.put("title", "You Win or You Die");
-    videoMetadata.put("contentAssetId", "123");
     videoMetadata.put("totalLength", "100.0");
     videoMetadata.put("startTime", "10.0");
     videoMetadata.put("indexPosition", "1");
@@ -542,7 +549,18 @@ public class AdobeTest {
         10D
     );
 
-    mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, new HashMap<String, String>());
+    Map <String, String> standardVideoMetadata = new HashMap<>();
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, "123");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, "Game of Thrones");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, "1");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.EPISODE, "7");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, "fantasy");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, "HBO");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, "2011");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ORIGINATOR, "HBO");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.RATING, "MA");
+
+    mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
 
     assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == 35.0);
     verify(heartbeat).trackPlay();
