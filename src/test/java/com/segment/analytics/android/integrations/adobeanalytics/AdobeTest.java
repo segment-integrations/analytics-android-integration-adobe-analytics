@@ -552,6 +552,7 @@ public class AdobeTest {
   public void trackVideoContentComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Content Completed");
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
     verify(heartbeat).trackComplete();
   }
 
@@ -599,6 +600,9 @@ public class AdobeTest {
 
   @Test
   public void trackVideoAdBreakStarted() {
+    integration.contextValues = new HashMap<>();
+    integration.contextValues.put("title", "adobe.title");
+
     newVideoSession();
     integration.track(new TrackPayload.Builder()
         .userId("123")
@@ -616,7 +620,10 @@ public class AdobeTest {
         10D
     );
 
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart), isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq((Map) null));
+    Map<String, String> adBreakMetadata = new HashMap<>();
+    adBreakMetadata.put("adobe.title", "Car Commercial");
+
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart), isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq(adBreakMetadata));
   }
 
   @Test

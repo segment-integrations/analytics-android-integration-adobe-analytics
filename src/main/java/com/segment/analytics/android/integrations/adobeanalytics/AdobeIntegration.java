@@ -624,6 +624,7 @@ public class AdobeIntegration extends Integration<Void> {
         break;
 
       case "Video Content Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
         heartbeat.trackComplete();
         break;
 
@@ -655,13 +656,15 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Ad Break Started":
         Properties videoAdBreakProperties = track.properties();
+        Properties adBreakProperties = mapProperties(videoAdBreakProperties);
         MediaObject mediaAdBreakInfo =
             MediaHeartbeat.createAdBreakObject(
                 videoAdBreakProperties.getString("title"),
                 videoAdBreakProperties.getLong("indexPosition", 1), // Segment does not spec this
                 videoAdBreakProperties.getDouble("startTime", 0));
 
-        heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, null);
+        heartbeat.trackEvent(
+            MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, adBreakProperties.toStringMap());
         break;
 
       case "Video Ad Break Completed":
