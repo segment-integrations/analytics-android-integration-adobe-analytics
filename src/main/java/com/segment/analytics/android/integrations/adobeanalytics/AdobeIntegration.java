@@ -534,8 +534,8 @@ public class AdobeIntegration extends Integration<Void> {
         } else {
           config.ovp = "unknown";
         }
-        if (properties.get("playerName") != null) {
-          config.playerName = properties.getString("playerName");
+        if (properties.get("videoPlayer") != null) {
+          config.playerName = properties.getString("videoPlayer");
         } else {
           config.playerName = "unknown";
         }
