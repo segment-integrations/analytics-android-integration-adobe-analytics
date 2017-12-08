@@ -706,7 +706,6 @@ public class AdobeIntegration extends Integration<Void> {
                 videoAdProperties.getLong("indexPosition", 0),
                 videoAdProperties.getDouble("totalLength", 0));
 
-        standardAdMetadata.remove(MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
         mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
         heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata);
