@@ -170,44 +170,35 @@ public class AdobeIntegration extends Integration<Void> {
     long offset = 0;
     /** Whether the video playhead is in a paused state. */
     boolean isPaused = false;
-    /** Video bitrate; set or updated whenever {@link #setQosVariables(Properties)} is invoked */
-    long bitrate;
     /**
-     * Video startup time; set or updated whenever {@link #setQosVariables(Properties)} is invoked
+     * Quality of service object. This is created and updated upon receipt of a "Video Quality
+     * Updated" event, which triggers {@link #createAndUpdateQosObject(Properties)}.
      */
-    double startupTime;
-    /**
-     * Video frames per second; set or updated whenever {@link #setQosVariables(Properties)} is
-     * invoked
-     */
-    double fps;
-    /**
-     * Number of dropped frames during video playback; set or updated whenever {@link
-     * #setQosVariables(Properties)} is invoked
-     */
-    long droppedFrames;
+    MediaObject qosData;
 
     public PlaybackDelegate() {
       this.initialTime = System.currentTimeMillis();
     }
 
     /**
-     * Sets the value of member variables related to quality of service tracking.
+     * Creates a quality of service object.
      *
      * @param properties Properties object from a "Video Quality Updated" event, which triggers
      *     invocation of this method.
      */
-    public void setQosVariables(Properties properties) {
-      this.bitrate = properties.getLong("bitrate", 0);
-      this.startupTime = properties.getDouble("startupTime", 0);
-      this.fps = properties.getDouble("fps", 0);
-      this.droppedFrames = properties.getLong("droppedFrames", 0);
+    public void createAndUpdateQosObject(Properties properties) {
+      qosData =
+          MediaHeartbeat.createQoSObject(
+              properties.getLong("bitrate", 0),
+              properties.getDouble("startupTime", 0),
+              properties.getDouble("fps", 0),
+              properties.getLong("droppedFrames", 0));
     }
 
     /** Adobe invokes this method once every ten seconds to report quality of service data. */
     @Override
     public MediaObject getQoSObject() {
-      return MediaHeartbeat.createQoSObject(bitrate, startupTime, fps, droppedFrames);
+      return qosData;
     }
 
     /**
@@ -714,7 +705,7 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Quality Updated":
         Properties videoQualityProperties = track.properties();
-        playbackDelegate.setQosVariables(videoQualityProperties);
+        playbackDelegate.createAndUpdateQosObject(videoQualityProperties);
         break;
     }
   }

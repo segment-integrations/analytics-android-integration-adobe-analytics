@@ -692,10 +692,14 @@ public class AdobeTest {
         .build()
     );
 
-    assertTrue(integration.playbackDelegate.bitrate == 12000);
-    assertTrue(integration.playbackDelegate.startupTime == 1);
-    assertTrue(integration.playbackDelegate.fps == 50);
-    assertTrue(integration.playbackDelegate.droppedFrames == 1);
+    MediaObject expectedMediaObject = MediaHeartbeat.createQoSObject(
+        12000L,
+        1D,
+        50D,
+        1L
+    );
+
+    assertThat(integration.playbackDelegate.qosData).isEqualToComparingFieldByField(expectedMediaObject);
   }
 
   @Test
