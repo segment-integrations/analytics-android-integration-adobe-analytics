@@ -552,6 +552,7 @@ public class AdobeTest {
   public void trackVideoContentComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Content Completed");
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
     verify(heartbeat).trackComplete();
   }
 
