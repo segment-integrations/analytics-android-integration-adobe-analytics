@@ -85,7 +85,8 @@ public class AdobeIntegration extends Integration<Void> {
               "Video Ad Break Completed",
               "Video Ad Started",
               "Video Ad Completed",
-              "Video Playback Interrupted"));
+              "Video Playback Interrupted",
+              "Video Quality Updated"));
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
@@ -167,17 +168,46 @@ public class AdobeIntegration extends Integration<Void> {
     long updatedPlayheadPosition;
     /** The total time in seconds a video has been in a paused state during a video session */
     long offset = 0;
-
+    /** Whether the video playhead is in a paused state. */
     boolean isPaused = false;
+    /** Video bitrate; set or updated whenever {@link #setQosVariables(Properties)} is invoked */
+    long bitrate;
+    /**
+     * Video startup time; set or updated whenever {@link #setQosVariables(Properties)} is invoked
+     */
+    double startupTime;
+    /**
+     * Video frames per second; set or updated whenever {@link #setQosVariables(Properties)} is
+     * invoked
+     */
+    double fps;
+    /**
+     * Number of dropped frames during video playback; set or updated whenever {@link
+     * #setQosVariables(Properties)} is invoked
+     */
+    long droppedFrames;
 
     public PlaybackDelegate() {
       this.initialTime = System.currentTimeMillis();
     }
 
-    /** TO DO: Implement quality of service method. */
+    /**
+     * Sets the value of member variables related to quality of service tracking.
+     *
+     * @param properties Properties object from a "Video Quality Updated" event, which triggers
+     *     invocation of this method.
+     */
+    public void setQosVariables(Properties properties) {
+      this.bitrate = properties.getLong("bitrate", 0);
+      this.startupTime = properties.getDouble("startupTime", 0);
+      this.fps = properties.getDouble("fps", 0);
+      this.droppedFrames = properties.getLong("droppedFrames", 0);
+    }
+
+    /** Adobe invokes this method once every ten seconds to report quality of service data. */
     @Override
     public MediaObject getQoSObject() {
-      return null;
+      return MediaHeartbeat.createQoSObject(bitrate, startupTime, fps, droppedFrames);
     }
 
     /**
@@ -680,6 +710,12 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Interrupted":
         playbackDelegate.pausePlayhead();
+        break;
+
+      case "Video Quality Updated":
+        Properties videoQualityProperties = track.properties();
+        playbackDelegate.setQosVariables(videoQualityProperties);
+        break;
     }
   }
 
