@@ -679,6 +679,30 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackVideoQualityUpdated() {
+    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
+    integration.track(new TrackPayload.Builder()
+        .userId("123")
+        .event("Video Quality Updated")
+        .properties(new Properties()
+            .putValue("bitrate", 12000)
+            .putValue("startupTime", 1)
+            .putValue("fps", 50)
+            .putValue("droppedFrames", 1))
+        .build()
+    );
+
+    MediaObject expectedMediaObject = MediaHeartbeat.createQoSObject(
+        12000L,
+        1D,
+        50D,
+        1L
+    );
+
+    assertThat(integration.playbackDelegate.qosData).isEqualToComparingFieldByField(expectedMediaObject);
+  }
+
+  @Test
   public void identify() {
     integration.identify(new IdentifyPayload.Builder()
         .userId("123")

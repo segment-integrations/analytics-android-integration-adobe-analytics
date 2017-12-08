@@ -85,7 +85,8 @@ public class AdobeIntegration extends Integration<Void> {
               "Video Ad Break Completed",
               "Video Ad Started",
               "Video Ad Completed",
-              "Video Playback Interrupted"));
+              "Video Playback Interrupted",
+              "Video Quality Updated"));
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
@@ -167,17 +168,37 @@ public class AdobeIntegration extends Integration<Void> {
     long updatedPlayheadPosition;
     /** The total time in seconds a video has been in a paused state during a video session */
     long offset = 0;
-
+    /** Whether the video playhead is in a paused state. */
     boolean isPaused = false;
+    /**
+     * Quality of service object. This is created and updated upon receipt of a "Video Quality
+     * Updated" event, which triggers {@link #createAndUpdateQosObject(Properties)}.
+     */
+    MediaObject qosData;
 
     public PlaybackDelegate() {
       this.initialTime = System.currentTimeMillis();
     }
 
-    /** TO DO: Implement quality of service method. */
+    /**
+     * Creates a quality of service object.
+     *
+     * @param properties Properties object from a "Video Quality Updated" event, which triggers
+     *     invocation of this method.
+     */
+    public void createAndUpdateQosObject(Properties properties) {
+      qosData =
+          MediaHeartbeat.createQoSObject(
+              properties.getLong("bitrate", 0),
+              properties.getDouble("startupTime", 0),
+              properties.getDouble("fps", 0),
+              properties.getLong("droppedFrames", 0));
+    }
+
+    /** Adobe invokes this method once every ten seconds to report quality of service data. */
     @Override
     public MediaObject getQoSObject() {
-      return null;
+      return qosData;
     }
 
     /**
@@ -680,6 +701,12 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Interrupted":
         playbackDelegate.pausePlayhead();
+        break;
+
+      case "Video Quality Updated":
+        Properties videoQualityProperties = track.properties();
+        playbackDelegate.createAndUpdateQosObject(videoQualityProperties);
+        break;
     }
   }
 
