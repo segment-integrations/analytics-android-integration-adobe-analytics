@@ -143,24 +143,25 @@ public class AdobeIntegration extends Integration<Void> {
 
   /*
    * PlaybackDelegate implements Adobe's MediaHeartbeatDelegate interface. This implementation allows us
-   * to write logic and returns the position of a video playhead during a video session.
+   * to return the position of a video playhead during a video session.
    */
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
     /**
      * The system time in millis at which the playhead is first set or updated. The playhead is
-     * first set upon instantiation of the PlaybackDelegate. The value is updated whenever
-     * `updatePlayheadPosition()` is invoked.
+     * first set upon instantiation of the PlaybackDelegate. The value is updated whenever {@link
+     * #updatePlayheadPosition(Long)} is invoked.
      */
     long initialTime;
     /** The current playhead position in seconds */
     long playheadPosition;
     /** The position of the playhead in seconds when the video was paused */
     long pausedPlayheadPosition;
-    /** The system time in millis at which pausePlayhead() was invoked */
+    /** The system time in millis at which {@link #pausePlayhead} was invoked */
     long pauseStartedTime;
     /**
      * The updated playhead position - this variable is assigned to the value a customer passes as
-     * "position" in a "Video Playback Seek Completed" event, defaulting to 0
+     * properties.seekPosition in a "Video Playback Seek Completed" event or properties.position in
+     * a "Video Content Started" event
      */
     long updatedPlayheadPosition;
     /** The total time in seconds a video has been in a paused state during a video session */
@@ -180,8 +181,8 @@ public class AdobeIntegration extends Integration<Void> {
 
     /**
      * Adobe invokes this method once per second to resolve the current position of the video
-     * playhead. Unless paused, this method increments the value of `playheadPosition` by one every
-     * second by calling `incrementPlayheadPosition()`
+     * playhead. Unless paused, this method increments the value of {@link #playheadPosition} by one
+     * every second by calling {@link #incrementPlayheadPosition()}
      */
     @Override
     public Double getCurrentPlaybackTime() {
@@ -193,15 +194,15 @@ public class AdobeIntegration extends Integration<Void> {
     }
 
     /**
-     * `getCurrentPlayback()` time invokes this method once per second to resolve the current
+     * {@link #getCurrentPlaybackTime()} invokes this method once per second to resolve the current
      * location of the video playhead:
      *
      * <p>updatedPlayheadPosition + (currentSystemTime - videoSessionStartTime) - offset
      *
-     * <p>updatedPlayheadPosition represents a user-specified position of the playhead. This is
-     * useful for updating the playhead position after a "Video Playback Seek Completed" event. The
-     * user must provide the updated playhead position in order for this method to update the
-     * playhead position here properly.
+     * <p>{@link #updatedPlayheadPosition} represents a user-specified position of the playhead.
+     * This is useful for updating the playhead position after a "Video Content Started" or "Video
+     * Playback Seek Completed" event. The user must provide the updated playhead position in order
+     * for this method to update the playhead position here properly.
      */
     private void incrementPlayheadPosition() {
       this.playheadPosition =
@@ -209,9 +210,9 @@ public class AdobeIntegration extends Integration<Void> {
     }
 
     /**
-     * Stores the current playhead position in `pausedPlayheadPosition`. Also stores the system time
-     * at which the video was paused in `pauseStartedTime`. Sets `isPaused` to true so
-     * `getCurrentPlaybackTime()` knows the video is in a paused state.
+     * Stores the current playhead position in {@link #pausedPlayheadPosition}. Also stores the
+     * system time at which the video was paused in {@link #pauseStartedTime}. Sets {@link
+     * #isPaused} to true so {@link #getCurrentPlaybackTime()} knows the video is in a paused state.
      */
     public void pausePlayhead() {
       this.pausedPlayheadPosition = playheadPosition;
@@ -220,9 +221,9 @@ public class AdobeIntegration extends Integration<Void> {
     }
 
     /**
-     * This method sets the `isPaused` flag to false, as well as calculates the `offset` value.
-     * `Offset` represents the total cumulative time in seconds a video was in a paused state during
-     * a session. If no offset exists:
+     * This method sets the {@link #isPaused} flag to false, as well as calculates the {@link
+     * #offset} value. {@link #offset} represents the total cumulative time in seconds a video was
+     * in a paused state during a session. If no offset exists:
      *
      * <p>offset = currentSystemTime - timePlayerWasPaused
      *
@@ -241,21 +242,22 @@ public class AdobeIntegration extends Integration<Void> {
     }
 
     /**
-     * Resumes invocation of `getCurrentPlaybackTime()` by setting `isPaused` to false. This is only
-     * called when a customer sends a "Video Playback Seek Completed" event.
+     * Resumes invocation of {@link #getCurrentPlaybackTime()} by setting {@link #isPaused} to
+     * false. This is only called when a customer sends a "Video Playback Seek Completed" event.
      */
     public void resumePlayheadAfterSeeking() {
       this.isPaused = false;
     }
 
     /**
-     * Updates member variables `initialTime` and `updatedPlayheadPosition` after a seek is
-     * completed. After invocation, `initialTime` is assigned to the system time at which "Video
-     * Playback Seek Completed" was sent by the customer.
+     * Updates member variables {@link #initialTime} and {@link #updatedPlayheadPosition} whenever
+     * either a "Video Playback Seek Completed" or "Video Content Started" event is received AND
+     * contains properties.seekPosition or properties.position, respectively. After invocation,
+     * {@link #initialTime} is assigned to the system time at which the video event was received.
      *
      * @param playheadPosition properties.position passed by the customer into a "Video Playback
-     *     Seek Completed" event. This value is required for accurate reporting in the Adobe
-     *     dashboard. It defaults to 0.
+     *     Seek Completed" or "Video Content Started" event. This value is required for accurate
+     *     reporting in the Adobe dashboard. It defaults to 0.
      */
     public void updatePlayheadPosition(Long playheadPosition) {
       this.initialTime = System.currentTimeMillis();
@@ -586,13 +588,16 @@ public class AdobeIntegration extends Integration<Void> {
         MediaObject mediaChapter =
             MediaHeartbeat.createChapterObject(
                 videoContentProperties.getString("title"),
-                videoContentProperties.getLong("position", 1), // Segment does not spec this
+                videoContentProperties.getLong("indexPosition", 1), // Segment does not spec this
                 videoContentProperties.getDouble("totalLength", 0),
                 videoContentProperties.getDouble("startTime", 0));
 
         mediaChapter.setValue(
             MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardChapterMetadata);
 
+        if (videoContentProperties.getDouble("position", 0) > 0) {
+          playbackDelegate.updatePlayheadPosition(videoContentProperties.getLong("position", 0));
+        }
         heartbeat.trackPlay();
         heartbeat.trackEvent(MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata);
         break;

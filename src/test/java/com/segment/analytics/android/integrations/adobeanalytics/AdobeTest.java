@@ -513,6 +513,7 @@ public class AdobeTest {
   @Test
   public void trackVideoContentStarted() {
     newVideoSession();
+
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event("Video Content Started")
@@ -521,7 +522,8 @@ public class AdobeTest {
             .putValue("contentAssetId", "123")
             .putValue("totalLength", 100D)
             .putValue("startTime", 10D)
-            .putValue("indexPosition", 1L))
+            .putValue("indexPosition", 1L)
+            .putValue("position", 35))
         .build()
     );
 
@@ -531,6 +533,7 @@ public class AdobeTest {
     videoMetadata.put("totalLength", "100.0");
     videoMetadata.put("startTime", "10.0");
     videoMetadata.put("indexPosition", "1");
+    videoMetadata.put("position", "35");
 
     MediaObject mediaChapter = MediaHeartbeat.createChapterObject(
         "You Win or You Die",
@@ -541,6 +544,7 @@ public class AdobeTest {
 
     mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, new HashMap<String, String>());
 
+    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == 35.0);
     verify(heartbeat).trackPlay();
     verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart), isEqualToComparingFieldByFieldRecursively(mediaChapter),
         eq(videoMetadata));
