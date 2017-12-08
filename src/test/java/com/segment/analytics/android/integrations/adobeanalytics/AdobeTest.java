@@ -475,7 +475,6 @@ public class AdobeTest {
 
     HashMap<String, String> videoMetadata = new HashMap<>();
     videoMetadata.put("title", "You Win or You Die");
-    videoMetadata.put("contentAssetId", "123");
     videoMetadata.put("totalLength", "100.0");
     videoMetadata.put("random metadata", "something super random");
 
