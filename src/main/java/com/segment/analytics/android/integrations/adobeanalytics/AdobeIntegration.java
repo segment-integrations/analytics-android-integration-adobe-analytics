@@ -99,8 +99,17 @@ public class AdobeIntegration extends Integration<Void> {
     videoPropertyList.put("genre", MediaHeartbeat.VideoMetadataKeys.GENRE);
     videoPropertyList.put("channel", MediaHeartbeat.VideoMetadataKeys.NETWORK);
     videoPropertyList.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
-    videoPropertyList.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
     return videoPropertyList;
+  }
+
+  // breaking this out into a separate map since this will likely grow over time as we spec more ad
+  // properties Adobe expects; also prevents overlap with standard video metadata
+  private static final Map<String, String> AD_METADATA_MAP = getStandardAdMetadataMap();
+
+  private static Map<String, String> getStandardAdMetadataMap() {
+    Map<String, String> adPropertyList = new HashMap<>();
+    adPropertyList.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
+    return adPropertyList;
   }
 
   private final com.segment.analytics.Analytics analytics;
@@ -570,7 +579,12 @@ public class AdobeIntegration extends Integration<Void> {
         heartbeat = heartbeatFactory.get(playbackDelegate, config);
 
         Map<String, String> standardVideoMetadata = new HashMap<>();
-        Properties videoProperties = mapStandardVideoMetadata(properties, standardVideoMetadata);
+        Properties videoProperties =
+            mapStandardVideoMetadata(
+                properties,
+                standardVideoMetadata,
+                // eventType
+                "coreVideo");
         HashMap<String, String> videoMetadata = new HashMap<>();
         videoMetadata.putAll(videoProperties.toStringMap());
 
@@ -603,7 +617,11 @@ public class AdobeIntegration extends Integration<Void> {
         Properties videoContentProperties = track.properties();
         Map<String, String> standardChapterMetadata = new HashMap<>();
         Properties chapterProperties =
-            mapStandardVideoMetadata(videoContentProperties, standardChapterMetadata);
+            mapStandardVideoMetadata(
+                videoContentProperties,
+                standardChapterMetadata,
+                // eventType
+                "coreVideo");
         HashMap<String, String> chapterMetadata = new HashMap<>();
         chapterMetadata.putAll(chapterProperties.toStringMap());
 
@@ -672,7 +690,12 @@ public class AdobeIntegration extends Integration<Void> {
       case "Video Ad Started":
         Properties videoAdProperties = track.properties();
         Map<String, String> standardAdMetadata = new HashMap<>();
-        Properties adProperties = mapStandardVideoMetadata(videoAdProperties, standardAdMetadata);
+        Properties adProperties =
+            mapStandardVideoMetadata(
+                videoAdProperties,
+                standardAdMetadata,
+                // eventType
+                "ad");
         HashMap<String, String> adMetadata = new HashMap<>();
         adMetadata.putAll(adProperties.toStringMap());
 
@@ -683,9 +706,6 @@ public class AdobeIntegration extends Integration<Void> {
                 videoAdProperties.getLong("indexPosition", 0),
                 videoAdProperties.getDouble("totalLength", 0));
 
-        // Delete assetId; otherwise helper function would map this incorrectly as standard video metadata
-        // Adobe handles "assetId" differently for content events and ad events
-        // This is the only property that is shared b/w ad and content events; all others are unique
         standardAdMetadata.remove(MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
         mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
@@ -711,19 +731,21 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private Properties mapStandardVideoMetadata(
-      Properties properties, Map<String, String> standardVideoMetadata) {
+      Properties properties, Map<String, String> standardVideoMetadata, String eventType) {
     Properties propertiesCopy = new Properties();
     propertiesCopy.putAll(properties);
+    Map<String, String> propertyMap =
+        (eventType.equals("coreVideo")) ? VIDEO_METADATA_MAP : AD_METADATA_MAP;
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
       String propertyKey = entry.getKey();
       String value = String.valueOf(entry.getValue());
 
-      if (VIDEO_METADATA_MAP.containsKey(propertyKey)) {
-        standardVideoMetadata.put(VIDEO_METADATA_MAP.get(propertyKey), value);
+      if (propertyMap.containsKey(propertyKey)) {
+        standardVideoMetadata.put(propertyMap.get(propertyKey), value);
         propertiesCopy.remove(propertyKey);
       }
     }
-    if (properties.containsKey("livestream")) {
+    if (eventType.equals("coreVideo") && properties.containsKey("livestream")) {
       standardVideoMetadata.put(
           MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT,
           properties.getBoolean("livestream", false)
