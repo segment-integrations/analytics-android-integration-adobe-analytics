@@ -152,6 +152,11 @@ public class AdobeIntegration extends Integration<Void> {
      * `updatePlayheadPosition()` is invoked.
      */
     long initialTime;
+    /**
+     * The initial position of the playhead if not 0. The user must pass this value into a video
+     * event as the value of properties.position.
+     */
+    long initialPlayheadPosition;
     /** The current playhead position in seconds */
     long playheadPosition;
     /** The position of the playhead in seconds when the video was paused */
@@ -205,7 +210,10 @@ public class AdobeIntegration extends Integration<Void> {
      */
     private void incrementPlayheadPosition() {
       this.playheadPosition =
-          updatedPlayheadPosition + ((System.currentTimeMillis() - initialTime) / 1000) - offset;
+          initialPlayheadPosition
+              + updatedPlayheadPosition
+              + ((System.currentTimeMillis() - initialTime) / 1000)
+              - offset;
     }
 
     /**
@@ -249,13 +257,15 @@ public class AdobeIntegration extends Integration<Void> {
     }
 
     /**
-     * Updates member variables `initialTime` and `updatedPlayheadPosition` after a seek is
-     * completed. After invocation, `initialTime` is assigned to the system time at which "Video
-     * Playback Seek Completed" was sent by the customer.
+     * Updates member variables `initialTime` and `updatedPlayheadPosition` whenever either a "Video
+     * Playback Seek Completed" or "Video Playback Content Started" event is received AND contains
+     * properties.position or properties.seekPosition - these properties should only serve to update
+     * the playhead position. After invocation, `initialTime` is assigned to the system time at
+     * which the video event was received.
      *
      * @param playheadPosition properties.position passed by the customer into a "Video Playback
-     *     Seek Completed" event. This value is required for accurate reporting in the Adobe
-     *     dashboard. It defaults to 0.
+     *     Seek Completed" or "Video Playback Content Started" event. This value is required for
+     *     accurate reporting in the Adobe dashboard. It defaults to 0.
      */
     public void updatePlayheadPosition(Long playheadPosition) {
       this.initialTime = System.currentTimeMillis();
@@ -586,13 +596,16 @@ public class AdobeIntegration extends Integration<Void> {
         MediaObject mediaChapter =
             MediaHeartbeat.createChapterObject(
                 videoContentProperties.getString("title"),
-                videoContentProperties.getLong("position", 1), // Segment does not spec this
+                videoContentProperties.getLong("indexPosition", 1), // Segment does not spec this
                 videoContentProperties.getDouble("totalLength", 0),
                 videoContentProperties.getDouble("startTime", 0));
 
         mediaChapter.setValue(
             MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardChapterMetadata);
 
+        if (videoContentProperties.getDouble("position", 0) > 0) {
+          playbackDelegate.updatePlayheadPosition(videoContentProperties.getLong("position", 0));
+        }
         heartbeat.trackPlay();
         heartbeat.trackEvent(MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata);
         break;
