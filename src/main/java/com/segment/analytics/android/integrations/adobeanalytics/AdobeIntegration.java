@@ -625,6 +625,7 @@ public class AdobeIntegration extends Integration<Void> {
         break;
 
       case "Video Content Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
         heartbeat.trackComplete();
         break;
 
