@@ -48,14 +48,14 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(RobolectricTestRunner.class)
 @PrepareForTest({Analytics.class, Config.class, MediaHeartbeat.class})
 @org.robolectric.annotation.Config(constants = BuildConfig.class)
-@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "org.json.*" })
+@PowerMockIgnore({"org.mockito.*", "org.robolectric.*", "android.*", "org.json.*"})
 public class AdobeTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
+  @Mock private MediaHeartbeat heartbeat;
+  @Mock private com.segment.analytics.Analytics analytics;
+  @Mock private Application context;
   private AdobeIntegration integration;
-  private @Mock MediaHeartbeat heartbeat;
-  private @Mock com.segment.analytics.Analytics analytics;
-  private @Mock Application context;
   private AdobeIntegration.HeartbeatFactory mockHeartbeatFactory = new AdobeIntegration.HeartbeatFactory() {
     @Override
     public MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config) {
@@ -70,7 +70,8 @@ public class AdobeTest {
     PowerMockito.mockStatic(Analytics.class);
     when(analytics.getApplication()).thenReturn(context);
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("heartbeatTrackingServer", "true"), analytics, Logger.with(NONE), mockHeartbeatFactory);
+        .putValue("heartbeatTrackingServer", "true"), analytics, Logger.with(NONE),
+        mockHeartbeatFactory);
   }
 
   @Test
@@ -85,8 +86,8 @@ public class AdobeTest {
         .putValue("contextValues", new HashMap<String, Object>())
         .putValue("productIdentifier", "id")
         .putValue("adobeVerboseLogging", true),
-      analytics,
-      Logger.with(VERBOSE),
+        analytics,
+        Logger.with(VERBOSE),
         mockHeartbeatFactory);
 
     verifyStatic();
@@ -102,16 +103,18 @@ public class AdobeTest {
     // all default arguments have not yet been defined
   }
 
-  @Test public void activityCreate() {
+  @Test
+  public void activityCreate() {
     Activity activity = mock(Activity.class);
-    Bundle savedInstanceState = mock (Bundle.class);
+    Bundle savedInstanceState = mock(Bundle.class);
     integration.onActivityCreated(activity, savedInstanceState);
 
     verifyStatic();
     Config.setContext(activity.getApplicationContext());
   }
 
-  @Test public void activityPause() {
+  @Test
+  public void activityPause() {
     Activity activity = mock(Activity.class);
     integration.onActivityPaused(activity);
 
@@ -119,7 +122,8 @@ public class AdobeTest {
     Config.pauseCollectingLifecycleData();
   }
 
-  @Test public void activityResume() {
+  @Test
+  public void activityResume() {
     Activity activity = mock(Activity.class);
     integration.onActivityResumed(activity);
 
@@ -293,13 +297,13 @@ public class AdobeTest {
         .event("Checkout Started")
         .properties(new Properties()
             .putProducts(new Product("123", "ABC", 10.0)
-                .putName("shoes")
-                .putValue("category", "athletic")
-                .putValue("quantity", 2),
-              new Product("456", "DEF", 20.0)
-                .putName("jeans")
-                .putValue("category", "casual")
-                .putValue("quantity", 1)))
+                    .putName("shoes")
+                    .putValue("category", "athletic")
+                    .putValue("quantity", 2),
+                new Product("456", "DEF", 20.0)
+                    .putName("jeans")
+                    .putValue("category", "casual")
+                    .putValue("quantity", 1)))
         .build()
     );
 
@@ -432,7 +436,8 @@ public class AdobeTest {
     integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
     integration.playbackDelegate.pausePlayhead();
     Thread.sleep(1000);
-    integration.playbackDelegate.unPausePlayhead();Thread.sleep(3000);
+    integration.playbackDelegate.unPausePlayhead();
+    Thread.sleep(3000);
     assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(3.0));
   }
 
@@ -463,7 +468,7 @@ public class AdobeTest {
         .build()
     );
 
-    Map <String, String> standardVideoMetadata = new HashMap<>();
+    Map<String, String> standardVideoMetadata = new HashMap<>();
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, "123");
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, "Game of Thrones");
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, "1");
@@ -471,7 +476,8 @@ public class AdobeTest {
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, "fantasy");
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, "HBO");
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, "2011");
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT, MediaHeartbeat.StreamType.VOD);
+    standardVideoMetadata
+        .put(MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT, MediaHeartbeat.StreamType.VOD);
 
     HashMap<String, String> videoMetadata = new HashMap<>();
     videoMetadata.put("title", "You Win or You Die");
@@ -542,11 +548,13 @@ public class AdobeTest {
         10D
     );
 
-    mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, new HashMap<String, String>());
+    mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata,
+        new HashMap<String, String>());
 
     assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == 35.0);
     verify(heartbeat).trackPlay();
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart), isEqualToComparingFieldByFieldRecursively(mediaChapter),
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart),
+        isEqualToComparingFieldByFieldRecursively(mediaChapter),
         eq(videoMetadata));
   }
 
@@ -607,7 +615,8 @@ public class AdobeTest {
         .userId("123")
         .event("Video Ad Break Started")
         .properties(new Properties()
-            .putValue("title", "Car Commercial") // should this be pre-roll, mid-roll or post-roll instead?
+            .putValue("title",
+                "Car Commercial") // Should this be pre-roll, mid-roll or post-roll instead?
             .putValue("startTime", 10D)
             .putValue("indexPosition", 1L))
         .build()
@@ -619,7 +628,8 @@ public class AdobeTest {
         10D
     );
 
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart), isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq((Map) null));
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart),
+        isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq((Map) null));
   }
 
   @Test
@@ -660,7 +670,8 @@ public class AdobeTest {
     standardAdMetadata.put(MediaHeartbeat.AdMetadataKeys.ADVERTISER, "Lexus");
     mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdStart), isEqualToComparingFieldByFieldRecursively(mediaAdInfo), eq(adMetadata));
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdStart),
+        isEqualToComparingFieldByFieldRecursively(mediaAdInfo), eq(adMetadata));
   }
 
   @Test
@@ -700,7 +711,8 @@ public class AdobeTest {
         1L
     );
 
-    assertThat(integration.playbackDelegate.qosData).isEqualToComparingFieldByField(expectedMediaObject);
+    assertThat(integration.playbackDelegate.qosData)
+        .isEqualToComparingFieldByField(expectedMediaObject);
   }
 
   @Test
@@ -708,7 +720,7 @@ public class AdobeTest {
     integration.identify(new IdentifyPayload.Builder()
         .userId("123")
         .traits(new Traits())
-    .build());
+        .build());
 
     verifyStatic();
     Config.setUserIdentifier("123");
@@ -814,7 +826,7 @@ public class AdobeTest {
   }
 
   private static <T> T isEqualToComparingFieldByFieldRecursively(final T expected) {
-    return argThat(new AssertionMatcher<T>(){
+    return argThat(new AssertionMatcher<T>() {
       @Override
       public void assertion(T actual) throws AssertionError {
         assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
