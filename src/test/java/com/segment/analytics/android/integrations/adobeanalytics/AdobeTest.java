@@ -36,7 +36,6 @@ import org.robolectric.RobolectricTestRunner;
 import static com.segment.analytics.Analytics.LogLevel.NONE;
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -76,7 +75,7 @@ public class AdobeTest {
 
   @Test
   public void factory() {
-    assertTrue(AdobeIntegration.FACTORY.key().equals("Adobe Analytics"));
+    assertThat(AdobeIntegration.FACTORY.key()).isEqualTo("Adobe Analytics");
   }
 
   @Test
@@ -93,9 +92,9 @@ public class AdobeTest {
     verifyStatic();
     Config.setDebugLogging(true);
 
-    assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
-    assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
-    assertTrue(integration.productIdentifier.equals("id"));
+    assertThat(integration.eventsV2).isEqualTo(new HashMap<String, Object>());
+    assertThat(integration.contextValues).isEqualTo(new HashMap<String, Object>());
+    assertThat(integration.productIdentifier).isEqualTo("id");
   }
 
   @Test
@@ -419,7 +418,7 @@ public class AdobeTest {
   public void videoPlaybackDelegatePlay() throws Exception {
     integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
     Thread.sleep(2000);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(2.0));
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(2.0);
   }
 
   @Test
@@ -428,7 +427,8 @@ public class AdobeTest {
     integration.playbackDelegate.pausePlayhead();
     Double firstPlayheadPosition = integration.playbackDelegate.getCurrentPlaybackTime();
     Thread.sleep(2000);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(firstPlayheadPosition));
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime())
+        .isEqualTo(firstPlayheadPosition);
   }
 
   @Test
@@ -438,7 +438,8 @@ public class AdobeTest {
     Thread.sleep(1000);
     integration.playbackDelegate.unPausePlayhead();
     Thread.sleep(3000);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(3.0));
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime())
+        .isEqualTo(3.0);
   }
 
   @Test
@@ -497,14 +498,14 @@ public class AdobeTest {
 
     verify(heartbeat).trackSessionStart(isEqualToComparingFieldByFieldRecursively(mediaInfo),
         eq(videoMetadata));
-    assertTrue(integration.playbackDelegate != null);
+    assertThat(integration.playbackDelegate).isNotNull();
   }
 
   @Test
   public void trackVideoPlaybackPaused() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Paused");
-    assertTrue(integration.playbackDelegate.isPaused);
+    assertThat(integration.playbackDelegate.isPaused).isTrue();
     verify(heartbeat).trackPause();
   }
 
@@ -512,7 +513,7 @@ public class AdobeTest {
   public void trackVideoPlaybackResumed() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Resumed");
-    assertTrue(!integration.playbackDelegate.isPaused);
+    assertThat(integration.playbackDelegate.isPaused).isFalse();
     verify(heartbeat).trackPlay();
   }
 
@@ -551,7 +552,7 @@ public class AdobeTest {
     mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata,
         new HashMap<String, String>());
 
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == 35.0);
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(35.0);
     verify(heartbeat).trackPlay();
     verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart),
         isEqualToComparingFieldByFieldRecursively(mediaChapter),
@@ -577,7 +578,7 @@ public class AdobeTest {
   public void trackVideoBufferStarted() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Started");
-    assertTrue(integration.playbackDelegate.isPaused);
+    assertThat(integration.playbackDelegate.isPaused).isTrue();
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
   }
 
@@ -585,7 +586,7 @@ public class AdobeTest {
   public void trackVideoBufferComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Completed");
-    assertTrue(!integration.playbackDelegate.isPaused);
+    assertThat(integration.playbackDelegate.isPaused).isFalse();
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
   }
 
@@ -593,18 +594,18 @@ public class AdobeTest {
   public void trackVideoSeekStarted() {
     newVideoSession();
     heartbeatSeekFixture("Video Playback Seek Started", null);
-    assertTrue(integration.playbackDelegate.isPaused);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == 0.0);
+    assertThat(integration.playbackDelegate.isPaused).isTrue();
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isZero();
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
   }
 
   @Test
   public void trackVideoSeekComplete() {
     newVideoSession();
-    Double first = integration.playbackDelegate.getCurrentPlaybackTime();
+    double first = integration.playbackDelegate.getCurrentPlaybackTime();
     heartbeatSeekFixture("Video Playback Seek Completed", 50L);
-    assertTrue(!integration.playbackDelegate.isPaused);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == first + 50.0);
+    assertThat(integration.playbackDelegate.isPaused).isFalse();
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(first + 50);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
   }
 
@@ -688,7 +689,7 @@ public class AdobeTest {
     heartbeatTestFixture("Video Playback Interrupted");
     Double first = integration.playbackDelegate.getCurrentPlaybackTime();
     Thread.sleep(2000L);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(first));
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(first);
   }
 
   @Test
