@@ -18,7 +18,7 @@ import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,38 +55,37 @@ public class AdobeIntegration extends Integration<Void> {
 
   private static final String ADOBE_KEY = "Adobe Analytics";
 
-  private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
+  private static final Map<String, String> ECOMMERCE_EVENT_MAP = getEcommerceEventMap();
 
-  private static Map<String, String> getEcommerceEventList() {
-    Map<String, String> ecommerceEventList = new HashMap<>();
-    ecommerceEventList.put("Order Completed", "purchase");
-    ecommerceEventList.put("Product Added", "scAdd");
-    ecommerceEventList.put("Product Removed", "scRemove");
-    ecommerceEventList.put("Checkout Started", "scCheckout");
-    ecommerceEventList.put("Cart Viewed", "scView");
-    ecommerceEventList.put("Product Viewed", "prodView");
-    return ecommerceEventList;
+  private static Map<String, String> getEcommerceEventMap() {
+    Map<String, String> ecommerceEventMap = new HashMap<>();
+    ecommerceEventMap.put("Order Completed", "purchase");
+    ecommerceEventMap.put("Product Added", "scAdd");
+    ecommerceEventMap.put("Product Removed", "scRemove");
+    ecommerceEventMap.put("Checkout Started", "scCheckout");
+    ecommerceEventMap.put("Cart Viewed", "scView");
+    ecommerceEventMap.put("Product Viewed", "prodView");
+    return ecommerceEventMap;
   }
 
   private static final Set<String> VIDEO_EVENT_LIST =
-      new HashSet<>(
-          Arrays.asList(
-              "Video Playback Started",
-              "Video Content Started",
-              "Video Playback Paused",
-              "Video Playback Resumed",
-              "Video Content Completed",
-              "Video Playback Completed",
-              "Video Playback Buffer Started",
-              "Video Playback Buffer Completed",
-              "Video Playback Seek Started",
-              "Video Playback Seek Completed",
-              "Video Ad Break Started",
-              "Video Ad Break Completed",
-              "Video Ad Started",
-              "Video Ad Completed",
-              "Video Playback Interrupted",
-              "Video Quality Updated"));
+      newSet(
+          "Video Playback Started",
+          "Video Content Started",
+          "Video Playback Paused",
+          "Video Playback Resumed",
+          "Video Content Completed",
+          "Video Playback Completed",
+          "Video Playback Buffer Started",
+          "Video Playback Buffer Completed",
+          "Video Playback Seek Started",
+          "Video Playback Seek Completed",
+          "Video Ad Break Started",
+          "Video Ad Break Completed",
+          "Video Ad Started",
+          "Video Ad Completed",
+          "Video Playback Interrupted",
+          "Video Quality Updated");
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
@@ -99,19 +98,27 @@ public class AdobeIntegration extends Integration<Void> {
     videoPropertyList.put("genre", MediaHeartbeat.VideoMetadataKeys.GENRE);
     videoPropertyList.put("channel", MediaHeartbeat.VideoMetadataKeys.NETWORK);
     videoPropertyList.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
-    videoPropertyList.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
     return videoPropertyList;
   }
 
-  private final com.segment.analytics.Analytics analytics;
+  // breaking this out into a separate map since this will likely grow over time as we spec more ad
+  // properties Adobe expects; also prevents overlap with standard video metadata
+  private static final Map<String, String> AD_METADATA_MAP = getStandardAdMetadataMap();
+
+  private static Map<String, String> getStandardAdMetadataMap() {
+    Map<String, String> adPropertyList = new HashMap<>();
+    adPropertyList.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
+    return adPropertyList;
+  }
+
   private final Logger logger;
   private MediaHeartbeat heartbeat;
   private HeartbeatFactory heartbeatFactory;
   PlaybackDelegate playbackDelegate;
-  final boolean adobeLogLevel;
-  final String heartbeatTrackingServer;
-  final String packageName;
-  final boolean ssl;
+  private final boolean adobeLogLevel;
+  private final String heartbeatTrackingServer;
+  private final String packageName;
+  private final boolean ssl;
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   String productIdentifier;
@@ -124,7 +131,6 @@ public class AdobeIntegration extends Integration<Void> {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
-    this.analytics = analytics;
     this.heartbeatFactory = heartbeatFactory;
     this.heartbeatTrackingServer = settings.getString("heartbeatTrackingServer");
     this.ssl = settings.getBoolean("ssl", false);
@@ -148,17 +154,18 @@ public class AdobeIntegration extends Integration<Void> {
    * to return the position of a video playhead during a video session.
    */
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
+
     /**
      * The system time in millis at which the playhead is first set or updated. The playhead is
      * first set upon instantiation of the PlaybackDelegate. The value is updated whenever {@link
      * #updatePlayheadPosition(Long)} is invoked.
      */
     long initialTime;
-    /** The current playhead position in seconds */
+    /** The current playhead position in seconds. */
     long playheadPosition;
-    /** The position of the playhead in seconds when the video was paused */
+    /** The position of the playhead in seconds when the video was paused. */
     long pausedPlayheadPosition;
-    /** The system time in millis at which {@link #pausePlayhead} was invoked */
+    /** The system time in millis at which {@link #pausePlayhead} was invoked. */
     long pauseStartedTime;
     /**
      * The updated playhead position - this variable is assigned to the value a customer passes as
@@ -166,7 +173,7 @@ public class AdobeIntegration extends Integration<Void> {
      * a "Video Content Started" event
      */
     long updatedPlayheadPosition;
-    /** The total time in seconds a video has been in a paused state during a video session */
+    /** The total time in seconds a video has been in a paused state during a video session. */
     long offset = 0;
     /** Whether the video playhead is in a paused state. */
     boolean isPaused = false;
@@ -176,7 +183,7 @@ public class AdobeIntegration extends Integration<Void> {
      */
     MediaObject qosData;
 
-    public PlaybackDelegate() {
+    PlaybackDelegate() {
       this.initialTime = System.currentTimeMillis();
     }
 
@@ -186,7 +193,7 @@ public class AdobeIntegration extends Integration<Void> {
      * @param properties Properties object from a "Video Quality Updated" event, which triggers
      *     invocation of this method.
      */
-    public void createAndUpdateQosObject(Properties properties) {
+    void createAndUpdateQosObject(Properties properties) {
       qosData =
           MediaHeartbeat.createQoSObject(
               properties.getLong("bitrate", 0),
@@ -236,7 +243,7 @@ public class AdobeIntegration extends Integration<Void> {
      * system time at which the video was paused in {@link #pauseStartedTime}. Sets {@link
      * #isPaused} to true so {@link #getCurrentPlaybackTime()} knows the video is in a paused state.
      */
-    public void pausePlayhead() {
+    void pausePlayhead() {
       this.pausedPlayheadPosition = playheadPosition;
       this.pauseStartedTime = System.currentTimeMillis();
       this.isPaused = true;
@@ -254,7 +261,7 @@ public class AdobeIntegration extends Integration<Void> {
      *
      * <p>offset = originalOffset + (currentSystemTime - timePlayerWasPaused)
      */
-    public void unPausePlayhead() {
+    void unPausePlayhead() {
       if (offset == 0) {
         offset = (System.currentTimeMillis() - pauseStartedTime) / 1000;
       } else {
@@ -267,7 +274,7 @@ public class AdobeIntegration extends Integration<Void> {
      * Resumes invocation of {@link #getCurrentPlaybackTime()} by setting {@link #isPaused} to
      * false. This is only called when a customer sends a "Video Playback Seek Completed" event.
      */
-    public void resumePlayheadAfterSeeking() {
+    void resumePlayheadAfterSeeking() {
       this.isPaused = false;
     }
 
@@ -281,7 +288,7 @@ public class AdobeIntegration extends Integration<Void> {
      *     Seek Completed" or "Video Content Started" event. This value is required for accurate
      *     reporting in the Adobe dashboard. It defaults to 0.
      */
-    public void updatePlayheadPosition(Long playheadPosition) {
+    void updatePlayheadPosition(Long playheadPosition) {
       this.initialTime = System.currentTimeMillis();
       this.updatedPlayheadPosition = playheadPosition;
     }
@@ -329,7 +336,9 @@ public class AdobeIntegration extends Integration<Void> {
     super.identify(identify);
 
     String userId = identify.userId();
-    if (isNullOrEmpty(userId)) return;
+    if (isNullOrEmpty(userId)) {
+      return;
+    }
     Config.setUserIdentifier(userId);
     logger.verbose("Config.setUserIdentifier(%s);", userId);
   }
@@ -363,7 +372,7 @@ public class AdobeIntegration extends Integration<Void> {
       return;
     }
 
-    if (!(ECOMMERCE_EVENT_LIST.containsKey(eventName)) && isNullOrEmpty(eventsV2)) {
+    if (!(ECOMMERCE_EVENT_MAP.containsKey(eventName)) && isNullOrEmpty(eventsV2)) {
       logger.verbose(
           "Event must be either configured in Adobe and in the Segment EventsV2 setting or "
               + "a reserved Adobe Ecommerce event.");
@@ -371,7 +380,7 @@ public class AdobeIntegration extends Integration<Void> {
     }
     if ((!isNullOrEmpty(eventsV2))
         && eventsV2.containsKey(eventName)
-        && ECOMMERCE_EVENT_LIST.containsKey(eventName)) {
+        && ECOMMERCE_EVENT_MAP.containsKey(eventName)) {
       logger.verbose(
           "Segment currently does not support mapping specced ecommerce events to "
               + "custom Adobe events.");
@@ -382,8 +391,8 @@ public class AdobeIntegration extends Integration<Void> {
       eventName = String.valueOf(eventsV2.get(eventName));
       mappedProperties = (isNullOrEmpty(properties)) ? null : mapProperties(properties);
     }
-    if (ECOMMERCE_EVENT_LIST.containsKey(eventName)) {
-      eventName = ECOMMERCE_EVENT_LIST.get(eventName);
+    if (ECOMMERCE_EVENT_MAP.containsKey(eventName)) {
+      eventName = ECOMMERCE_EVENT_MAP.get(eventName);
       mappedProperties = (isNullOrEmpty(properties)) ? null : mapEcommerce(eventName, properties);
     }
 
@@ -541,7 +550,6 @@ public class AdobeIntegration extends Integration<Void> {
 
     switch (eventName) {
       case "Video Playback Started":
-        Context context = analytics.getApplication();
         Properties properties = track.properties();
         MediaHeartbeatConfig config = new MediaHeartbeatConfig();
 
@@ -570,8 +578,14 @@ public class AdobeIntegration extends Integration<Void> {
         heartbeat = heartbeatFactory.get(playbackDelegate, config);
 
         Map<String, String> standardVideoMetadata = new HashMap<>();
-        Properties videoProperties = mapStandardVideoMetadata(properties, standardVideoMetadata);
-        Properties videoMetadata = mapProperties(videoProperties);
+        Properties videoProperties =
+            mapStandardVideoMetadata(
+                properties,
+                standardVideoMetadata,
+                // eventType
+                "coreVideo");
+        Map<String, String> videoMetadata = new HashMap<>();
+        videoMetadata.putAll(videoProperties.toStringMap());
 
         MediaObject mediaInfo =
             MediaHeartbeat.createMediaObject(
@@ -602,8 +616,13 @@ public class AdobeIntegration extends Integration<Void> {
         Properties videoContentProperties = track.properties();
         Map<String, String> standardChapterMetadata = new HashMap<>();
         Properties chapterProperties =
-            mapStandardVideoMetadata(videoContentProperties, standardChapterMetadata);
-        Properties chapterMetadata = mapProperties(chapterProperties);
+            mapStandardVideoMetadata(
+                videoContentProperties,
+                standardChapterMetadata,
+                // eventType
+                "coreVideo");
+        Map<String, String> chapterMetadata = new HashMap<>();
+        chapterMetadata.putAll(chapterProperties.toStringMap());
 
         MediaObject mediaChapter =
             MediaHeartbeat.createChapterObject(
@@ -624,6 +643,7 @@ public class AdobeIntegration extends Integration<Void> {
         break;
 
       case "Video Content Completed":
+        heartbeat.trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
         heartbeat.trackComplete();
         break;
 
@@ -671,8 +691,14 @@ public class AdobeIntegration extends Integration<Void> {
       case "Video Ad Started":
         Properties videoAdProperties = track.properties();
         Map<String, String> standardAdMetadata = new HashMap<>();
-        Properties adProperties = mapStandardVideoMetadata(videoAdProperties, standardAdMetadata);
-        Properties adMetadata = mapProperties(adProperties);
+        Properties adProperties =
+            mapStandardVideoMetadata(
+                videoAdProperties,
+                standardAdMetadata,
+                // eventType
+                "ad");
+        Map<String, String> adMetadata = new HashMap<>();
+        adMetadata.putAll(adProperties.toStringMap());
 
         MediaObject mediaAdInfo =
             MediaHeartbeat.createAdObject(
@@ -681,10 +707,6 @@ public class AdobeIntegration extends Integration<Void> {
                 videoAdProperties.getLong("indexPosition", 0),
                 videoAdProperties.getDouble("totalLength", 0));
 
-        // Delete assetId; otherwise helper function would map this incorrectly as standard video metadata
-        // Adobe handles "assetId" differently for content events and ad events
-        // This is the only property that is shared b/w ad and content events; all others are unique
-        standardAdMetadata.remove(MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
         mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
         heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata.toStringMap());
@@ -709,19 +731,21 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private Properties mapStandardVideoMetadata(
-      Properties properties, Map<String, String> standardVideoMetadata) {
+      Properties properties, Map<String, String> standardVideoMetadata, String eventType) {
     Properties propertiesCopy = new Properties();
     propertiesCopy.putAll(properties);
+    Map<String, String> propertyMap =
+        (eventType.equals("coreVideo")) ? VIDEO_METADATA_MAP : AD_METADATA_MAP;
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
       String propertyKey = entry.getKey();
       String value = String.valueOf(entry.getValue());
 
-      if (VIDEO_METADATA_MAP.containsKey(propertyKey)) {
-        standardVideoMetadata.put(VIDEO_METADATA_MAP.get(propertyKey), value);
+      if (propertyMap.containsKey(propertyKey)) {
+        standardVideoMetadata.put(propertyMap.get(propertyKey), value);
         propertiesCopy.remove(propertyKey);
       }
     }
-    if (properties.containsKey("livestream")) {
+    if (eventType.equals("coreVideo") && properties.containsKey("livestream")) {
       standardVideoMetadata.put(
           MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT,
           properties.getBoolean("livestream", false)
@@ -730,5 +754,12 @@ public class AdobeIntegration extends Integration<Void> {
       propertiesCopy.remove("livestream");
     }
     return propertiesCopy;
+  }
+
+  /** Creates a mutable HashSet instance containing the given elements in unspecified order */
+  public static <T> Set<T> newSet(T... values) {
+    Set<T> set = new HashSet<>(values.length);
+    Collections.addAll(set, values);
+    return set;
   }
 }

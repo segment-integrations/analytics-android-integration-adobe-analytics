@@ -36,7 +36,6 @@ import org.robolectric.RobolectricTestRunner;
 import static com.segment.analytics.Analytics.LogLevel.NONE;
 import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
 import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
@@ -48,14 +47,14 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @RunWith(RobolectricTestRunner.class)
 @PrepareForTest({Analytics.class, Config.class, MediaHeartbeat.class})
 @org.robolectric.annotation.Config(constants = BuildConfig.class)
-@PowerMockIgnore({ "org.mockito.*", "org.robolectric.*", "android.*", "org.json.*" })
+@PowerMockIgnore({"org.mockito.*", "org.robolectric.*", "android.*", "org.json.*"})
 public class AdobeTest {
 
   @Rule public PowerMockRule rule = new PowerMockRule();
+  @Mock private MediaHeartbeat heartbeat;
+  @Mock private com.segment.analytics.Analytics analytics;
+  @Mock private Application context;
   private AdobeIntegration integration;
-  private @Mock MediaHeartbeat heartbeat;
-  private @Mock com.segment.analytics.Analytics analytics;
-  private @Mock Application context;
   private AdobeIntegration.HeartbeatFactory mockHeartbeatFactory = new AdobeIntegration.HeartbeatFactory() {
     @Override
     public MediaHeartbeat get(MediaHeartbeatDelegate delegate, MediaHeartbeatConfig config) {
@@ -70,12 +69,13 @@ public class AdobeTest {
     PowerMockito.mockStatic(Analytics.class);
     when(analytics.getApplication()).thenReturn(context);
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("heartbeatTrackingServer", "true"), analytics, Logger.with(NONE), mockHeartbeatFactory);
+        .putValue("heartbeatTrackingServer", "true"), analytics, Logger.with(NONE),
+        mockHeartbeatFactory);
   }
 
   @Test
   public void factory() {
-    assertTrue(AdobeIntegration.FACTORY.key().equals("Adobe Analytics"));
+    assertThat(AdobeIntegration.FACTORY.key()).isEqualTo("Adobe Analytics");
   }
 
   @Test
@@ -85,16 +85,16 @@ public class AdobeTest {
         .putValue("contextValues", new HashMap<String, Object>())
         .putValue("productIdentifier", "id")
         .putValue("adobeVerboseLogging", true),
-      analytics,
-      Logger.with(VERBOSE),
+        analytics,
+        Logger.with(VERBOSE),
         mockHeartbeatFactory);
 
     verifyStatic();
     Config.setDebugLogging(true);
 
-    assertTrue(integration.eventsV2.equals(new HashMap<String, Object>()));
-    assertTrue(integration.contextValues.equals(new HashMap<String, Object>()));
-    assertTrue(integration.productIdentifier.equals("id"));
+    assertThat(integration.eventsV2).isEqualTo(new HashMap<String, Object>());
+    assertThat(integration.contextValues).isEqualTo(new HashMap<String, Object>());
+    assertThat(integration.productIdentifier).isEqualTo("id");
   }
 
   @Test
@@ -102,16 +102,18 @@ public class AdobeTest {
     // all default arguments have not yet been defined
   }
 
-  @Test public void activityCreate() {
+  @Test
+  public void activityCreate() {
     Activity activity = mock(Activity.class);
-    Bundle savedInstanceState = mock (Bundle.class);
+    Bundle savedInstanceState = mock(Bundle.class);
     integration.onActivityCreated(activity, savedInstanceState);
 
     verifyStatic();
     Config.setContext(activity.getApplicationContext());
   }
 
-  @Test public void activityPause() {
+  @Test
+  public void activityPause() {
     Activity activity = mock(Activity.class);
     integration.onActivityPaused(activity);
 
@@ -119,7 +121,8 @@ public class AdobeTest {
     Config.pauseCollectingLifecycleData();
   }
 
-  @Test public void activityResume() {
+  @Test
+  public void activityResume() {
     Activity activity = mock(Activity.class);
     integration.onActivityResumed(activity);
 
@@ -293,13 +296,13 @@ public class AdobeTest {
         .event("Checkout Started")
         .properties(new Properties()
             .putProducts(new Product("123", "ABC", 10.0)
-                .putName("shoes")
-                .putValue("category", "athletic")
-                .putValue("quantity", 2),
-              new Product("456", "DEF", 20.0)
-                .putName("jeans")
-                .putValue("category", "casual")
-                .putValue("quantity", 1)))
+                    .putName("shoes")
+                    .putValue("category", "athletic")
+                    .putValue("quantity", 2),
+                new Product("456", "DEF", 20.0)
+                    .putName("jeans")
+                    .putValue("category", "casual")
+                    .putValue("quantity", 1)))
         .build()
     );
 
@@ -415,7 +418,7 @@ public class AdobeTest {
   public void videoPlaybackDelegatePlay() throws Exception {
     integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
     Thread.sleep(2000);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(2.0));
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(2.0);
   }
 
   @Test
@@ -424,7 +427,8 @@ public class AdobeTest {
     integration.playbackDelegate.pausePlayhead();
     Double firstPlayheadPosition = integration.playbackDelegate.getCurrentPlaybackTime();
     Thread.sleep(2000);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(firstPlayheadPosition));
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime())
+        .isEqualTo(firstPlayheadPosition);
   }
 
   @Test
@@ -432,8 +436,10 @@ public class AdobeTest {
     integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
     integration.playbackDelegate.pausePlayhead();
     Thread.sleep(1000);
-    integration.playbackDelegate.unPausePlayhead();Thread.sleep(3000);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(3.0));
+    integration.playbackDelegate.unPausePlayhead();
+    Thread.sleep(3000);
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime())
+        .isEqualTo(3.0);
   }
 
   @Test
@@ -466,7 +472,7 @@ public class AdobeTest {
         .build()
     );
 
-    Map <String, String> standardVideoMetadata = new HashMap<>();
+    Map<String, String> standardVideoMetadata = new HashMap<>();
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, "123");
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, "Game of Thrones");
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, "1");
@@ -474,9 +480,10 @@ public class AdobeTest {
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, "fantasy");
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, "HBO");
     standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, "2011");
-    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT, MediaHeartbeat.StreamType.VOD);
+    standardVideoMetadata
+        .put(MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT, MediaHeartbeat.StreamType.VOD);
 
-    HashMap<String, String> videoMetadata = new HashMap<>();
+    Map<String, String> videoMetadata = new HashMap<>();
     videoMetadata.put("adobe.random", "something super random");
 
     // create a media object; values can be null
@@ -491,14 +498,14 @@ public class AdobeTest {
 
     verify(heartbeat).trackSessionStart(isEqualToComparingFieldByFieldRecursively(mediaInfo),
         eq(videoMetadata));
-    assertTrue(integration.playbackDelegate != null);
+    assertThat(integration.playbackDelegate).isNotNull();
   }
 
   @Test
   public void trackVideoPlaybackPaused() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Paused");
-    assertTrue(integration.playbackDelegate.isPaused);
+    assertThat(integration.playbackDelegate.isPaused).isTrue();
     verify(heartbeat).trackPause();
   }
 
@@ -506,7 +513,7 @@ public class AdobeTest {
   public void trackVideoPlaybackResumed() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Resumed");
-    assertTrue(!integration.playbackDelegate.isPaused);
+    assertThat(integration.playbackDelegate.isPaused).isFalse();
     verify(heartbeat).trackPlay();
   }
 
@@ -530,7 +537,7 @@ public class AdobeTest {
         .build()
     );
 
-    HashMap<String, String> videoMetadata = new HashMap<>();
+    Map<String, String> videoMetadata = new HashMap<>();
     videoMetadata.put("adobe.title", "You Win or You Die");
 
     MediaObject mediaChapter = MediaHeartbeat.createChapterObject(
@@ -540,11 +547,13 @@ public class AdobeTest {
         10D
     );
 
-    mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, new HashMap<String, String>());
+    mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata,
+        new HashMap<String, String>());
 
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == 35.0);
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(35.0);
     verify(heartbeat).trackPlay();
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart), isEqualToComparingFieldByFieldRecursively(mediaChapter),
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart),
+        isEqualToComparingFieldByFieldRecursively(mediaChapter),
         eq(videoMetadata));
   }
 
@@ -552,6 +561,7 @@ public class AdobeTest {
   public void trackVideoContentComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Content Completed");
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
     verify(heartbeat).trackComplete();
   }
 
@@ -566,7 +576,7 @@ public class AdobeTest {
   public void trackVideoBufferStarted() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Started");
-    assertTrue(integration.playbackDelegate.isPaused);
+    assertThat(integration.playbackDelegate.isPaused).isTrue();
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
   }
 
@@ -574,7 +584,7 @@ public class AdobeTest {
   public void trackVideoBufferComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Completed");
-    assertTrue(!integration.playbackDelegate.isPaused);
+    assertThat(integration.playbackDelegate.isPaused).isFalse();
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
   }
 
@@ -582,18 +592,18 @@ public class AdobeTest {
   public void trackVideoSeekStarted() {
     newVideoSession();
     heartbeatSeekFixture("Video Playback Seek Started", null);
-    assertTrue(integration.playbackDelegate.isPaused);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == 0.0);
+    assertThat(integration.playbackDelegate.isPaused).isTrue();
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isZero();
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
   }
 
   @Test
   public void trackVideoSeekComplete() {
     newVideoSession();
-    Double first = integration.playbackDelegate.getCurrentPlaybackTime();
+    double first = integration.playbackDelegate.getCurrentPlaybackTime();
     heartbeatSeekFixture("Video Playback Seek Completed", 50L);
-    assertTrue(!integration.playbackDelegate.isPaused);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime() == first + 50.0);
+    assertThat(integration.playbackDelegate.isPaused).isFalse();
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(first + 50);
     verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
   }
 
@@ -604,7 +614,8 @@ public class AdobeTest {
         .userId("123")
         .event("Video Ad Break Started")
         .properties(new Properties()
-            .putValue("title", "Car Commercial") // should this be pre-roll, mid-roll or post-roll instead?
+            .putValue("title",
+                "Car Commercial") // Should this be pre-roll, mid-roll or post-roll instead?
             .putValue("startTime", 10D)
             .putValue("indexPosition", 1L))
         .build()
@@ -615,8 +626,9 @@ public class AdobeTest {
         1L,
         10D
     );
-
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart), isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq((Map) null));
+    
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart),
+        isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq((Map<String, String>) null));
   }
 
   @Test
@@ -651,14 +663,18 @@ public class AdobeTest {
         10D
     );
 
-    HashMap<String, String> adMetadata = new HashMap<>();
+    Map<String, String> adMetadata = new HashMap<>();
     adMetadata.put("adobe.title", "Car Commercial");
+    adMetadata.put("assetId", "123");
+    adMetadata.put("totalLength", "10.0");
+    adMetadata.put("indexPosition", "1");
 
     Map<String, String> standardAdMetadata = new HashMap<>();
     standardAdMetadata.put(MediaHeartbeat.AdMetadataKeys.ADVERTISER, "Lexus");
     mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdStart), isEqualToComparingFieldByFieldRecursively(mediaAdInfo), eq(adMetadata));
+    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdStart),
+        isEqualToComparingFieldByFieldRecursively(mediaAdInfo), eq(adMetadata));
   }
 
   @Test
@@ -674,7 +690,7 @@ public class AdobeTest {
     heartbeatTestFixture("Video Playback Interrupted");
     Double first = integration.playbackDelegate.getCurrentPlaybackTime();
     Thread.sleep(2000L);
-    assertTrue(integration.playbackDelegate.getCurrentPlaybackTime().equals(first));
+    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(first);
   }
 
   @Test
@@ -698,7 +714,8 @@ public class AdobeTest {
         1L
     );
 
-    assertThat(integration.playbackDelegate.qosData).isEqualToComparingFieldByField(expectedMediaObject);
+    assertThat(integration.playbackDelegate.qosData)
+        .isEqualToComparingFieldByField(expectedMediaObject);
   }
 
   @Test
@@ -706,7 +723,7 @@ public class AdobeTest {
     integration.identify(new IdentifyPayload.Builder()
         .userId("123")
         .traits(new Traits())
-    .build());
+        .build());
 
     verifyStatic();
     Config.setUserIdentifier("123");
@@ -812,7 +829,7 @@ public class AdobeTest {
   }
 
   private static <T> T isEqualToComparingFieldByFieldRecursively(final T expected) {
-    return argThat(new AssertionMatcher<T>(){
+    return argThat(new AssertionMatcher<T>() {
       @Override
       public void assertion(T actual) throws AssertionError {
         assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
