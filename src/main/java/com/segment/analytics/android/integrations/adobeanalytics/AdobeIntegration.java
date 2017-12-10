@@ -18,7 +18,7 @@ import com.segment.analytics.integrations.Integration;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,38 +55,37 @@ public class AdobeIntegration extends Integration<Void> {
 
   private static final String ADOBE_KEY = "Adobe Analytics";
 
-  private static final Map<String, String> ECOMMERCE_EVENT_LIST = getEcommerceEventList();
+  private static final Map<String, String> ECOMMERCE_EVENT_MAP = getEcommerceEventMap();
 
-  private static Map<String, String> getEcommerceEventList() {
-    Map<String, String> ecommerceEventList = new HashMap<>();
-    ecommerceEventList.put("Order Completed", "purchase");
-    ecommerceEventList.put("Product Added", "scAdd");
-    ecommerceEventList.put("Product Removed", "scRemove");
-    ecommerceEventList.put("Checkout Started", "scCheckout");
-    ecommerceEventList.put("Cart Viewed", "scView");
-    ecommerceEventList.put("Product Viewed", "prodView");
-    return ecommerceEventList;
+  private static Map<String, String> getEcommerceEventMap() {
+    Map<String, String> ecommerceEventMap = new HashMap<>();
+    ecommerceEventMap.put("Order Completed", "purchase");
+    ecommerceEventMap.put("Product Added", "scAdd");
+    ecommerceEventMap.put("Product Removed", "scRemove");
+    ecommerceEventMap.put("Checkout Started", "scCheckout");
+    ecommerceEventMap.put("Cart Viewed", "scView");
+    ecommerceEventMap.put("Product Viewed", "prodView");
+    return ecommerceEventMap;
   }
 
   private static final Set<String> VIDEO_EVENT_LIST =
-      new HashSet<>(
-          Arrays.asList(
-              "Video Playback Started",
-              "Video Content Started",
-              "Video Playback Paused",
-              "Video Playback Resumed",
-              "Video Content Completed",
-              "Video Playback Completed",
-              "Video Playback Buffer Started",
-              "Video Playback Buffer Completed",
-              "Video Playback Seek Started",
-              "Video Playback Seek Completed",
-              "Video Ad Break Started",
-              "Video Ad Break Completed",
-              "Video Ad Started",
-              "Video Ad Completed",
-              "Video Playback Interrupted",
-              "Video Quality Updated"));
+      newSet(
+          "Video Playback Started",
+          "Video Content Started",
+          "Video Playback Paused",
+          "Video Playback Resumed",
+          "Video Content Completed",
+          "Video Playback Completed",
+          "Video Playback Buffer Started",
+          "Video Playback Buffer Completed",
+          "Video Playback Seek Started",
+          "Video Playback Seek Completed",
+          "Video Ad Break Started",
+          "Video Ad Break Completed",
+          "Video Ad Started",
+          "Video Ad Completed",
+          "Video Playback Interrupted",
+          "Video Quality Updated");
 
   private static final Map<String, String> VIDEO_METADATA_MAP = getStandardVideoMetadataMap();
 
@@ -366,7 +365,7 @@ public class AdobeIntegration extends Integration<Void> {
       return;
     }
 
-    if (!(ECOMMERCE_EVENT_LIST.containsKey(eventName)) && isNullOrEmpty(eventsV2)) {
+    if (!(ECOMMERCE_EVENT_MAP.containsKey(eventName)) && isNullOrEmpty(eventsV2)) {
       logger.verbose(
           "Event must be either configured in Adobe and in the Segment EventsV2 setting or "
               + "a reserved Adobe Ecommerce event.");
@@ -374,7 +373,7 @@ public class AdobeIntegration extends Integration<Void> {
     }
     if ((!isNullOrEmpty(eventsV2))
         && eventsV2.containsKey(eventName)
-        && ECOMMERCE_EVENT_LIST.containsKey(eventName)) {
+        && ECOMMERCE_EVENT_MAP.containsKey(eventName)) {
       logger.verbose(
           "Segment currently does not support mapping specced ecommerce events to "
               + "custom Adobe events.");
@@ -385,8 +384,8 @@ public class AdobeIntegration extends Integration<Void> {
       eventName = String.valueOf(eventsV2.get(eventName));
       mappedProperties = (isNullOrEmpty(properties)) ? null : mapProperties(properties);
     }
-    if (ECOMMERCE_EVENT_LIST.containsKey(eventName)) {
-      eventName = ECOMMERCE_EVENT_LIST.get(eventName);
+    if (ECOMMERCE_EVENT_MAP.containsKey(eventName)) {
+      eventName = ECOMMERCE_EVENT_MAP.get(eventName);
       mappedProperties = (isNullOrEmpty(properties)) ? null : mapEcommerce(eventName, properties);
     }
 
@@ -736,5 +735,12 @@ public class AdobeIntegration extends Integration<Void> {
       propertiesCopy.remove("livestream");
     }
     return propertiesCopy;
+  }
+
+  /** Creates a mutable HashSet instance containing the given elements in unspecified order */
+  public static <T> Set<T> newSet(T... values) {
+    Set<T> set = new HashSet<>(values.length);
+    Collections.addAll(set, values);
+    return set;
   }
 }
