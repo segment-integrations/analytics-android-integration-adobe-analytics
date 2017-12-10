@@ -111,15 +111,14 @@ public class AdobeIntegration extends Integration<Void> {
     return adPropertyList;
   }
 
-  private final com.segment.analytics.Analytics analytics;
   private final Logger logger;
   private MediaHeartbeat heartbeat;
   private HeartbeatFactory heartbeatFactory;
   PlaybackDelegate playbackDelegate;
-  final boolean adobeLogLevel;
-  final String heartbeatTrackingServer;
-  final String packageName;
-  final boolean ssl;
+  private final boolean adobeLogLevel;
+  private final String heartbeatTrackingServer;
+  private final String packageName;
+  private final boolean ssl;
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   String productIdentifier;
@@ -132,7 +131,6 @@ public class AdobeIntegration extends Integration<Void> {
     this.eventsV2 = settings.getValueMap("eventsV2");
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
-    this.analytics = analytics;
     this.heartbeatFactory = heartbeatFactory;
     this.heartbeatTrackingServer = settings.getString("heartbeatTrackingServer");
     this.ssl = settings.getBoolean("ssl", false);
@@ -185,7 +183,7 @@ public class AdobeIntegration extends Integration<Void> {
      */
     MediaObject qosData;
 
-    public PlaybackDelegate() {
+    PlaybackDelegate() {
       this.initialTime = System.currentTimeMillis();
     }
 
@@ -195,7 +193,7 @@ public class AdobeIntegration extends Integration<Void> {
      * @param properties Properties object from a "Video Quality Updated" event, which triggers
      *     invocation of this method.
      */
-    public void createAndUpdateQosObject(Properties properties) {
+    void createAndUpdateQosObject(Properties properties) {
       qosData =
           MediaHeartbeat.createQoSObject(
               properties.getLong("bitrate", 0),
@@ -245,7 +243,7 @@ public class AdobeIntegration extends Integration<Void> {
      * system time at which the video was paused in {@link #pauseStartedTime}. Sets {@link
      * #isPaused} to true so {@link #getCurrentPlaybackTime()} knows the video is in a paused state.
      */
-    public void pausePlayhead() {
+    void pausePlayhead() {
       this.pausedPlayheadPosition = playheadPosition;
       this.pauseStartedTime = System.currentTimeMillis();
       this.isPaused = true;
@@ -263,7 +261,7 @@ public class AdobeIntegration extends Integration<Void> {
      *
      * <p>offset = originalOffset + (currentSystemTime - timePlayerWasPaused)
      */
-    public void unPausePlayhead() {
+    void unPausePlayhead() {
       if (offset == 0) {
         offset = (System.currentTimeMillis() - pauseStartedTime) / 1000;
       } else {
@@ -276,7 +274,7 @@ public class AdobeIntegration extends Integration<Void> {
      * Resumes invocation of {@link #getCurrentPlaybackTime()} by setting {@link #isPaused} to
      * false. This is only called when a customer sends a "Video Playback Seek Completed" event.
      */
-    public void resumePlayheadAfterSeeking() {
+    void resumePlayheadAfterSeeking() {
       this.isPaused = false;
     }
 
@@ -290,7 +288,7 @@ public class AdobeIntegration extends Integration<Void> {
      *     Seek Completed" or "Video Content Started" event. This value is required for accurate
      *     reporting in the Adobe dashboard. It defaults to 0.
      */
-    public void updatePlayheadPosition(Long playheadPosition) {
+    void updatePlayheadPosition(Long playheadPosition) {
       this.initialTime = System.currentTimeMillis();
       this.updatedPlayheadPosition = playheadPosition;
     }
@@ -552,7 +550,6 @@ public class AdobeIntegration extends Integration<Void> {
 
     switch (eventName) {
       case "Video Playback Started":
-        Context context = analytics.getApplication();
         Properties properties = track.properties();
         MediaHeartbeatConfig config = new MediaHeartbeatConfig();
 

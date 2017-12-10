@@ -627,9 +627,9 @@ public class AdobeTest {
         1L,
         10D
     );
-
+    
     verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart),
-        isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq((Map) null));
+        isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq((Map<String, String>) null));
   }
 
   @Test
