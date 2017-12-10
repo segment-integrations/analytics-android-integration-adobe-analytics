@@ -665,9 +665,6 @@ public class AdobeTest {
 
     Map<String, String> adMetadata = new HashMap<>();
     adMetadata.put("adobe.title", "Car Commercial");
-    adMetadata.put("assetId", "123");
-    adMetadata.put("totalLength", "10.0");
-    adMetadata.put("indexPosition", "1");
 
     Map<String, String> standardAdMetadata = new HashMap<>();
     standardAdMetadata.put(MediaHeartbeat.AdMetadataKeys.ADVERTISER, "Lexus");

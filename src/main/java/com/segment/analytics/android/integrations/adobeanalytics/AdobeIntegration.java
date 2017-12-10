@@ -584,8 +584,7 @@ public class AdobeIntegration extends Integration<Void> {
                 standardVideoMetadata,
                 // eventType
                 "coreVideo");
-        Map<String, String> videoMetadata = new HashMap<>();
-        videoMetadata.putAll(videoProperties.toStringMap());
+        Properties videoMetadata = mapProperties(videoProperties);
 
         MediaObject mediaInfo =
             MediaHeartbeat.createMediaObject(
@@ -621,8 +620,7 @@ public class AdobeIntegration extends Integration<Void> {
                 standardChapterMetadata,
                 // eventType
                 "coreVideo");
-        Map<String, String> chapterMetadata = new HashMap<>();
-        chapterMetadata.putAll(chapterProperties.toStringMap());
+        Properties chapterMetadata = mapProperties(chapterProperties);
 
         MediaObject mediaChapter =
             MediaHeartbeat.createChapterObject(
@@ -697,8 +695,7 @@ public class AdobeIntegration extends Integration<Void> {
                 standardAdMetadata,
                 // eventType
                 "ad");
-        Map<String, String> adMetadata = new HashMap<>();
-        adMetadata.putAll(adProperties.toStringMap());
+        Properties adMetadata = mapProperties(adProperties);
 
         MediaObject mediaAdInfo =
             MediaHeartbeat.createAdObject(
