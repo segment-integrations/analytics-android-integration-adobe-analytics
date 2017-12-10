@@ -148,17 +148,18 @@ public class AdobeIntegration extends Integration<Void> {
    * to return the position of a video playhead during a video session.
    */
   static class PlaybackDelegate implements MediaHeartbeatDelegate {
+
     /**
      * The system time in millis at which the playhead is first set or updated. The playhead is
      * first set upon instantiation of the PlaybackDelegate. The value is updated whenever {@link
      * #updatePlayheadPosition(Long)} is invoked.
      */
     long initialTime;
-    /** The current playhead position in seconds */
+    /** The current playhead position in seconds. */
     long playheadPosition;
-    /** The position of the playhead in seconds when the video was paused */
+    /** The position of the playhead in seconds when the video was paused. */
     long pausedPlayheadPosition;
-    /** The system time in millis at which {@link #pausePlayhead} was invoked */
+    /** The system time in millis at which {@link #pausePlayhead} was invoked. */
     long pauseStartedTime;
     /**
      * The updated playhead position - this variable is assigned to the value a customer passes as
@@ -166,7 +167,7 @@ public class AdobeIntegration extends Integration<Void> {
      * a "Video Content Started" event
      */
     long updatedPlayheadPosition;
-    /** The total time in seconds a video has been in a paused state during a video session */
+    /** The total time in seconds a video has been in a paused state during a video session. */
     long offset = 0;
     /** Whether the video playhead is in a paused state. */
     boolean isPaused = false;
@@ -329,7 +330,9 @@ public class AdobeIntegration extends Integration<Void> {
     super.identify(identify);
 
     String userId = identify.userId();
-    if (isNullOrEmpty(userId)) return;
+    if (isNullOrEmpty(userId)) {
+      return;
+    }
     Config.setUserIdentifier(userId);
     logger.verbose("Config.setUserIdentifier(%s);", userId);
   }
