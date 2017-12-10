@@ -400,7 +400,7 @@ public class AdobeIntegration extends Integration<Void> {
     logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
   }
 
-  private Map<String, Object> mapProperties(Properties properties) {
+  private Properties mapProperties(Properties properties) {
     Properties propertiesCopy = new Properties();
     propertiesCopy.putAll(properties);
 
@@ -410,7 +410,7 @@ public class AdobeIntegration extends Integration<Void> {
       propertiesCopy.remove("products");
     }
 
-    Map<String, Object> mappedProperties = new HashMap<>();
+    Properties mappedProperties = new Properties();
 
     if (!isNullOrEmpty(contextValues)) {
       for (Map.Entry<String, Object> entry : properties.entrySet()) {
@@ -584,8 +584,7 @@ public class AdobeIntegration extends Integration<Void> {
                 standardVideoMetadata,
                 // eventType
                 "coreVideo");
-        HashMap<String, String> videoMetadata = new HashMap<>();
-        videoMetadata.putAll(videoProperties.toStringMap());
+        Properties videoMetadata = mapProperties(videoProperties);
 
         MediaObject mediaInfo =
             MediaHeartbeat.createMediaObject(
@@ -599,7 +598,7 @@ public class AdobeIntegration extends Integration<Void> {
         mediaInfo.setValue(
             MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
 
-        heartbeat.trackSessionStart(mediaInfo, videoMetadata);
+        heartbeat.trackSessionStart(mediaInfo, videoMetadata.toStringMap());
         break;
 
       case "Video Playback Paused":
@@ -621,8 +620,7 @@ public class AdobeIntegration extends Integration<Void> {
                 standardChapterMetadata,
                 // eventType
                 "coreVideo");
-        HashMap<String, String> chapterMetadata = new HashMap<>();
-        chapterMetadata.putAll(chapterProperties.toStringMap());
+        Properties chapterMetadata = mapProperties(chapterProperties);
 
         MediaObject mediaChapter =
             MediaHeartbeat.createChapterObject(
@@ -638,7 +636,8 @@ public class AdobeIntegration extends Integration<Void> {
           playbackDelegate.updatePlayheadPosition(videoContentProperties.getLong("position", 0));
         }
         heartbeat.trackPlay();
-        heartbeat.trackEvent(MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata);
+        heartbeat.trackEvent(
+            MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata.toStringMap());
         break;
 
       case "Video Content Completed":
@@ -696,8 +695,7 @@ public class AdobeIntegration extends Integration<Void> {
                 standardAdMetadata,
                 // eventType
                 "ad");
-        HashMap<String, String> adMetadata = new HashMap<>();
-        adMetadata.putAll(adProperties.toStringMap());
+        Properties adMetadata = mapProperties(adProperties);
 
         MediaObject mediaAdInfo =
             MediaHeartbeat.createAdObject(
@@ -708,7 +706,7 @@ public class AdobeIntegration extends Integration<Void> {
 
         mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
-        heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata);
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata.toStringMap());
         break;
 
       case "Video Ad Skipped":

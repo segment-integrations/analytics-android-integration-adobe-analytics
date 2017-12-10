@@ -444,6 +444,9 @@ public class AdobeTest {
 
   @Test
   public void trackVideoPlaybackStarted() {
+    integration.contextValues = new HashMap<>();
+    integration.contextValues.put("random metadata", "adobe.random");
+
     ValueMap options = new ValueMap();
     ValueMap integrationSpecificOptions = new ValueMap();
     integrationSpecificOptions.put("ovpName", "HTML 5");
@@ -480,11 +483,8 @@ public class AdobeTest {
     standardVideoMetadata
         .put(MediaHeartbeat.VideoMetadataKeys.STREAM_FORMAT, MediaHeartbeat.StreamType.VOD);
 
-    HashMap<String, String> videoMetadata = new HashMap<>();
-    videoMetadata.put("title", "You Win or You Die");
-    videoMetadata.put("contentAssetId", "123");
-    videoMetadata.put("totalLength", "100.0");
-    videoMetadata.put("random metadata", "something super random");
+    Map<String, String> videoMetadata = new HashMap<>();
+    videoMetadata.put("adobe.random", "something super random");
 
     // create a media object; values can be null
     MediaObject mediaInfo = MediaHeartbeat.createMediaObject(
@@ -519,6 +519,9 @@ public class AdobeTest {
 
   @Test
   public void trackVideoContentStarted() {
+    integration.contextValues = new HashMap<>();
+    integration.contextValues.put("title", "adobe.title");
+
     newVideoSession();
 
     integration.track(new TrackPayload.Builder()
@@ -534,13 +537,8 @@ public class AdobeTest {
         .build()
     );
 
-    HashMap<String, String> videoMetadata = new HashMap<>();
-    videoMetadata.put("title", "You Win or You Die");
-    videoMetadata.put("contentAssetId", "123");
-    videoMetadata.put("totalLength", "100.0");
-    videoMetadata.put("startTime", "10.0");
-    videoMetadata.put("indexPosition", "1");
-    videoMetadata.put("position", "35");
+    Map<String, String> videoMetadata = new HashMap<>();
+    videoMetadata.put("adobe.title", "You Win or You Die");
 
     MediaObject mediaChapter = MediaHeartbeat.createChapterObject(
         "You Win or You Die",
@@ -642,6 +640,9 @@ public class AdobeTest {
 
   @Test
   public void trackVideoAdStarted() {
+    integration.contextValues = new HashMap<>();
+    integration.contextValues.put("title", "adobe.title");
+
     newVideoSession();
     integration.track(new TrackPayload.Builder()
         .userId("123")
@@ -662,11 +663,8 @@ public class AdobeTest {
         10D
     );
 
-    HashMap<String, String> adMetadata = new HashMap<>();
-    adMetadata.put("title", "Car Commercial");
-    adMetadata.put("assetId", "123");
-    adMetadata.put("totalLength", "10.0");
-    adMetadata.put("indexPosition", "1");
+    Map<String, String> adMetadata = new HashMap<>();
+    adMetadata.put("adobe.title", "Car Commercial");
 
     Map<String, String> standardAdMetadata = new HashMap<>();
     standardAdMetadata.put(MediaHeartbeat.AdMetadataKeys.ADVERTISER, "Lexus");
