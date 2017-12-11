@@ -674,7 +674,9 @@ public class AdobeIntegration extends Integration<Void> {
                 videoAdBreakProperties.getLong("indexPosition", 1), // Segment does not spec this
                 videoAdBreakProperties.getDouble("startTime", 0));
 
-        heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, null);
+        Properties adBreakMetadata = mapProperties(videoAdBreakProperties);
+
+        heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, adBreakMetadata.toStringMap());
         break;
 
       case "Video Ad Break Completed":
