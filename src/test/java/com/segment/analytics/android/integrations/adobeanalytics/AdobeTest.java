@@ -447,14 +447,8 @@ public class AdobeTest {
     integration.contextValues = new HashMap<>();
     integration.contextValues.put("random metadata", "adobe.random");
 
-    ValueMap options = new ValueMap();
-    ValueMap integrationSpecificOptions = new ValueMap();
-    integrationSpecificOptions.put("ovpName", "HTML 5");
-    options.put("Adobe Analytics", integrationSpecificOptions);
-
     integration.track(new TrackPayload.Builder()
         .userId("123")
-        .integrations(options)
         .event("Video Playback Started")
         .properties(new Properties()
             .putValue("title", "You Win or You Die")
