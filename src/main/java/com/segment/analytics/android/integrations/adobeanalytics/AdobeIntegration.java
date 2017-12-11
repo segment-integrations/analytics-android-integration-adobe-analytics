@@ -739,7 +739,7 @@ public class AdobeIntegration extends Integration<Void> {
 
   private void trackAdobeEvent(MediaHeartbeat.Event eventName, MediaObject mediaObject, Map<String, String> customMetadata) {
     heartbeat.trackEvent(eventName, mediaObject, customMetadata);
-    logger.verbose("heartbeat.trackEvent(%s, null, null);", eventName, mediaObject, customMetadata);
+    logger.verbose("heartbeat.trackEvent(%s, %s, %s);", eventName, mediaObject, customMetadata);
   }
 
   private Properties mapStandardVideoMetadata(
