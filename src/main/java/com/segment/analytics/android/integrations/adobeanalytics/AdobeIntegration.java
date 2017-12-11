@@ -92,12 +92,15 @@ public class AdobeIntegration extends Integration<Void> {
   private static Map<String, String> getStandardVideoMetadataMap() {
     Map<String, String> videoPropertyList = new HashMap<>();
     videoPropertyList.put("assetId", MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
+    videoPropertyList.put("contentAssetId", MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
     videoPropertyList.put("program", MediaHeartbeat.VideoMetadataKeys.SHOW);
     videoPropertyList.put("season", MediaHeartbeat.VideoMetadataKeys.SEASON);
     videoPropertyList.put("episode", MediaHeartbeat.VideoMetadataKeys.EPISODE);
     videoPropertyList.put("genre", MediaHeartbeat.VideoMetadataKeys.GENRE);
     videoPropertyList.put("channel", MediaHeartbeat.VideoMetadataKeys.NETWORK);
     videoPropertyList.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
+    videoPropertyList.put("publisher", MediaHeartbeat.VideoMetadataKeys.ORIGINATOR);
+    videoPropertyList.put("rating", MediaHeartbeat.VideoMetadataKeys.RATING);
     return videoPropertyList;
   }
 

@@ -527,7 +527,15 @@ public class AdobeTest {
             .putValue("totalLength", 100D)
             .putValue("startTime", 10D)
             .putValue("indexPosition", 1L)
-            .putValue("position", 35))
+            .putValue("position", 35)
+            .putValue("season", "1")
+            .putValue("program", "Game of Thrones")
+            .putValue("episode", "7")
+            .putValue("genre", "fantasy")
+            .putValue("channel", "HBO")
+            .putValue("airdate", "2011")
+            .putValue("publisher", "HBO")
+            .putValue("rating", "MA"))
         .build()
     );
 
@@ -541,8 +549,19 @@ public class AdobeTest {
         10D
     );
 
+    Map <String, String> standardVideoMetadata = new HashMap<>();
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, "123");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, "Game of Thrones");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, "1");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.EPISODE, "7");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, "fantasy");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, "HBO");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, "2011");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ORIGINATOR, "HBO");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.RATING, "MA");
+
     mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata,
-        new HashMap<String, String>());
+        standardVideoMetadata);
 
     assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(35.0);
     verify(heartbeat).trackPlay();
