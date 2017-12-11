@@ -635,19 +635,13 @@ public class AdobeIntegration extends Integration<Void> {
           playbackDelegate.updatePlayheadPosition(videoContentProperties.getLong("position", 0));
         }
         heartbeat.trackPlay();
-        heartbeat.trackEvent(
-            MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata.toStringMap());
         logger.verbose("heartbeat.trackPlay();");
-        logger.verbose(
-            "heartbeat.trackEvent(%s, MediaObject, %s);",
-            MediaHeartbeat.Event.ChapterStart, chapterMetadata);
+        trackAdobeEvent(MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata.toStringMap());
         break;
 
       case "Video Content Completed":
-        heartbeat.trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
+        trackAdobeEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
         heartbeat.trackComplete();
-        logger.verbose(
-            "heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.ChapterComplete);
         logger.verbose("heartbeat.trackComplete();");
         break;
 
@@ -658,29 +652,24 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Playback Buffer Started":
         playbackDelegate.pausePlayhead();
-        heartbeat.trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
-        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.BufferStart);
+        trackAdobeEvent(MediaHeartbeat.Event.BufferStart, null, null);
         break;
 
       case "Video Playback Buffer Completed":
         playbackDelegate.unPausePlayhead();
-        heartbeat.trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
-        logger.verbose(
-            "heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.BufferComplete);
+        trackAdobeEvent(MediaHeartbeat.Event.BufferComplete, null, null);
         break;
 
       case "Video Playback Seek Started":
         playbackDelegate.pausePlayhead();
-        heartbeat.trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
-        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.SeekStart);
+        trackAdobeEvent(MediaHeartbeat.Event.SeekStart, null, null);
         break;
 
       case "Video Playback Seek Completed":
         Properties seekProperties = track.properties();
         playbackDelegate.updatePlayheadPosition(seekProperties.getLong("seekPosition", 0));
         playbackDelegate.resumePlayheadAfterSeeking();
-        heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
-        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.SeekComplete);
+        trackAdobeEvent(MediaHeartbeat.Event.SeekComplete, null, null);
         break;
 
       case "Video Ad Break Started":
@@ -692,14 +681,11 @@ public class AdobeIntegration extends Integration<Void> {
                 videoAdBreakProperties.getDouble("startTime", 0));
         Properties adBreakMetadata = mapProperties(videoAdBreakProperties);
 
-        heartbeat.trackEvent(
-            MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, adBreakMetadata.toStringMap());
+        trackAdobeEvent(MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, null);
         break;
 
       case "Video Ad Break Completed":
-        heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
-        logger.verbose(
-            "heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.AdBreakComplete);
+        trackAdobeEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
         break;
 
       case "Video Ad Started":
@@ -722,18 +708,15 @@ public class AdobeIntegration extends Integration<Void> {
 
         mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
-        heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata.toStringMap());
-        logger.verbose(
-            "heartbeat.trackEvent(%s, MediaObject, %s);", MediaHeartbeat.Event.AdStart, adMetadata);
+        trackAdobeEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata.toStringMap());
         break;
 
       case "Video Ad Skipped":
-        heartbeat.trackEvent(MediaHeartbeat.Event.AdSkip, null, null);
-        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.AdSkip);
+        trackAdobeEvent(MediaHeartbeat.Event.AdSkip, null, null);
+        break;
 
       case "Video Ad Completed":
-        heartbeat.trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
-        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.AdComplete);
+        trackAdobeEvent(MediaHeartbeat.Event.AdComplete, null, null);
         break;
 
       case "Video Playback Interrupted":
@@ -747,11 +730,17 @@ public class AdobeIntegration extends Integration<Void> {
     }
   }
 
+
   private String getConfigProperty(String key, String defaultValue, Properties properties) {
     if (properties.get(key) != null) {
       return properties.getString(key);
     }
     return defaultValue;
+  }
+
+  private void trackAdobeEvent(MediaHeartbeat.Event eventName, MediaObject mediaObject, Map<String, String> customMetadata) {
+    heartbeat.trackEvent(eventName, mediaObject, customMetadata);
+    logger.verbose("heartbeat.trackEvent(%s, null, null);", eventName, mediaObject, customMetadata);
   }
 
   private Properties mapStandardVideoMetadata(
