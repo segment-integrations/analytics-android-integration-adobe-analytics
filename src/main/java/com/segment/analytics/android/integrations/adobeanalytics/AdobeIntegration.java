@@ -636,7 +636,8 @@ public class AdobeIntegration extends Integration<Void> {
         }
         heartbeat.trackPlay();
         logger.verbose("heartbeat.trackPlay();");
-        trackAdobeEvent(MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata.toStringMap());
+        trackAdobeEvent(
+            MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata.toStringMap());
         break;
 
       case "Video Content Completed":
@@ -681,7 +682,8 @@ public class AdobeIntegration extends Integration<Void> {
                 videoAdBreakProperties.getDouble("startTime", 0));
         Properties adBreakMetadata = mapProperties(videoAdBreakProperties);
 
-        trackAdobeEvent(MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, adBreakMetadata.toStringMap());
+        trackAdobeEvent(
+            MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, adBreakMetadata.toStringMap());
         break;
 
       case "Video Ad Break Completed":
@@ -737,7 +739,8 @@ public class AdobeIntegration extends Integration<Void> {
     return defaultValue;
   }
 
-  private void trackAdobeEvent(MediaHeartbeat.Event eventName, MediaObject mediaObject, Map<String, String> customMetadata) {
+  private void trackAdobeEvent(
+      MediaHeartbeat.Event eventName, MediaObject mediaObject, Map<String, String> customMetadata) {
     heartbeat.trackEvent(eventName, mediaObject, customMetadata);
     logger.verbose("heartbeat.trackEvent(%s, %s, %s);", eventName, mediaObject, customMetadata);
   }
