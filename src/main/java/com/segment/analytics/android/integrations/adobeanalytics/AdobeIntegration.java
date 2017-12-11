@@ -554,8 +554,8 @@ public class AdobeIntegration extends Integration<Void> {
         MediaHeartbeatConfig config = new MediaHeartbeatConfig();
 
         config.trackingServer = heartbeatTrackingServer;
-        config.channel = setConfigProperty("channel", "", properties);
-        config.playerName = setConfigProperty("videoPlayer", "unknown", properties);
+        config.channel = getConfigProperty("channel", "", properties);
+        config.playerName = getConfigProperty("videoPlayer", "unknown", properties);
         config.appVersion = packageName;
         config.ssl = ssl;
         config.debugLogging = adobeLogLevel;
@@ -719,7 +719,7 @@ public class AdobeIntegration extends Integration<Void> {
     }
   }
 
-  private String setConfigProperty(String key, String defaultValue, Properties properties) {
+  private String getConfigProperty(String key, String defaultValue, Properties properties) {
     if (properties.get(key) != null) {
       return properties.getString(key);
     }
