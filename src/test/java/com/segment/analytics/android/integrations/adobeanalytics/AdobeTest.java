@@ -696,6 +696,13 @@ public class AdobeTest {
   }
 
   @Test
+  public void trackVideoAdSkipped() {
+    newVideoSession();
+    heartbeatTestFixture("Video Ad Skipped");
+    verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdSkip, null, null);
+  }
+
+  @Test
   public void trackVideoAdCompleted() {
     newVideoSession();
     heartbeatTestFixture("Video Ad Completed");

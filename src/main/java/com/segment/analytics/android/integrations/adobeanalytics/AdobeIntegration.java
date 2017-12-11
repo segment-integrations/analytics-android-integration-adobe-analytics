@@ -83,6 +83,7 @@ public class AdobeIntegration extends Integration<Void> {
           "Video Ad Break Started",
           "Video Ad Break Completed",
           "Video Ad Started",
+          "Video Ad Skipped",
           "Video Ad Completed",
           "Video Playback Interrupted",
           "Video Quality Updated");
