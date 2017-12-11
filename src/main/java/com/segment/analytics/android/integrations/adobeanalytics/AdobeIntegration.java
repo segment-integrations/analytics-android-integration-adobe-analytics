@@ -554,25 +554,17 @@ public class AdobeIntegration extends Integration<Void> {
         MediaHeartbeatConfig config = new MediaHeartbeatConfig();
 
         config.trackingServer = heartbeatTrackingServer;
-        if (properties.get("channel") != null) {
-          config.channel = properties.getString("channel");
-        } else {
-          config.channel = "";
-        }
+        config.channel = getConfigProperty("channel", "", properties);
+        config.playerName = getConfigProperty("videoPlayer", "unknown", properties);
         config.appVersion = packageName;
+        config.ssl = ssl;
+        config.debugLogging = adobeLogLevel;
         ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
         if (eventOptions != null && eventOptions.getString("ovpName") != null) {
           config.ovp = eventOptions.getString("ovpName");
         } else {
           config.ovp = "unknown";
         }
-        if (properties.get("videoPlayer") != null) {
-          config.playerName = properties.getString("videoPlayer");
-        } else {
-          config.playerName = "unknown";
-        }
-        config.ssl = ssl;
-        config.debugLogging = adobeLogLevel;
 
         this.playbackDelegate = new PlaybackDelegate();
         heartbeat = heartbeatFactory.get(playbackDelegate, config);
@@ -725,6 +717,13 @@ public class AdobeIntegration extends Integration<Void> {
         playbackDelegate.createAndUpdateQosObject(videoQualityProperties);
         break;
     }
+  }
+
+  private String getConfigProperty(String key, String defaultValue, Properties properties) {
+    if (properties.get(key) != null) {
+      return properties.getString(key);
+    }
+    return defaultValue;
   }
 
   private Properties mapStandardVideoMetadata(
