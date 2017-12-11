@@ -638,13 +638,16 @@ public class AdobeIntegration extends Integration<Void> {
         heartbeat.trackEvent(
             MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata.toStringMap());
         logger.verbose("heartbeat.trackPlay();");
-        logger.verbose("heartbeat.trackEvent(%s, MediaObject, %s);", MediaHeartbeat.Event.ChapterStart, chapterMetadata);
+        logger.verbose(
+            "heartbeat.trackEvent(%s, MediaObject, %s);",
+            MediaHeartbeat.Event.ChapterStart, chapterMetadata);
         break;
 
       case "Video Content Completed":
         heartbeat.trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
         heartbeat.trackComplete();
-        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.ChapterComplete);
+        logger.verbose(
+            "heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.ChapterComplete);
         logger.verbose("heartbeat.trackComplete();");
         break;
 
@@ -662,7 +665,8 @@ public class AdobeIntegration extends Integration<Void> {
       case "Video Playback Buffer Completed":
         playbackDelegate.unPausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
-        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.BufferComplete);
+        logger.verbose(
+            "heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.BufferComplete);
         break;
 
       case "Video Playback Seek Started":
@@ -694,7 +698,8 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Ad Break Completed":
         heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
-        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.AdBreakComplete);
+        logger.verbose(
+            "heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.AdBreakComplete);
         break;
 
       case "Video Ad Started":
@@ -718,7 +723,8 @@ public class AdobeIntegration extends Integration<Void> {
         mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
         heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata.toStringMap());
-        logger.verbose("heartbeat.trackEvent(%s, MediaObject, %s);", MediaHeartbeat.Event.AdStart, adMetadata);
+        logger.verbose(
+            "heartbeat.trackEvent(%s, MediaObject, %s);", MediaHeartbeat.Event.AdStart, adMetadata);
         break;
 
       case "Video Ad Skipped":
