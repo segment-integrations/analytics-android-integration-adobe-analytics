@@ -681,7 +681,7 @@ public class AdobeIntegration extends Integration<Void> {
                 videoAdBreakProperties.getDouble("startTime", 0));
         Properties adBreakMetadata = mapProperties(videoAdBreakProperties);
 
-        trackAdobeEvent(MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, null);
+        trackAdobeEvent(MediaHeartbeat.Event.AdBreakStart, mediaAdBreakInfo, adBreakMetadata.toStringMap());
         break;
 
       case "Video Ad Break Completed":
@@ -729,7 +729,6 @@ public class AdobeIntegration extends Integration<Void> {
         break;
     }
   }
-
 
   private String getConfigProperty(String key, String defaultValue, Properties properties) {
     if (properties.get(key) != null) {
