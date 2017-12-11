@@ -622,7 +622,11 @@ public class AdobeTest {
 
   @Test
   public void trackVideoAdBreakStarted() {
+    integration.contextValues = new HashMap<>();
+    integration.contextValues.put("contextValue", "adobe.context.value");
+
     newVideoSession();
+
     integration.track(new TrackPayload.Builder()
         .userId("123")
         .event("Video Ad Break Started")
@@ -630,7 +634,8 @@ public class AdobeTest {
             .putValue("title",
                 "Car Commercial") // Should this be pre-roll, mid-roll or post-roll instead?
             .putValue("startTime", 10D)
-            .putValue("indexPosition", 1L))
+            .putValue("indexPosition", 1L)
+            .putValue("contextValue", "value"))
         .build()
     );
 
@@ -639,9 +644,12 @@ public class AdobeTest {
         1L,
         10D
     );
+
+    Map<String, String> adBreakMetadata = new HashMap<>();
+    adBreakMetadata.put("adobe.context.value", "value");
     
     verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart),
-        isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq((Map<String, String>) null));
+        isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq(adBreakMetadata));
   }
 
   @Test
