@@ -150,6 +150,7 @@ public class AdobeIntegration extends Integration<Void> {
 
     this.adobeLogLevel = logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
     Config.setDebugLogging(adobeLogLevel);
+    logger.verbose("Config.setDebugLogging(%b)", adobeLogLevel);
   }
 
   /*
@@ -594,16 +595,19 @@ public class AdobeIntegration extends Integration<Void> {
             MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
 
         heartbeat.trackSessionStart(mediaInfo, videoMetadata.toStringMap());
+        logger.verbose("heartbeat.trackSessionStart(MediaObject, %s);", videoMetadata);
         break;
 
       case "Video Playback Paused":
         playbackDelegate.pausePlayhead();
         heartbeat.trackPause();
+        logger.verbose("heartbeat.trackPause();");
         break;
 
       case "Video Playback Resumed":
         playbackDelegate.unPausePlayhead();
         heartbeat.trackPlay();
+        logger.verbose("heartbeat.trackPlay();");
         break;
 
       case "Video Content Started":
@@ -633,30 +637,38 @@ public class AdobeIntegration extends Integration<Void> {
         heartbeat.trackPlay();
         heartbeat.trackEvent(
             MediaHeartbeat.Event.ChapterStart, mediaChapter, chapterMetadata.toStringMap());
+        logger.verbose("heartbeat.trackPlay();");
+        logger.verbose("heartbeat.trackEvent(%s, MediaObject, %s);", MediaHeartbeat.Event.ChapterStart, chapterMetadata);
         break;
 
       case "Video Content Completed":
         heartbeat.trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
         heartbeat.trackComplete();
+        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.ChapterComplete);
+        logger.verbose("heartbeat.trackComplete();");
         break;
 
       case "Video Playback Completed":
         heartbeat.trackSessionEnd();
+        logger.verbose("heartbeat.trackSessionEnd();");
         break;
 
       case "Video Playback Buffer Started":
         playbackDelegate.pausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
+        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.BufferStart);
         break;
 
       case "Video Playback Buffer Completed":
         playbackDelegate.unPausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
+        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.BufferComplete);
         break;
 
       case "Video Playback Seek Started":
         playbackDelegate.pausePlayhead();
         heartbeat.trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
+        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.SeekStart);
         break;
 
       case "Video Playback Seek Completed":
@@ -664,6 +676,7 @@ public class AdobeIntegration extends Integration<Void> {
         playbackDelegate.updatePlayheadPosition(seekProperties.getLong("seekPosition", 0));
         playbackDelegate.resumePlayheadAfterSeeking();
         heartbeat.trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
+        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.SeekComplete);
         break;
 
       case "Video Ad Break Started":
@@ -681,6 +694,7 @@ public class AdobeIntegration extends Integration<Void> {
 
       case "Video Ad Break Completed":
         heartbeat.trackEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
+        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.AdBreakComplete);
         break;
 
       case "Video Ad Started":
@@ -704,13 +718,16 @@ public class AdobeIntegration extends Integration<Void> {
         mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
         heartbeat.trackEvent(MediaHeartbeat.Event.AdStart, mediaAdInfo, adMetadata.toStringMap());
+        logger.verbose("heartbeat.trackEvent(%s, MediaObject, %s);", MediaHeartbeat.Event.AdStart, adMetadata);
         break;
 
       case "Video Ad Skipped":
         heartbeat.trackEvent(MediaHeartbeat.Event.AdSkip, null, null);
+        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.AdSkip);
 
       case "Video Ad Completed":
         heartbeat.trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
+        logger.verbose("heartbeat.trackEvent(%s, null, null);", MediaHeartbeat.Event.AdComplete);
         break;
 
       case "Video Playback Interrupted":
