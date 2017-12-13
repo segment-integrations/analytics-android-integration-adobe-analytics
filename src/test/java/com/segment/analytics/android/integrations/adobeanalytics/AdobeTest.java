@@ -14,6 +14,7 @@ import com.segment.analytics.Properties;
 import com.segment.analytics.Properties.Product;
 import com.segment.analytics.Traits;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.android.integrations.adobeanalytics.AdobeIntegration.PlaybackDelegate;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
@@ -416,30 +417,29 @@ public class AdobeTest {
 
   @Test
   public void videoPlaybackDelegatePlay() throws Exception {
-    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
+    PlaybackDelegate playbackDelegate = new AdobeIntegration.PlaybackDelegate();
     Thread.sleep(2000);
-    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(2.0);
+    assertThat(playbackDelegate.getCurrentPlaybackTime()).isEqualTo(2.0);
   }
 
   @Test
   public void videoPlaybackDelegatePaused() throws Exception {
-    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
-    integration.playbackDelegate.pausePlayhead();
-    Double firstPlayheadPosition = integration.playbackDelegate.getCurrentPlaybackTime();
+    PlaybackDelegate playbackDelegate = new AdobeIntegration.PlaybackDelegate();
+    playbackDelegate.pausePlayhead();
+    Double firstPlayheadPosition = playbackDelegate.getCurrentPlaybackTime();
     Thread.sleep(2000);
-    assertThat(integration.playbackDelegate.getCurrentPlaybackTime())
+    assertThat(playbackDelegate.getCurrentPlaybackTime())
         .isEqualTo(firstPlayheadPosition);
   }
 
   @Test
   public void videoPlaybackDelegatePlayAndPause() throws Exception {
-    integration.playbackDelegate = new AdobeIntegration.PlaybackDelegate();
-    integration.playbackDelegate.pausePlayhead();
+    PlaybackDelegate playbackDelegate = new AdobeIntegration.PlaybackDelegate();
+    playbackDelegate.pausePlayhead();
     Thread.sleep(1000);
-    integration.playbackDelegate.unPausePlayhead();
+    playbackDelegate.unPausePlayhead();
     Thread.sleep(3000);
-    assertThat(integration.playbackDelegate.getCurrentPlaybackTime())
-        .isEqualTo(3.0);
+    assertThat(playbackDelegate.getCurrentPlaybackTime()).isEqualTo(3.0);
   }
 
   @Test
