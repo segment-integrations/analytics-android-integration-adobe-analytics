@@ -773,7 +773,7 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   /** Creates a mutable HashSet instance containing the given elements in unspecified order */
-  public static <T> Set<T> newSet(T... values) {
+  static <T> Set<T> newSet(T... values) {
     Set<T> set = new HashSet<>(values.length);
     Collections.addAll(set, values);
     return set;
