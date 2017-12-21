@@ -120,7 +120,7 @@ public class AdobeIntegration extends Integration<Void> {
   private HeartbeatFactory heartbeatFactory;
   PlaybackDelegate playbackDelegate;
   private final boolean adobeLogLevel;
-  private final String heartbeatTrackingServer;
+  private final String heartbeatTrackingServerUrl;
   private final String packageName;
   private final boolean ssl;
   Map<String, Object> eventsV2;
@@ -136,7 +136,7 @@ public class AdobeIntegration extends Integration<Void> {
     this.contextValues = settings.getValueMap("contextValues");
     this.productIdentifier = settings.getString("productIdentifier");
     this.heartbeatFactory = heartbeatFactory;
-    this.heartbeatTrackingServer = settings.getString("heartbeatTrackingServer");
+    this.heartbeatTrackingServerUrl = settings.getString("heartbeatTrackingServerUrl");
     this.ssl = settings.getBoolean("ssl", false);
     this.logger = logger;
 
@@ -546,7 +546,7 @@ public class AdobeIntegration extends Integration<Void> {
 
   private void trackVideo(String eventName, TrackPayload track) {
 
-    if (heartbeatTrackingServer == null) {
+    if (heartbeatTrackingServerUrl == null) {
       logger.verbose(
           "Please enter a Heartbeat Tracking Server URL in your Segment UI "
               + "Settings in order to send video events to Adobe Analytics");
@@ -558,7 +558,7 @@ public class AdobeIntegration extends Integration<Void> {
         Properties properties = track.properties();
         MediaHeartbeatConfig config = new MediaHeartbeatConfig();
 
-        config.trackingServer = heartbeatTrackingServer;
+        config.trackingServer = heartbeatTrackingServerUrl;
         config.channel = getConfigProperty("channel", "", properties);
         config.playerName = getConfigProperty("videoPlayer", "unknown", properties);
         config.appVersion = packageName;
