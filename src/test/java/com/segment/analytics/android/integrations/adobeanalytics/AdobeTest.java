@@ -70,7 +70,7 @@ public class AdobeTest {
     PowerMockito.mockStatic(Analytics.class);
     when(analytics.getApplication()).thenReturn(context);
     integration = new AdobeIntegration(new ValueMap()
-        .putValue("heartbeatTrackingServer", "true"), analytics, Logger.with(NONE),
+        .putValue("heartbeatTrackingServerUrl", "true"), analytics, Logger.with(NONE),
         mockHeartbeatFactory);
   }
 
