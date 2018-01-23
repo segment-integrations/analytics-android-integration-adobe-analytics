@@ -253,7 +253,7 @@ public class AdobeIntegration extends Integration<Void> {
     /**
      * Internal helper function used to calculate the {@link #playheadPosition}.
      *
-     * <p>System.currentTimeMillis retrieves the current time in seconds, then we calculate the
+     * <p>System.currentTimeMillis retrieves the current time in milliseconds, then we calculate the
      * delta between the current time and the {@link #playheadPositionTime}, which is the system
      * time at the time a Segment Spec'd Video event is triggered.
      *
