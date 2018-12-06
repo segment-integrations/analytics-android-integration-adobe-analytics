@@ -9,77 +9,79 @@ import com.adobe.mobile.Config;
 import java.util.Map;
 
 /**
- * Class to wrap the Adobe Analytics SDK and make testing easier without hacks or
- * altering bytecode.
+ * Class to wrap the Adobe Analytics SDK and make testing easier without hacks or altering bytecode.
  *
  * @since 1.0.3
  */
 interface AdobeAnalyticsClient {
 
-    void trackAction(String action, Map<String, Object> contextData);
-    void trackState(String state, Map<String, Object> contextData);
-    void setContext(Context context);
-    void pauseCollectingLifecycleData();
-    void collectLifecycleData(Activity activity);
-    void setUserIdentifier(String identifier);
-    void setDebugLogging(Boolean debugLogging);
+  void trackAction(String action, Map<String, Object> contextData);
 
-    /**
-     * Flushes the client's internal queue.
-     */
-    void flushQueue();
+  void trackState(String state, Map<String, Object> contextData);
 
-    /**
-     * Default implementation of Adobe Analytics client. It wraps all AA methods used by the integration.
-     *
-     * Do not add logic here.
-     *
-     * @since 1.0.3
-     */
-    class DefaultClient implements AdobeAnalyticsClient {
+  void setContext(Context context);
 
-        public DefaultClient() {
-        }
+  void pauseCollectingLifecycleData();
 
-        @Override
-        public void trackAction(String action, Map<String, Object> contextData) {
-            Analytics.trackAction(action, contextData);
-        }
+  void collectLifecycleData(Activity activity);
 
-        @Override
-        public void trackState(String state, Map<String, Object> contextData) {
-            Analytics.trackState(state, contextData);
-        }
+  void setUserIdentifier(String identifier);
 
-        @Override
-        public void setContext(Context context) {
-            Config.setContext(context);
-        }
+  void setDebugLogging(Boolean debugLogging);
 
-        @Override
-        public void pauseCollectingLifecycleData() {
-            Config.pauseCollectingLifecycleData();
-        }
+  /** Flushes the client's internal queue. */
+  void flushQueue();
 
-        @Override
-        public void collectLifecycleData(Activity activity) {
-            Config.collectLifecycleData();
-        }
+  /**
+   * Default implementation of Adobe Analytics client. It wraps all AA methods used by the
+   * integration.
+   *
+   * <p>Do not add logic here.
+   *
+   * @since 1.0.3
+   */
+  class DefaultClient implements AdobeAnalyticsClient {
 
-        @Override
-        public void setUserIdentifier(String identifier) {
-            Config.setUserIdentifier(identifier);
-        }
+    public DefaultClient() {}
 
-        @Override
-        public void setDebugLogging(Boolean debugLogging) {
-            Config.setDebugLogging(debugLogging);
-        }
-
-        @Override
-        public void flushQueue() {
-            Analytics.sendQueuedHits();
-        }
+    @Override
+    public void trackAction(String action, Map<String, Object> contextData) {
+      Analytics.trackAction(action, contextData);
     }
 
+    @Override
+    public void trackState(String state, Map<String, Object> contextData) {
+      Analytics.trackState(state, contextData);
+    }
+
+    @Override
+    public void setContext(Context context) {
+      Config.setContext(context);
+    }
+
+    @Override
+    public void pauseCollectingLifecycleData() {
+      Config.pauseCollectingLifecycleData();
+    }
+
+    @Override
+    public void collectLifecycleData(Activity activity) {
+      Config.collectLifecycleData();
+    }
+
+    @Override
+    public void setUserIdentifier(String identifier) {
+      Config.setUserIdentifier(identifier);
+    }
+
+    @Override
+    public void setDebugLogging(Boolean debugLogging) {
+      Config.setDebugLogging(debugLogging);
+    }
+
+    @Override
+    public void flushQueue() {
+      Analytics.sendQueuedHits();
+    }
+  }
 }

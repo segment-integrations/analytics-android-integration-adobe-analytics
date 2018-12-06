@@ -154,13 +154,13 @@ public class AdobeIntegration extends Integration<Void> {
     logger.verbose("Config.setDebugLogging(%b)", adobeLogLevel);
   }
 
-    /**
-     * Allows to set a different implementation. Used for testing.
-     *
-     * @param adobeAnalytics Adobe Analytics client.
-     */
+  /**
+   * Allows to set a different implementation. Used for testing.
+   *
+   * @param adobeAnalytics Adobe Analytics client.
+   */
   void setClient(AdobeAnalyticsClient adobeAnalytics) {
-      this.adobeAnalytics = adobeAnalytics;
+    this.adobeAnalytics = adobeAnalytics;
   }
 
   /*
