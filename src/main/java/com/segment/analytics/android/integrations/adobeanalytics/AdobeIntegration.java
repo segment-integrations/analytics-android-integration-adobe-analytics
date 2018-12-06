@@ -3,8 +3,6 @@ package com.segment.analytics.android.integrations.adobeanalytics;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import com.adobe.mobile.Analytics;
-import com.adobe.mobile.Config;
 import com.adobe.primetime.va.simple.MediaHeartbeat;
 import com.adobe.primetime.va.simple.MediaHeartbeat.MediaHeartbeatDelegate;
 import com.adobe.primetime.va.simple.MediaHeartbeatConfig;
@@ -123,6 +121,7 @@ public class AdobeIntegration extends Integration<Void> {
   private final String heartbeatTrackingServerUrl;
   private final String packageName;
   private final boolean ssl;
+  private AdobeAnalyticsClient adobeAnalytics;
   Map<String, Object> eventsV2;
   Map<String, Object> contextValues;
   String productIdentifier;
@@ -138,6 +137,7 @@ public class AdobeIntegration extends Integration<Void> {
     this.heartbeatFactory = heartbeatFactory;
     this.heartbeatTrackingServerUrl = settings.getString("heartbeatTrackingServerUrl");
     this.ssl = settings.getBoolean("ssl", false);
+    this.adobeAnalytics = new AdobeAnalyticsClient.DefaultClient();
     this.logger = logger;
 
     Context context = analytics.getApplication();
@@ -150,8 +150,17 @@ public class AdobeIntegration extends Integration<Void> {
     }
 
     this.adobeLogLevel = logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE);
-    Config.setDebugLogging(adobeLogLevel);
+    adobeAnalytics.setDebugLogging(adobeLogLevel);
     logger.verbose("Config.setDebugLogging(%b)", adobeLogLevel);
+  }
+
+  /**
+   * Allows to set a different implementation. Used for testing.
+   *
+   * @param adobeAnalytics Adobe Analytics client.
+   */
+  void setClient(AdobeAnalyticsClient adobeAnalytics) {
+    this.adobeAnalytics = adobeAnalytics;
   }
 
   /*
@@ -283,7 +292,7 @@ public class AdobeIntegration extends Integration<Void> {
   public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
     super.onActivityCreated(activity, savedInstanceState);
 
-    Config.setContext(activity.getApplicationContext());
+    adobeAnalytics.setContext(activity.getApplicationContext());
     logger.verbose("Config.setContext(%s);", activity.getApplicationContext());
   }
 
@@ -291,7 +300,7 @@ public class AdobeIntegration extends Integration<Void> {
   public void onActivityPaused(Activity activity) {
     super.onActivityPaused(activity);
 
-    Config.pauseCollectingLifecycleData();
+    adobeAnalytics.pauseCollectingLifecycleData();
     logger.verbose("Config.pauseCollectingLifecycleData();");
   }
 
@@ -299,7 +308,7 @@ public class AdobeIntegration extends Integration<Void> {
   public void onActivityResumed(Activity activity) {
     super.onActivityResumed(activity);
 
-    Config.collectLifecycleData(activity);
+    adobeAnalytics.collectLifecycleData(activity);
     logger.verbose("Config.collectLifecycleData(%s);", activity);
   }
 
@@ -311,7 +320,7 @@ public class AdobeIntegration extends Integration<Void> {
     if (isNullOrEmpty(userId)) {
       return;
     }
-    Config.setUserIdentifier(userId);
+    adobeAnalytics.setUserIdentifier(userId);
     logger.verbose("Config.setUserIdentifier(%s);", userId);
   }
 
@@ -322,13 +331,13 @@ public class AdobeIntegration extends Integration<Void> {
     Properties properties = screen.properties();
 
     if (isNullOrEmpty(properties)) {
-      Analytics.trackState(screen.name(), null);
+      adobeAnalytics.trackState(screen.name(), null);
       logger.verbose("Analytics.trackState(%s, %s);", screen.name(), null);
       return;
     }
 
     Map<String, Object> mappedProperties = mapProperties(properties);
-    Analytics.trackState(screen.name(), mappedProperties);
+    adobeAnalytics.trackState(screen.name(), mappedProperties);
     logger.verbose("Analytics.trackState(%s, %s);", screen.name(), mappedProperties);
   }
 
@@ -368,7 +377,7 @@ public class AdobeIntegration extends Integration<Void> {
       mappedProperties = (isNullOrEmpty(properties)) ? null : mapEcommerce(eventName, properties);
     }
 
-    Analytics.trackAction(eventName, mappedProperties);
+    adobeAnalytics.trackAction(eventName, mappedProperties);
     logger.verbose("Analytics.trackAction(%s, %s);", eventName, mappedProperties);
   }
 
@@ -499,7 +508,7 @@ public class AdobeIntegration extends Integration<Void> {
   public void flush() {
     super.flush();
 
-    Analytics.sendQueuedHits();
+    adobeAnalytics.flushQueue();
     logger.verbose("Analytics.sendQueuedHits();");
   }
 
@@ -507,7 +516,7 @@ public class AdobeIntegration extends Integration<Void> {
   public void reset() {
     super.reset();
 
-    Config.setUserIdentifier(null);
+    adobeAnalytics.setUserIdentifier(null);
     logger.verbose("Config.setUserIdentifier(null);");
   }
 

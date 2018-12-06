@@ -19,42 +19,32 @@ import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.ScreenPayload;
 import com.segment.analytics.integrations.TrackPayload;
+import com.segment.analytics.Analytics.LogLevel;
+
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import org.assertj.core.matcher.AssertionMatcher;
+import java.util.Set;
+
+import org.json.JSONObject;
+import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PowerMockIgnore;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.rule.PowerMockRule;
-import org.robolectric.RobolectricTestRunner;
+import org.mockito.MockitoAnnotations;
 
-import static com.segment.analytics.Analytics.LogLevel.NONE;
-import static com.segment.analytics.Analytics.LogLevel.VERBOSE;
-import static org.assertj.core.api.Java6Assertions.assertThat;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.MockitoAnnotations.initMocks;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
-import static org.powermock.api.mockito.PowerMockito.when;
 
-@RunWith(RobolectricTestRunner.class)
-@PrepareForTest({Analytics.class, Config.class, MediaHeartbeat.class})
-@org.robolectric.annotation.Config(constants = BuildConfig.class)
-@PowerMockIgnore({"org.mockito.*", "org.robolectric.*", "android.*", "org.json.*"})
 public class AdobeTest {
 
-  @Rule public PowerMockRule rule = new PowerMockRule();
   @Mock private MediaHeartbeat heartbeat;
   @Mock private com.segment.analytics.Analytics analytics;
-  @Mock private Application context;
+  @Mock private Application application;
+  @Mock private AdobeAnalyticsClient client;
   private AdobeIntegration integration;
   private AdobeIntegration.HeartbeatFactory mockHeartbeatFactory = new AdobeIntegration.HeartbeatFactory() {
     @Override
@@ -65,18 +55,19 @@ public class AdobeTest {
 
   @Before
   public void setUp() {
-    initMocks(this);
-    PowerMockito.mockStatic(Config.class);
-    PowerMockito.mockStatic(Analytics.class);
-    when(analytics.getApplication()).thenReturn(context);
+    MockitoAnnotations.initMocks(this);
+    Mockito.when(analytics.getApplication()).thenReturn(application);
+    Mockito.when(analytics.logger("Adobe Analytics")).thenReturn(Logger.with(LogLevel.VERBOSE));
+
     integration = new AdobeIntegration(new ValueMap()
         .putValue("heartbeatTrackingServerUrl", "https://www.heartbeatTrackingServerURL.com/"),
-        analytics, Logger.with(NONE), mockHeartbeatFactory);
+        analytics, Logger.with(LogLevel.NONE), mockHeartbeatFactory);
+    integration.setClient(client);
   }
 
   @Test
   public void factory() {
-    assertThat(AdobeIntegration.FACTORY.key()).isEqualTo("Adobe Analytics");
+    Assert.assertEquals(AdobeIntegration.FACTORY.key(), "Adobe Analytics");
   }
 
   @Test
@@ -87,48 +78,37 @@ public class AdobeTest {
         .putValue("productIdentifier", "id")
         .putValue("adobeVerboseLogging", true),
         analytics,
-        Logger.with(VERBOSE),
+        Logger.with(LogLevel.VERBOSE),
         mockHeartbeatFactory);
 
-    verifyStatic();
-    Config.setDebugLogging(true);
-
-    assertThat(integration.eventsV2).isEqualTo(new HashMap<String, Object>());
-    assertThat(integration.contextValues).isEqualTo(new HashMap<String, Object>());
-    assertThat(integration.productIdentifier).isEqualTo("id");
-  }
-
-  @Test
-  public void initializeWithDefaultArguments() {
-    // all default arguments have not yet been defined
+    Assert.assertEquals(integration.eventsV2, new HashMap<String, Object>());
+    Assert.assertEquals(integration.contextValues, new HashMap<String, Object>());
+    Assert.assertEquals(integration.productIdentifier, "id");
   }
 
   @Test
   public void activityCreate() {
-    Activity activity = mock(Activity.class);
-    Bundle savedInstanceState = mock(Bundle.class);
+    Activity activity = Mockito.mock(Activity.class);
+    Bundle savedInstanceState = Mockito.mock(Bundle.class);
     integration.onActivityCreated(activity, savedInstanceState);
 
-    verifyStatic();
-    Config.setContext(activity.getApplicationContext());
+    Mockito.verify(client).setContext(activity.getApplicationContext());
   }
 
   @Test
   public void activityPause() {
-    Activity activity = mock(Activity.class);
+    Activity activity = Mockito.mock(Activity.class);
     integration.onActivityPaused(activity);
 
-    verifyStatic();
-    Config.pauseCollectingLifecycleData();
+    Mockito.verify(client).pauseCollectingLifecycleData();
   }
 
   @Test
   public void activityResume() {
-    Activity activity = mock(Activity.class);
+    Activity activity = Mockito.mock(Activity.class);
     integration.onActivityResumed(activity);
 
-    verifyStatic();
-    Config.collectLifecycleData(activity);
+    Mockito.verify(client).collectLifecycleData(activity);
   }
 
   @Test
@@ -142,8 +122,7 @@ public class AdobeTest {
         .build()
     );
 
-    verifyStatic();
-    Analytics.trackAction("Adobe Testing Event", null);
+    Mockito.verify(client).trackAction("Adobe Testing Event", null);
   }
 
   @Test
@@ -163,8 +142,7 @@ public class AdobeTest {
 
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
-    verifyStatic();
-    Analytics.trackAction("Adobe Testing Event", contextData);
+    Mockito.verify(client).trackAction("Adobe Testing Event", contextData);
   }
 
   @Test
@@ -191,8 +169,7 @@ public class AdobeTest {
     contextData.put("purchaseid", "A5744855555");
     contextData.put("&&products", "athletic;shoes;2;20.0");
     contextData.put("&&events", "purchase");
-    verifyStatic();
-    Analytics.trackAction("purchase", contextData);
+    Mockito.verify(client).trackAction("purchase", contextData);
   }
 
   @Test
@@ -214,8 +191,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0");
     contextData.put("&&events", "scAdd");
-    verifyStatic();
-    Analytics.trackAction("scAdd", contextData);
+    Mockito.verify(client).trackAction("scAdd", contextData);
   }
 
   @Test
@@ -237,8 +213,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0");
     contextData.put("&&events", "scRemove");
-    verifyStatic();
-    Analytics.trackAction("scRemove", contextData);
+    Mockito.verify(client).trackAction("scRemove", contextData);
   }
 
   @Test
@@ -260,8 +235,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0");
     contextData.put("&&events", "prodView");
-    verifyStatic();
-    Analytics.trackAction("prodView", contextData);
+    Mockito.verify(client).trackAction("prodView", contextData);
   }
 
   @Test
@@ -284,8 +258,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;XYZ;2;20.0");
     contextData.put("&&events", "prodView");
-    verifyStatic();
-    Analytics.trackAction("prodView", contextData);
+    Mockito.verify(client).trackAction("prodView", contextData);
   }
 
   @Test
@@ -310,8 +283,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0,casual;jeans;1;20.0");
     contextData.put("&&events", "scCheckout");
-    verifyStatic();
-    Analytics.trackAction("scCheckout", contextData);
+    Mockito.verify(client).trackAction("scCheckout", contextData);
   }
 
   @Test
@@ -336,8 +308,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0,casual;jeans;1;20.0");
     contextData.put("&&events", "scView");
-    verifyStatic();
-    Analytics.trackAction("scView", contextData);
+    Mockito.verify(client).trackAction("scView", contextData);
   }
 
   @Test
@@ -358,8 +329,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&events", "scRemove");
 
-    verifyStatic();
-    Analytics.trackAction("scRemove", contextData);
+    Mockito.verify(client).trackAction("scRemove", contextData);
   }
 
   @Test
@@ -373,8 +343,7 @@ public class AdobeTest {
         .build()
     );
 
-    verifyStatic();
-    Analytics.trackAction("scAdd", null);
+    Mockito.verify(client).trackAction("scAdd", null);
   }
 
   @Test
@@ -392,8 +361,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", ";ABC;1;0.0");
     contextData.put("&&events", "purchase");
-    verifyStatic();
-    Analytics.trackAction("purchase", contextData);
+    Mockito.verify(client).trackAction("purchase", contextData);
   }
 
   @Test
@@ -411,15 +379,14 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&events", "purchase");
     contextData.put("purchaseid", "123456");
-    verifyStatic();
-    Analytics.trackAction("purchase", contextData);
+    Mockito.verify(client).trackAction("purchase", contextData);
   }
 
   @Test
   public void videoPlaybackDelegatePlay() throws Exception {
     PlaybackDelegate playbackDelegate = new AdobeIntegration.PlaybackDelegate();
     Thread.sleep(2000);
-    assertThat(playbackDelegate.getCurrentPlaybackTime()).isEqualTo(2.0);
+    Assert.assertEquals(playbackDelegate.getCurrentPlaybackTime().doubleValue(), 2.0, 0.01);
   }
 
   @Test
@@ -428,8 +395,7 @@ public class AdobeTest {
     playbackDelegate.pausePlayhead();
     Double firstPlayheadPosition = playbackDelegate.getCurrentPlaybackTime();
     Thread.sleep(2000);
-    assertThat(playbackDelegate.getCurrentPlaybackTime())
-        .isEqualTo(firstPlayheadPosition);
+    Assert.assertEquals(playbackDelegate.getCurrentPlaybackTime().doubleValue(), firstPlayheadPosition.doubleValue(), 0.01);
   }
 
   @Test
@@ -439,7 +405,7 @@ public class AdobeTest {
     Thread.sleep(1000);
     playbackDelegate.unPausePlayhead();
     Thread.sleep(3000);
-    assertThat(playbackDelegate.getCurrentPlaybackTime()).isEqualTo(3.0);
+    Assert.assertEquals(playbackDelegate.getCurrentPlaybackTime().doubleValue(), 3.0, 0.01);
   }
 
   @Test
@@ -490,25 +456,25 @@ public class AdobeTest {
 
     mediaInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata, standardVideoMetadata);
 
-    verify(heartbeat).trackSessionStart(isEqualToComparingFieldByFieldRecursively(mediaInfo),
+    Mockito.verify(heartbeat).trackSessionStart(mediaObjectEq(mediaInfo),
         eq(videoMetadata));
-    assertThat(integration.playbackDelegate).isNotNull();
+    Assert.assertNotNull(integration.playbackDelegate);
   }
 
   @Test
   public void trackVideoPlaybackPaused() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Paused");
-    assertThat(integration.playbackDelegate.isPaused).isTrue();
-    verify(heartbeat).trackPause();
+    Assert.assertTrue(integration.playbackDelegate.isPaused);
+    Mockito.verify(heartbeat).trackPause();
   }
 
   @Test
   public void trackVideoPlaybackResumed() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Resumed");
-    assertThat(integration.playbackDelegate.isPaused).isFalse();
-    verify(heartbeat).trackPlay();
+    Assert.assertFalse(integration.playbackDelegate.isPaused);
+    Mockito.verify(heartbeat).trackPlay();
   }
 
   @Test
@@ -563,10 +529,10 @@ public class AdobeTest {
     mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata,
         standardVideoMetadata);
 
-    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(35.0);
-    verify(heartbeat).trackPlay();
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart),
-        isEqualToComparingFieldByFieldRecursively(mediaChapter),
+    Assert.assertEquals(integration.playbackDelegate.getCurrentPlaybackTime().doubleValue(), 35.0, 0.01);
+    Mockito.verify(heartbeat).trackPlay();
+    Mockito.verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart),
+        mediaObjectEq(mediaChapter),
         eq(videoMetadata));
   }
 
@@ -574,40 +540,40 @@ public class AdobeTest {
   public void trackVideoContentComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Content Completed");
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
-    verify(heartbeat).trackComplete();
+    Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
+    Mockito.verify(heartbeat).trackComplete();
   }
 
   @Test
   public void trackVideoPlaybackComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Completed");
-    verify(heartbeat).trackSessionEnd();
+    Mockito.verify(heartbeat).trackSessionEnd();
   }
 
   @Test
   public void trackVideoBufferStarted() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Started");
-    assertThat(integration.playbackDelegate.isPaused).isTrue();
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
+    Assert.assertTrue(integration.playbackDelegate.isPaused);
+    Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
   }
 
   @Test
   public void trackVideoBufferComplete() {
     newVideoSession();
     heartbeatTestFixture("Video Playback Buffer Completed");
-    assertThat(integration.playbackDelegate.isPaused).isFalse();
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
+    Assert.assertFalse(integration.playbackDelegate.isPaused);
+    Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
   }
 
   @Test
   public void trackVideoSeekStarted() {
     newVideoSession();
     heartbeatSeekFixture("Video Playback Seek Started", null);
-    assertThat(integration.playbackDelegate.isPaused).isTrue();
-    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isZero();
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
+    Assert.assertTrue(integration.playbackDelegate.isPaused);
+    Assert.assertEquals(integration.playbackDelegate.getCurrentPlaybackTime().doubleValue(), 0.0, 0.001);
+    Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
   }
 
   @Test
@@ -615,9 +581,9 @@ public class AdobeTest {
     newVideoSession();
     double first = integration.playbackDelegate.getCurrentPlaybackTime();
     heartbeatSeekFixture("Video Playback Seek Completed", 50L);
-    assertThat(integration.playbackDelegate.isPaused).isFalse();
-    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(first + 50);
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
+    Assert.assertFalse(integration.playbackDelegate.isPaused);
+    Assert.assertEquals(integration.playbackDelegate.getCurrentPlaybackTime().doubleValue(), first + 50, 0.01);
+    Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
   }
 
   @Test
@@ -648,15 +614,15 @@ public class AdobeTest {
     Map<String, String> adBreakMetadata = new HashMap<>();
     adBreakMetadata.put("adobe.context.value", "value");
     
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart),
-        isEqualToComparingFieldByFieldRecursively(mediaAdBreakInfo), eq(adBreakMetadata));
+    Mockito.verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart),
+        mediaObjectEq(mediaAdBreakInfo), eq(adBreakMetadata));
   }
 
   @Test
   public void trackVideoAdBreakCompleted() {
     newVideoSession();
     heartbeatTestFixture("Video Ad Break Completed");
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
+    Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
   }
 
   @Test
@@ -691,22 +657,22 @@ public class AdobeTest {
     standardAdMetadata.put(MediaHeartbeat.AdMetadataKeys.ADVERTISER, "Lexus");
     mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
 
-    verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdStart),
-        isEqualToComparingFieldByFieldRecursively(mediaAdInfo), eq(adMetadata));
+    Mockito.verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdStart),
+        mediaObjectEq(mediaAdInfo), eq(adMetadata));
   }
 
   @Test
   public void trackVideoAdSkipped() {
     newVideoSession();
     heartbeatTestFixture("Video Ad Skipped");
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdSkip, null, null);
+    Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdSkip, null, null);
   }
 
   @Test
   public void trackVideoAdCompleted() {
     newVideoSession();
     heartbeatTestFixture("Video Ad Completed");
-    verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
+    Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
   }
 
   @Test
@@ -715,7 +681,7 @@ public class AdobeTest {
     heartbeatTestFixture("Video Playback Interrupted");
     Double first = integration.playbackDelegate.getCurrentPlaybackTime();
     Thread.sleep(2000L);
-    assertThat(integration.playbackDelegate.getCurrentPlaybackTime()).isEqualTo(first);
+    Assert.assertEquals(integration.playbackDelegate.getCurrentPlaybackTime().doubleValue(), first.doubleValue(), 0.001);
   }
 
   @Test
@@ -739,8 +705,9 @@ public class AdobeTest {
         1L
     );
 
-    assertThat(integration.playbackDelegate.qosData)
-        .isEqualToComparingFieldByField(expectedMediaObject);
+    ArgumentMatcher<MediaObject> matcher = new MediaObjectEqArgumentMatcher(expectedMediaObject);
+
+    Assert.assertTrue(matcher.matches(integration.playbackDelegate.qosData));
   }
 
   @Test
@@ -750,19 +717,7 @@ public class AdobeTest {
         .traits(new Traits())
         .build());
 
-    verifyStatic();
-    Config.setUserIdentifier("123");
-  }
-
-  @Test
-  public void identifyWithNoUserId() {
-    integration.identify(new IdentifyPayload.Builder()
-        .userId("123")
-        .traits(new Traits())
-        .build());
-
-    verifyStatic(Mockito.times(0));
-    Config.setUserIdentifier(null);
+    Mockito.verify(client).setUserIdentifier("123");
   }
 
   @Test
@@ -773,8 +728,7 @@ public class AdobeTest {
         .build()
     );
 
-    verifyStatic();
-    Analytics.trackState("Viewed a Screen", null);
+    Mockito.verify(client).trackState("Viewed a Screen", null);
   }
 
   @Test
@@ -792,8 +746,7 @@ public class AdobeTest {
 
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
-    verifyStatic();
-    Analytics.trackState("Viewed a Screen", contextData);
+    Mockito.verify(client).trackState("Viewed a Screen", contextData);
   }
 
   @Test
@@ -803,15 +756,13 @@ public class AdobeTest {
   @Test
   public void flush() {
     integration.flush();
-    verifyStatic();
-    Analytics.sendQueuedHits();
+    Mockito.verify(client).flushQueue();
   }
 
   @Test
   public void reset() {
     integration.reset();
-    verifyStatic();
-    Config.setUserIdentifier(null);
+    Mockito.verify(client).setUserIdentifier(null);
   }
 
   private void newVideoSession() {
@@ -853,12 +804,61 @@ public class AdobeTest {
     );
   }
 
-  private static <T> T isEqualToComparingFieldByFieldRecursively(final T expected) {
-    return argThat(new AssertionMatcher<T>() {
-      @Override
-      public void assertion(T actual) throws AssertionError {
-        assertThat(actual).isEqualToComparingFieldByFieldRecursively(expected);
-      }
-    });
+  /**
+   * Compares the value maps of a media object.
+   * @param expected MediaObject object expected.
+   * @return Argument matcher.
+   */
+  private static MediaObject mediaObjectEq(MediaObject expected) {
+    return argThat(new MediaObjectEqArgumentMatcher(expected));
   }
+
+  private static class MediaObjectEqArgumentMatcher implements ArgumentMatcher<MediaObject> {
+
+    private MediaObject expected;
+
+    MediaObjectEqArgumentMatcher(MediaObject expected) {
+      this.expected = expected;
+    }
+
+    @Override
+    public boolean matches(MediaObject other) {
+      if (expected == null) {
+        return (other == null);
+      } else if (other == null) {
+        return false;
+      }
+
+      Set<Object> keys = new HashSet<>(Arrays.asList(expected.allKeys()));
+      Set<Object> otherKeys = new HashSet<>(Arrays.asList(other.allKeys()));
+      if (!keys.equals(otherKeys)) {
+        return false;
+      }
+
+      for (Object key : keys) {
+        String k = (String) key;
+        Object value = expected.getValue(k);
+        Object otherValue = expected.getValue(k);
+        if (!value.equals(otherValue)) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      Set<Object> keys = new HashSet<>(Arrays.asList(expected.allKeys()));
+      Map<String, Object> map = new HashMap<>();
+      for (Object k : keys) {
+        String key = (String) k;
+        map.put(key, expected.getValue(key));
+      }
+
+      JSONObject obj = new JSONObject(map);
+      return obj.toString();
+    }
+  }
+
 }
