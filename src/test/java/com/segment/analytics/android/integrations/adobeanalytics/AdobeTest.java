@@ -44,6 +44,7 @@ public class AdobeTest {
   @Mock private MediaHeartbeat heartbeat;
   @Mock private com.segment.analytics.Analytics analytics;
   @Mock private Application application;
+  @Mock private AdobeAnalyticsClient client;
   private AdobeIntegration integration;
   private AdobeIntegration.HeartbeatFactory mockHeartbeatFactory = new AdobeIntegration.HeartbeatFactory() {
     @Override
@@ -61,6 +62,7 @@ public class AdobeTest {
     integration = new AdobeIntegration(new ValueMap()
         .putValue("heartbeatTrackingServerUrl", "https://www.heartbeatTrackingServerURL.com/"),
         analytics, Logger.with(LogLevel.NONE), mockHeartbeatFactory);
+    integration.setClient(client);
   }
 
   @Test
@@ -79,8 +81,6 @@ public class AdobeTest {
         Logger.with(LogLevel.VERBOSE),
         mockHeartbeatFactory);
 
-    Config.setDebugLogging(true);
-
     Assert.assertEquals(integration.eventsV2, new HashMap<String, Object>());
     Assert.assertEquals(integration.contextValues, new HashMap<String, Object>());
     Assert.assertEquals(integration.productIdentifier, "id");
@@ -92,7 +92,7 @@ public class AdobeTest {
     Bundle savedInstanceState = Mockito.mock(Bundle.class);
     integration.onActivityCreated(activity, savedInstanceState);
 
-    Config.setContext(activity.getApplicationContext());
+    Mockito.verify(client).setContext(activity.getApplicationContext());
   }
 
   @Test
@@ -100,7 +100,7 @@ public class AdobeTest {
     Activity activity = Mockito.mock(Activity.class);
     integration.onActivityPaused(activity);
 
-    Config.pauseCollectingLifecycleData();
+    Mockito.verify(client).pauseCollectingLifecycleData();
   }
 
   @Test
@@ -108,7 +108,7 @@ public class AdobeTest {
     Activity activity = Mockito.mock(Activity.class);
     integration.onActivityResumed(activity);
 
-    Config.collectLifecycleData(activity);
+    Mockito.verify(client).collectLifecycleData(activity);
   }
 
   @Test
@@ -122,7 +122,7 @@ public class AdobeTest {
         .build()
     );
 
-    Analytics.trackAction("Adobe Testing Event", null);
+    Mockito.verify(client).trackAction("Adobe Testing Event", null);
   }
 
   @Test
@@ -142,7 +142,7 @@ public class AdobeTest {
 
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
-    Analytics.trackAction("Adobe Testing Event", contextData);
+    Mockito.verify(client).trackAction("Adobe Testing Event", contextData);
   }
 
   @Test
@@ -169,7 +169,7 @@ public class AdobeTest {
     contextData.put("purchaseid", "A5744855555");
     contextData.put("&&products", "athletic;shoes;2;20.0");
     contextData.put("&&events", "purchase");
-    Analytics.trackAction("purchase", contextData);
+    Mockito.verify(client).trackAction("purchase", contextData);
   }
 
   @Test
@@ -191,7 +191,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0");
     contextData.put("&&events", "scAdd");
-    Analytics.trackAction("scAdd", contextData);
+    Mockito.verify(client).trackAction("scAdd", contextData);
   }
 
   @Test
@@ -213,7 +213,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0");
     contextData.put("&&events", "scRemove");
-    Analytics.trackAction("scRemove", contextData);
+    Mockito.verify(client).trackAction("scRemove", contextData);
   }
 
   @Test
@@ -235,7 +235,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0");
     contextData.put("&&events", "prodView");
-    Analytics.trackAction("prodView", contextData);
+    Mockito.verify(client).trackAction("prodView", contextData);
   }
 
   @Test
@@ -258,7 +258,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;XYZ;2;20.0");
     contextData.put("&&events", "prodView");
-    Analytics.trackAction("prodView", contextData);
+    Mockito.verify(client).trackAction("prodView", contextData);
   }
 
   @Test
@@ -283,7 +283,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0,casual;jeans;1;20.0");
     contextData.put("&&events", "scCheckout");
-    Analytics.trackAction("scCheckout", contextData);
+    Mockito.verify(client).trackAction("scCheckout", contextData);
   }
 
   @Test
@@ -308,7 +308,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", "athletic;shoes;2;20.0,casual;jeans;1;20.0");
     contextData.put("&&events", "scView");
-    Analytics.trackAction("scView", contextData);
+    Mockito.verify(client).trackAction("scView", contextData);
   }
 
   @Test
@@ -329,7 +329,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&events", "scRemove");
 
-    Analytics.trackAction("scRemove", contextData);
+    Mockito.verify(client).trackAction("scRemove", contextData);
   }
 
   @Test
@@ -343,7 +343,7 @@ public class AdobeTest {
         .build()
     );
 
-    Analytics.trackAction("scAdd", null);
+    Mockito.verify(client).trackAction("scAdd", null);
   }
 
   @Test
@@ -361,7 +361,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&products", ";ABC;1;0.0");
     contextData.put("&&events", "purchase");
-    Analytics.trackAction("purchase", contextData);
+    Mockito.verify(client).trackAction("purchase", contextData);
   }
 
   @Test
@@ -379,7 +379,7 @@ public class AdobeTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&events", "purchase");
     contextData.put("purchaseid", "123456");
-    Analytics.trackAction("purchase", contextData);
+    Mockito.verify(client).trackAction("purchase", contextData);
   }
 
   @Test
@@ -717,17 +717,7 @@ public class AdobeTest {
         .traits(new Traits())
         .build());
 
-    Config.setUserIdentifier("123");
-  }
-
-  @Test
-  public void identifyWithNoUserId() {
-    integration.identify(new IdentifyPayload.Builder()
-        .userId("123")
-        .traits(new Traits())
-        .build());
-
-    Config.setUserIdentifier(null);
+    Mockito.verify(client).setUserIdentifier("123");
   }
 
   @Test
@@ -738,7 +728,7 @@ public class AdobeTest {
         .build()
     );
 
-    Analytics.trackState("Viewed a Screen", null);
+    Mockito.verify(client).trackState("Viewed a Screen", null);
   }
 
   @Test
@@ -756,7 +746,7 @@ public class AdobeTest {
 
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
-    Analytics.trackState("Viewed a Screen", contextData);
+    Mockito.verify(client).trackState("Viewed a Screen", contextData);
   }
 
   @Test
@@ -766,13 +756,13 @@ public class AdobeTest {
   @Test
   public void flush() {
     integration.flush();
-    Analytics.sendQueuedHits();
+    Mockito.verify(client).flushQueue();
   }
 
   @Test
   public void reset() {
     integration.reset();
-    Config.setUserIdentifier(null);
+    Mockito.verify(client).setUserIdentifier(null);
   }
 
   private void newVideoSession() {
