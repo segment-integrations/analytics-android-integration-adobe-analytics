@@ -1,3 +1,10 @@
+
+1.0.3 / 2018-12-06
+==================
+
+  * [FCD-143] Update dependencies and release process (#67)
+  * Update/playback delegate (#64)
+
 Version 1.0.1-beta (21th December, 2017)
 ========================================
 *(Supports analytics-android 4.3.0, Adobe Mobile Library 4.13.7 and Adobe Heartbeat 2.0.2)*
