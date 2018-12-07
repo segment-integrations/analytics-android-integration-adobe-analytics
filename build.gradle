@@ -50,7 +50,7 @@ dependencies {
 
     api fileTree(dir: 'libs', include: ['*.jar'])
     api 'com.segment.analytics.android:analytics:4.3.1'
-    api 'com.adobe.mobile:adobeMobileLibrary:4.13.7'
+    api 'com.adobe.mobile:adobeMobileLibrary:4.17.0'
 
     testImplementation 'com.segment.analytics.android:analytics-tests:4.3.1'
     testImplementation 'junit:junit:4.12'
