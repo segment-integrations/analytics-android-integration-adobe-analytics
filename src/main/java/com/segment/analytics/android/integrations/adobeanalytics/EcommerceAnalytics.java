@@ -120,11 +120,24 @@ public class EcommerceAnalytics {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&events", eventName);
 
+    Properties extraProperties = new Properties();
+    extraProperties.putAll(properties);
+
     Products products;
     if (properties.products() != null && properties.products().size() > 0) {
       products = new Products(properties.products());
+      extraProperties.remove("products");
     } else {
       products = new Products(properties);
+
+      String idKey = productIdentifier;
+      if (idKey == null || idKey.equals("id")) {
+        idKey = "productId";
+      }
+
+      for (String key : new String[] {"category", "quantity", "price", idKey}) {
+        extraProperties.remove(key);
+      }
     }
 
     if (!products.isEmpty()) {
@@ -133,10 +146,7 @@ public class EcommerceAnalytics {
 
     if (properties.containsKey("orderId")) {
       contextData.put("purchaseid", properties.getString("orderId"));
-    }
-
-    if (contextDataVariables == null) {
-      return contextData;
+      extraProperties.remove("orderId");
     }
 
     // add all customer-mapped properties to ecommerce context data map
@@ -146,8 +156,12 @@ public class EcommerceAnalytics {
         String variable = contextDataVariables.get(key);
         Object value = properties.get(key);
         contextData.put(variable, value);
+        extraProperties.remove(key);
       }
     }
+
+    // Add extra properties.
+    contextData.putAll(extraProperties.toStringMap());
 
     return contextData;
   }

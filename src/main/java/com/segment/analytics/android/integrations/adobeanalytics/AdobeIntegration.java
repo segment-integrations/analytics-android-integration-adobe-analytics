@@ -57,7 +57,6 @@ public class AdobeIntegration extends Integration<Void> {
 
     String serverUrl = settings.getString("heartbeatTrackingServerUrl");
     String productIdentifier = settings.getString("productIdentifier");
-    Map<String, String> contextDataVariables = getSetting("contextValues", settings);
     boolean ssl = settings.getBoolean("ssl", false);
 
     eventsMapping = getSetting("eventsV2", settings);

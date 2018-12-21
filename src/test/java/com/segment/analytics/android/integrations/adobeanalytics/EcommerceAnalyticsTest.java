@@ -86,6 +86,41 @@ public class EcommerceAnalyticsTest {
     }
 
     @Test
+    public void trackOrderCompletedWithExtraProperties() {
+        ecommerceAnalytics.setProductIdentifier("name");
+
+        Map<String, String> contextDataVariables = new HashMap<>();
+        contextDataVariables.put("testing", "myapp.testing");
+        ecommerceAnalytics.setContextDataVariables(contextDataVariables);
+
+        EcommerceAnalytics.Event event = EcommerceAnalytics.Event.OrderCompleted;
+        Properties.Product product = new Properties.Product("123", "ABC", 10.0);
+        product.putName("shoes");
+        product.putValue("category", "athletic");
+        product.putValue("quantity", 2);
+
+        TrackPayload payload = new TrackPayload.Builder()
+                .userId("test-user")
+                .event(event.getSegmentEvent())
+                .properties(new Properties()
+                        .putOrderId("A5744855555")
+                        .putValue("testing", "test!")
+                        .putValue("extra", "extra value")
+                        .putProducts(product))
+                .build();
+
+        ecommerceAnalytics.track(payload);
+
+        Map<String, Object> contextData = new HashMap<>();
+        contextData.put("myapp.testing", "test!");
+        contextData.put("purchaseid", "A5744855555");
+        contextData.put("&&products", "athletic;shoes;2;20.0");
+        contextData.put("&&events", event.getAdobeAnalyticsEvent());
+        contextData.put("extra", "extra value");
+        Mockito.verify(client).trackAction(event.getAdobeAnalyticsEvent(), contextData);
+    }
+
+    @Test
     public void trackProductAdded() {
         ecommerceAnalytics.setProductIdentifier("name");
 
@@ -106,8 +141,37 @@ public class EcommerceAnalyticsTest {
         Map<String, Object> contextData = new HashMap<>();
         contextData.put("&&products", "athletic;shoes;2;20.0");
         contextData.put("&&events", event.getAdobeAnalyticsEvent());
+        contextData.put("sku", "ABC");
         Mockito.verify(client).trackAction(event.getAdobeAnalyticsEvent(), contextData);
     }
+
+    @Test
+    public void trackProductAddedWithExtraProperties() {
+        ecommerceAnalytics.setProductIdentifier("name");
+
+        EcommerceAnalytics.Event event = EcommerceAnalytics.Event.ProductAdded;
+        TrackPayload payload = new TrackPayload.Builder()
+                .userId("test-user")
+                .event(event.getSegmentEvent())
+                .properties(new Properties()
+                        .putSku("ABC")
+                        .putPrice(10.0)
+                        .putName("shoes")
+                        .putCategory("athletic")
+                        .putValue("quantity", 2)
+                        .putValue("extra", "extra value"))
+                .build();
+
+        ecommerceAnalytics.track(payload);
+
+        Map<String, Object> contextData = new HashMap<>();
+        contextData.put("&&products", "athletic;shoes;2;20.0");
+        contextData.put("&&events", event.getAdobeAnalyticsEvent());
+        contextData.put("extra", "extra value");
+        contextData.put("sku", "ABC");
+        Mockito.verify(client).trackAction(event.getAdobeAnalyticsEvent(), contextData);
+    }
+
 
     @Test
     public void trackProductRemoved() {
@@ -130,6 +194,7 @@ public class EcommerceAnalyticsTest {
         Map<String, Object> contextData = new HashMap<>();
         contextData.put("&&products", "athletic;shoes;2;20.0");
         contextData.put("&&events", event.getAdobeAnalyticsEvent());
+        contextData.put("sku", "ABC");
         Mockito.verify(client).trackAction(event.getAdobeAnalyticsEvent(), contextData);
     }
 
@@ -154,6 +219,7 @@ public class EcommerceAnalyticsTest {
         Map<String, Object> contextData = new HashMap<>();
         contextData.put("&&products", "athletic;shoes;2;20.0");
         contextData.put("&&events", event.getAdobeAnalyticsEvent());
+        contextData.put("sku", "ABC");
         Mockito.verify(client).trackAction(event.getAdobeAnalyticsEvent(), contextData);
     }
 
@@ -178,6 +244,8 @@ public class EcommerceAnalyticsTest {
         Map<String, Object> contextData = new HashMap<>();
         contextData.put("&&products", "athletic;XYZ;2;20.0");
         contextData.put("&&events", event.getAdobeAnalyticsEvent());
+        contextData.put("sku", "ABC");
+        contextData.put("name", "shoes");
         Mockito.verify(client).trackAction(event.getAdobeAnalyticsEvent(), contextData);
     }
 
@@ -263,6 +331,7 @@ public class EcommerceAnalyticsTest {
 
         Map<String, Object> contextData = new HashMap<>();
         contextData.put("&&events", event.getAdobeAnalyticsEvent());
+        contextData.put("sku", "ABC");
 
         Mockito.verify(client).trackAction(event.getAdobeAnalyticsEvent(), contextData);
     }
