@@ -198,12 +198,15 @@ public class AdobeIntegration extends Integration<Void> {
   }
 
   private Map<String, Object> getContextData(Properties properties) {
-    if (properties == null
-        || properties.size() == 0
-        || contextDataVariables == null
-        || contextDataVariables.size() == 0) {
+    if (properties == null || properties.size() == 0) {
       return null;
     }
+
+    Properties extraProperties = new Properties();
+    extraProperties.putAll(properties);
+
+    // Remove products just in case
+    extraProperties.remove("products");
 
     Map<String, Object> contextData = new HashMap<>();
 
@@ -213,8 +216,12 @@ public class AdobeIntegration extends Integration<Void> {
         String variable = contextDataVariables.get(key);
         Object value = properties.get(key);
         contextData.put(variable, value);
+        extraProperties.remove(key);
       }
     }
+
+    // Add all extra properties
+    contextData.putAll(extraProperties);
 
     return contextData;
   }

@@ -461,25 +461,42 @@ class VideoAnalytics {
     }
 
     Map<String, String> getContextData() {
-      Map<String, String> cdata = new HashMap<>();
 
-      if (contextDataVariables == null || contextDataVariables.size() == 0) {
-        return cdata;
+      Properties extraProperties = new Properties();
+      extraProperties.putAll(properties);
+
+      // Remove products from extra properties
+      extraProperties.remove("products");
+
+      // Remove video metadata keys
+      for (String key : VIDEO_METADATA_KEYS.keySet()) {
+        extraProperties.remove(key);
       }
 
-      for (String key : contextDataVariables.keySet()) {
+      // Remove ad metadata keys
+      for (String key : AD_METADATA_KEYS.keySet()) {
+        extraProperties.remove(key);
+      }
 
-        // if a products array exists, remove it now because we'll have already mapped it in ecommerce properties
-        // if not, it shouldn't exist because a products array is only specced for ecommerce events
-        if (key.equals("products")) {
-          continue;
-        }
+      // Remove media object keys
+      for (String key :
+          new String[] {"title", "indexPosition", "position", "totalLength", "startTime"}) {
+        extraProperties.remove(key);
+      }
+
+      Map<String, String> cdata = new HashMap<>();
+
+      for (String key : contextDataVariables.keySet()) {
 
         if (properties.containsKey(key)) {
           String variable = contextDataVariables.get(key);
           cdata.put(variable, String.valueOf(properties.getString(key)));
+          extraProperties.remove(key);
         }
       }
+
+      // Add extra properties.
+      cdata.putAll(extraProperties.toStringMap());
 
       return cdata;
     }

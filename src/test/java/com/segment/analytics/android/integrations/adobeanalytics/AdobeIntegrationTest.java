@@ -154,6 +154,30 @@ public class AdobeIntegrationTest {
   }
 
   @Test
+  public void trackWithContextValuesAndExtraProperties() {
+    Map<String, String> eventsMapping = new HashMap<>();
+    eventsMapping.put("Testing Event", "Adobe Testing Event");
+    integration.setEventsMapping(eventsMapping);
+
+    Map<String, String> contextDataVariables = new HashMap<>();
+    contextDataVariables.put("testing", "myapp.testing.Testing");
+    integration.setContextDataVariables(contextDataVariables);
+
+    TrackPayload payload = new TrackPayload.Builder()
+            .userId("test-user")
+            .event("Testing Event")
+            .properties(new Properties().putValue("testing", "testing value").putValue("extra", "extra value"))
+            .build();
+
+    integration.track(payload);
+
+    Map<String, Object> contextData = new HashMap<>();
+    contextData.put("myapp.testing.Testing", "testing value");
+    contextData.put("extra", "extra value");
+    Mockito.verify(client).trackAction("Adobe Testing Event", contextData);
+  }
+
+  @Test
   public void identify() {
     integration.identify(new IdentifyPayload.Builder()
         .userId("123")

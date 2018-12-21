@@ -176,6 +176,67 @@ public class VideoAnalyticsTest {
   }
 
   @Test
+  public void trackVideoContentStartedWithExtraProperties() {
+    Map<String, String> variables = new HashMap<>();
+    variables.put("title", "adobe.title");
+    videoAnalytics.setContextDataVariables(variables);
+    startVideoSession();
+
+    TrackPayload payload = new TrackPayload.Builder()
+            .userId("test-user")
+            .event(VideoAnalytics.Event.ContentStarted.getName())
+            .properties(new Properties()
+                    .putValue("title", "You Win or You Die")
+                    .putValue("contentAssetId", "123")
+                    .putValue("totalLength", 100D)
+                    .putValue("startTime", 10D)
+                    .putValue("indexPosition", 1L)
+                    .putValue("position", 35)
+                    .putValue("season", "1")
+                    .putValue("program", "Game of Thrones")
+                    .putValue("episode", "7")
+                    .putValue("genre", "fantasy")
+                    .putValue("channel", "HBO")
+                    .putValue("airdate", "2011")
+                    .putValue("publisher", "HBO")
+                    .putValue("rating", "MA")
+                    .putValue("extra", "extra value"))
+            .build();
+    videoAnalytics.track(payload);
+
+    Map<String, String> videoMetadata = new HashMap<>();
+    videoMetadata.put("adobe.title", "You Win or You Die");
+    videoMetadata.put("extra", "extra value");
+
+    MediaObject mediaChapter = MediaHeartbeat.createChapterObject(
+            "You Win or You Die",
+            1L,
+            100D,
+            10D
+    );
+
+    Map <String, String> standardVideoMetadata = new HashMap<>();
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, "123");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, "Game of Thrones");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, "1");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.EPISODE, "7");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, "fantasy");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, "HBO");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, "2011");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ORIGINATOR, "HBO");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.RATING, "MA");
+
+    mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata,
+            standardVideoMetadata);
+
+    Assert.assertEquals(videoAnalytics.getPlayback().getCurrentPlaybackTime(), 35.0, 0.01);
+    Mockito.verify(heartbeat).trackPlay();
+    Mockito.verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart),
+            mediaObjectEq(mediaChapter),
+            eq(videoMetadata));
+  }
+
+  @Test
   public void trackVideoContentComplete() {
     startVideoSession();
     sendHeartbeat("VideoEvent Content Completed");
