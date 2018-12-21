@@ -41,7 +41,7 @@ public class AdobeIntegrationTest {
     ValueMap settings = new ValueMap();
     settings.putValue("heartbeatTrackingServerUrl", "https://www.heartbeatTrackingServerURL.com/");
 
-    integration = new AdobeIntegration(settings, videoAnalytics, ecommerceAnalytics, client, Logger.with(LogLevel.NONE));
+    integration = new AdobeIntegration(settings, analytics, videoAnalytics, ecommerceAnalytics, client, Logger.with(LogLevel.NONE));
   }
 
   @Test
@@ -57,7 +57,9 @@ public class AdobeIntegrationTest {
     settings.putValue("productIdentifier", "id");
     settings.putValue("adobeVerboseLogging", true);
 
-    integration = new AdobeIntegration(settings, videoAnalytics, ecommerceAnalytics, client, Logger.with(LogLevel.VERBOSE));
+    Mockito.verify(client).setContext(analytics.getApplication());
+
+    integration = new AdobeIntegration(settings, analytics, videoAnalytics, ecommerceAnalytics, client, Logger.with(LogLevel.VERBOSE));
 
     Assert.assertEquals(integration.getEventsMapping(), new HashMap<String, Object>());
     Assert.assertEquals(integration.getContextDataVariables(), new HashMap<String, Object>());

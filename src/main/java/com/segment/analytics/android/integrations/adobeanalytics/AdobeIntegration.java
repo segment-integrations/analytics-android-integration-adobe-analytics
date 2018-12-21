@@ -1,7 +1,9 @@
 package com.segment.analytics.android.integrations.adobeanalytics;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
+
 import com.segment.analytics.Properties;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.integrations.GroupPayload;
@@ -52,12 +54,16 @@ public class AdobeIntegration extends Integration<Void> {
   private Map<String, String> contextDataVariables;
 
   AdobeIntegration(ValueMap settings, com.segment.analytics.Analytics analytics, Logger logger) {
-    initialize(settings, logger);
 
     String serverUrl = settings.getString("heartbeatTrackingServerUrl");
     String productIdentifier = settings.getString("productIdentifier");
     Map<String, String> contextDataVariables = getSetting("contextValues", settings);
     boolean ssl = settings.getBoolean("ssl", false);
+
+    eventsMapping = getSetting("eventsV2", settings);
+    contextDataVariables = getSetting("contextValues", settings);
+
+    this.logger = logger;
 
     video =
         new VideoAnalytics(
@@ -71,26 +77,32 @@ public class AdobeIntegration extends Integration<Void> {
       video.setDebugLogging(true);
       adobeAnalytics.setDebugLogging(true);
     }
+
+    Context context = analytics.getApplication();
+    // This is the same as adding it to onCreate in the main application class.
+    adobeAnalytics.setContext(context);
+    logger.verbose("Config.setContext();");
   }
 
   AdobeIntegration(
       ValueMap settings,
+      com.segment.analytics.Analytics analytics,
       VideoAnalytics video,
       EcommerceAnalytics ecommerce,
       AdobeAnalyticsClient adobeAnalytics,
       Logger logger) {
-    initialize(settings, logger);
 
+    this.adobeAnalytics = adobeAnalytics;
+    this.logger = logger;
     this.video = video;
     this.ecommerce = ecommerce;
-    this.adobeAnalytics = adobeAnalytics;
-  }
-
-  private void initialize(ValueMap settings, Logger logger) {
     this.eventsMapping = getSetting("eventsV2", settings);
     this.contextDataVariables = getSetting("contextValues", settings);
 
-    this.logger = logger;
+    Context context = analytics.getApplication();
+    // This is the same as adding it to onCreate in the main application class.
+    this.adobeAnalytics.setContext(context);
+    logger.verbose("Config.setContext();");
   }
 
   @Override
@@ -98,7 +110,7 @@ public class AdobeIntegration extends Integration<Void> {
     super.onActivityCreated(activity, savedInstanceState);
 
     adobeAnalytics.setContext(activity.getApplicationContext());
-    logger.verbose("Config.setContext(%s);", activity.getApplicationContext());
+    logger.verbose("Config.setContext();");
   }
 
   @Override
