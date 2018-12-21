@@ -8,6 +8,7 @@ import com.adobe.primetime.va.simple.MediaHeartbeatConfig;
 import com.adobe.primetime.va.simple.MediaObject;
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
+import com.segment.analytics.ValueMap;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.TrackPayload;
 
@@ -180,12 +181,14 @@ public class VideoAnalyticsTest {
   public void trackVideoContentStartedWithExtraProperties() {
     Map<String, String> variables = new HashMap<>();
     variables.put("title", "adobe.title");
+    variables.put(".context.library", "adobe.library");
     videoAnalytics.setContextDataConfiguration(new ContextDataConfiguration("", variables));
     startVideoSession();
 
     TrackPayload payload = new TrackPayload.Builder()
             .userId("test-user")
             .event(VideoAnalytics.Event.ContentStarted.getName())
+            .context(new ValueMap().putValue("library", "Android"))
             .properties(new Properties()
                     .putValue("title", "You Win or You Die")
                     .putValue("contentAssetId", "123")
@@ -208,6 +211,7 @@ public class VideoAnalyticsTest {
     Map<String, String> videoMetadata = new HashMap<>();
     videoMetadata.put("adobe.title", "You Win or You Die");
     videoMetadata.put("extra", "extra value");
+    videoMetadata.put("adobe.library", "Android");
 
     MediaObject mediaChapter = MediaHeartbeat.createChapterObject(
             "You Win or You Die",

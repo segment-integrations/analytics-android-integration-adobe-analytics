@@ -138,12 +138,14 @@ public class AdobeIntegrationTest {
 
     Map<String, String> contextDataVariables = new HashMap<>();
     contextDataVariables.put("testing", "myapp.testing.Testing");
+    contextDataVariables.put(".context.library", "myapp.library");
     integration.setContextDataConfiguration(new ContextDataConfiguration("myapp.", contextDataVariables));
 
     TrackPayload payload = new TrackPayload.Builder()
             .userId("test-user")
             .event("Testing Event")
             .properties(new Properties().putValue("testing", "testing value").putValue("extra", "extra value"))
+            .context(new ValueMap().putValue("library", "Android"))
             .build();
 
     integration.track(payload);
@@ -151,6 +153,7 @@ public class AdobeIntegrationTest {
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
     contextData.put("myapp.extra", "extra value");
+    contextData.put("myapp.library", "Android");
     Mockito.verify(client).trackAction("Adobe Testing Event", contextData);
   }
 

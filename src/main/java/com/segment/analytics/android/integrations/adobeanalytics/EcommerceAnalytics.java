@@ -2,6 +2,7 @@ package com.segment.analytics.android.integrations.adobeanalytics;
 
 import com.segment.analytics.Properties;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.integrations.BasePayload;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.TrackPayload;
 
@@ -106,26 +107,30 @@ public class EcommerceAnalytics {
     EcommerceAnalytics.Event event = EcommerceAnalytics.Event.get(payload.event());
     String eventName = event.getAdobeAnalyticsEvent();
 
-    Map<String, Object> cdata = getContextData(eventName, payload.properties());
+    Map<String, Object> cdata = getContextData(eventName, payload);
 
     adobeAnalytics.trackAction(eventName, cdata);
     logger.verbose("Analytics.trackAction(%s, %s);", eventName, cdata);
   }
 
-  private Map<String, Object> getContextData(String eventName, Properties properties) {
-    if (properties == null || properties.size() == 0) {
-      return null;
-    }
+  private Map<String, Object> getContextData(String eventName, BasePayload payload) {
 
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("&&events", eventName);
 
     Properties extraProperties = new Properties();
-    extraProperties.putAll(properties);
+    ValueMap properties;
+    if (payload.containsKey("properties")) {
+      properties = payload.getValueMap("properties");
+      extraProperties.putAll(properties);
+    } else {
+      properties = new Properties();
+    }
 
     Products products;
-    if (properties.products() != null && properties.products().size() > 0) {
-      products = new Products(properties.products());
+    if (properties.containsKey("products")
+        && properties.getList("products", Properties.Product.class).size() > 0) {
+      products = new Products(properties.getList("products", Properties.Product.class));
       extraProperties.remove("products");
     } else {
       products = new Products(properties);
@@ -152,10 +157,16 @@ public class EcommerceAnalytics {
     // add all customer-mapped properties to ecommerce context data map
     for (String field : contextDataConfiguration.getEventFieldNames()) {
 
-      if (properties.containsKey(field)) {
+      Object value = null;
+      try {
+        value = contextDataConfiguration.searchValue(field, payload);
+      } catch (IllegalArgumentException e) {
+        // Ignore.
+      }
+
+      if (value != null) {
         String variable = contextDataConfiguration.getVariableName(field);
-        Object value = properties.get(field);
-        contextData.put(variable, value);
+        contextData.put(variable, String.valueOf(value));
         extraProperties.remove(field);
       }
     }
@@ -164,6 +175,11 @@ public class EcommerceAnalytics {
     for (String extraProperty : extraProperties.keySet()) {
       String variable = contextDataConfiguration.getPrefix() + extraProperty;
       contextData.put(variable, extraProperties.get(extraProperty));
+    }
+
+    // If we only have events, we return null;
+    if (contextData.size() == 1) {
+      return null;
     }
 
     return contextData;
@@ -336,7 +352,7 @@ public class EcommerceAnalytics {
       }
     }
 
-    Products(Properties eventProperties) {
+    Products(ValueMap eventProperties) {
       products = new ArrayList<>(1);
 
       try {

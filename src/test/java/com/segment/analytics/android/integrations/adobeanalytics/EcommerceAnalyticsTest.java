@@ -2,6 +2,7 @@ package com.segment.analytics.android.integrations.adobeanalytics;
 
 import com.segment.analytics.Analytics;
 import com.segment.analytics.Properties;
+import com.segment.analytics.ValueMap;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.TrackPayload;
 
@@ -92,6 +93,8 @@ public class EcommerceAnalyticsTest {
 
         Map<String, String> contextDataVariables = new HashMap<>();
         contextDataVariables.put("testing", "myapp.testing");
+        contextDataVariables.put(".context.library", "myapp.library");
+        contextDataVariables.put("date.year", "myapp.order.year");
         ecommerceAnalytics.setContextDataConfiguration(new ContextDataConfiguration("myapp.", contextDataVariables));
 
         EcommerceAnalytics.Event event = EcommerceAnalytics.Event.OrderCompleted;
@@ -100,13 +103,17 @@ public class EcommerceAnalyticsTest {
         product.putValue("category", "athletic");
         product.putValue("quantity", 2);
 
+        ValueMap date = new ValueMap().putValue("year", 2018).putValue("month", 12).putValue("day", 31);
+
         TrackPayload payload = new TrackPayload.Builder()
                 .userId("test-user")
                 .event(event.getSegmentEvent())
+                .context(new ValueMap().putValue("library", "Android"))
                 .properties(new Properties()
                         .putOrderId("A5744855555")
                         .putValue("testing", "test!")
                         .putValue("extra", "extra value")
+                        .putValue("date", date)
                         .putProducts(product))
                 .build();
 
@@ -118,6 +125,9 @@ public class EcommerceAnalyticsTest {
         contextData.put("&&products", "athletic;shoes;2;20.0");
         contextData.put("&&events", event.getAdobeAnalyticsEvent());
         contextData.put("myapp.extra", "extra value");
+        contextData.put("myapp.library", "Android");
+        contextData.put("myapp.order.year", "2018");
+        contextData.put("myapp.date", date);
         Mockito.verify(client).trackAction(event.getAdobeAnalyticsEvent(), contextData);
     }
 

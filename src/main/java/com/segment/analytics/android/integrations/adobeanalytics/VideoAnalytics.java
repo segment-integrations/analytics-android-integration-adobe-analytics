@@ -7,6 +7,7 @@ import com.adobe.primetime.va.simple.MediaHeartbeatConfig;
 import com.adobe.primetime.va.simple.MediaObject;
 import com.segment.analytics.Properties;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.integrations.BasePayload;
 import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.TrackPayload;
 
@@ -272,7 +273,7 @@ class VideoAnalytics {
     heartbeat = heartbeatFactory.get(playback, config);
     sessionStarted = true;
 
-    VideoEvent event = new VideoEvent(eventProperties);
+    VideoEvent event = new VideoEvent(track);
 
     heartbeat.trackSessionStart(event.getMediaObject(), event.getContextData());
     logger.verbose("heartbeat.trackSessionStart(MediaObject);");
@@ -291,7 +292,7 @@ class VideoAnalytics {
   }
 
   private void trackVideoContentStarted(TrackPayload track) {
-    VideoEvent event = new VideoEvent(track.properties());
+    VideoEvent event = new VideoEvent(track);
 
     if (event.properties.getDouble("position", 0) > 0) {
       playback.updatePlayheadPosition(event.properties.getLong("position", 0));
@@ -343,7 +344,7 @@ class VideoAnalytics {
   }
 
   private void trackVideoAdBreakStarted(TrackPayload track) {
-    VideoEvent event = new VideoEvent(track.properties(), true);
+    VideoEvent event = new VideoEvent(track, true);
     trackAdobeEvent(
         MediaHeartbeat.Event.AdBreakStart, event.getAdBreakObject(), event.getContextData());
   }
@@ -353,7 +354,7 @@ class VideoAnalytics {
   }
 
   private void trackVideoAdStarted(TrackPayload track) {
-    VideoEvent event = new VideoEvent(track.properties(), true);
+    VideoEvent event = new VideoEvent(track, true);
     trackAdobeEvent(MediaHeartbeat.Event.AdStart, event.getAdObject(), event.getContextData());
   }
 
@@ -402,36 +403,40 @@ class VideoAnalytics {
   class VideoEvent {
     private Map<String, String> metadata;
     private Properties properties;
-    private Properties eventProperties;
+    private BasePayload payload;
 
     /**
      * Creates video properties from the ones provided in the event.
      *
-     * @param eventProperties Event properties.
+     * @param payload Event Payload.
      */
-    VideoEvent(Properties eventProperties) {
-      this(eventProperties, false);
+    VideoEvent(BasePayload payload) {
+      this(payload, false);
     }
 
     /**
      * Creates video properties from the ones provided in the event.
      *
-     * @param eventProperties Event properties.
+     * @param payload Event Payload.
      * @param isAd Determines if the video is an ad.
      */
-    VideoEvent(Properties eventProperties, boolean isAd) {
-      this.eventProperties = eventProperties;
+    VideoEvent(BasePayload payload, boolean isAd) {
+      this.payload = payload;
       metadata = new HashMap<>();
       properties = new Properties();
-      properties.putAll(eventProperties);
-      if (isAd) {
-        mapAdProperties(eventProperties);
-      } else {
-        mapVideoProperties(eventProperties);
+      if (payload.containsKey("properties")) {
+        ValueMap eventProperties = payload.getValueMap("properties");
+        properties.putAll(eventProperties);
+
+        if (isAd) {
+          mapAdProperties(eventProperties);
+        } else {
+          mapVideoProperties(eventProperties);
+        }
       }
     }
 
-    private void mapVideoProperties(Properties eventProperties) {
+    private void mapVideoProperties(ValueMap eventProperties) {
       for (String key : eventProperties.keySet()) {
 
         if (VIDEO_METADATA_KEYS.containsKey(key)) {
@@ -452,7 +457,7 @@ class VideoAnalytics {
       }
     }
 
-    private void mapAdProperties(Properties eventProperties) {
+    private void mapAdProperties(ValueMap eventProperties) {
       for (String key : eventProperties.keySet()) {
 
         if (AD_METADATA_KEYS.containsKey(key)) {
@@ -490,10 +495,16 @@ class VideoAnalytics {
       Map<String, String> cdata = new HashMap<>();
 
       for (String field : contextDataConfiguration.getEventFieldNames()) {
+        Object value = null;
+        try {
+          value = contextDataConfiguration.searchValue(field, payload);
+        } catch (IllegalArgumentException e) {
+          // Ignore.
+        }
 
-        if (properties.containsKey(field)) {
+        if (value != null) {
           String variable = contextDataConfiguration.getVariableName(field);
-          cdata.put(variable, String.valueOf(properties.getString(field)));
+          cdata.put(variable, String.valueOf(value));
           extraProperties.remove(field);
         }
       }
@@ -508,6 +519,12 @@ class VideoAnalytics {
     }
 
     MediaObject getChapterObject() {
+      if (!payload.containsKey("properties")) {
+        return null;
+      }
+
+      ValueMap eventProperties = payload.getValueMap("properties");
+
       String title = eventProperties.getString("title");
       long indexPosition =
           eventProperties.getLong("indexPosition", 1); // Segment does not spec this
@@ -521,6 +538,12 @@ class VideoAnalytics {
     }
 
     MediaObject getMediaObject() {
+      if (!payload.containsKey("properties")) {
+        return null;
+      }
+
+      ValueMap eventProperties = payload.getValueMap("properties");
+
       String title = eventProperties.getString("title");
       String contentAssetId = eventProperties.getString("contentAssetId");
       double totalLength = eventProperties.getDouble("totalLength", 0);
@@ -536,6 +559,12 @@ class VideoAnalytics {
     }
 
     MediaObject getAdObject() {
+      if (!payload.containsKey("properties")) {
+        return null;
+      }
+
+      ValueMap eventProperties = payload.getValueMap("properties");
+
       String title = eventProperties.getString("title");
       String assetId = eventProperties.getString("assetId");
       long indexPosition = eventProperties.getLong("indexPosition", 0);
@@ -548,6 +577,12 @@ class VideoAnalytics {
     }
 
     MediaObject getAdBreakObject() {
+      if (!payload.containsKey("properties")) {
+        return null;
+      }
+
+      ValueMap eventProperties = payload.getValueMap("properties");
+
       String title = eventProperties.getString("title");
       long indexPosition =
           eventProperties.getLong("indexPosition", 1); // Segment does not spec this
@@ -565,8 +600,8 @@ class VideoAnalytics {
       return properties;
     }
 
-    Properties getEventProperties() {
-      return eventProperties;
+    BasePayload getEventPayload() {
+      return payload;
     }
   }
 }

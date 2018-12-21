@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import com.segment.analytics.Properties;
 import com.segment.analytics.ValueMap;
+import com.segment.analytics.integrations.BasePayload;
 import com.segment.analytics.integrations.GroupPayload;
 import com.segment.analytics.integrations.IdentifyPayload;
 import com.segment.analytics.integrations.Integration;
@@ -152,7 +153,7 @@ public class AdobeIntegration extends Integration<Void> {
       return;
     }
 
-    Map<String, Object> cdata = getContextData(properties);
+    Map<String, Object> cdata = getContextData(screen);
     adobeAnalytics.trackState(screen.name(), cdata);
     logger.verbose("Analytics.trackState(%s, %s);", screen.name(), cdata);
   }
@@ -190,19 +191,18 @@ public class AdobeIntegration extends Integration<Void> {
     }
 
     String event = String.valueOf(eventsMapping.get(eventName));
-    Map<String, Object> cdata = getContextData(payload.properties());
+    Map<String, Object> cdata = getContextData(payload);
 
     adobeAnalytics.trackAction(event, cdata);
     logger.verbose("Analytics.trackAction(%s, %s);", event, cdata);
   }
 
-  private Map<String, Object> getContextData(Properties properties) {
-    if (properties == null || properties.size() == 0) {
-      return null;
-    }
+  private Map<String, Object> getContextData(BasePayload payload) {
 
     Properties extraProperties = new Properties();
-    extraProperties.putAll(properties);
+    if (payload.containsKey("properties")) {
+      extraProperties.putAll(payload.getValueMap("properties"));
+    }
 
     // Remove products just in case
     extraProperties.remove("products");
@@ -210,10 +210,15 @@ public class AdobeIntegration extends Integration<Void> {
     Map<String, Object> contextData = new HashMap<>();
 
     for (String field : contextDataConfiguration.getEventFieldNames()) {
+      Object value = null;
+      try {
+        value = contextDataConfiguration.searchValue(field, payload);
+      } catch (IllegalArgumentException e) {
+        // Ignore.
+      }
 
-      if (properties.containsKey(field)) {
+      if (value != null) {
         String variable = contextDataConfiguration.getVariableName(field);
-        Object value = properties.get(field);
         contextData.put(variable, value);
         extraProperties.remove(field);
       }
@@ -223,6 +228,10 @@ public class AdobeIntegration extends Integration<Void> {
     for (String extraProperty : extraProperties.keySet()) {
       String variable = contextDataConfiguration.getPrefix() + extraProperty;
       contextData.put(variable, extraProperties.get(extraProperty));
+    }
+
+    if (contextData.size() == 0) {
+      return null;
     }
 
     return contextData;
