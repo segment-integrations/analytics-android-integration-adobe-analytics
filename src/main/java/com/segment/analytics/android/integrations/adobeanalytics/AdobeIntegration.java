@@ -51,7 +51,7 @@ public class AdobeIntegration extends Integration<Void> {
   private VideoAnalytics video;
   private EcommerceAnalytics ecommerce;
   private Map<String, String> eventsMapping;
-  private Map<String, String> contextDataVariables;
+  private ContextDataConfiguration contextDataConfiguration;
 
   AdobeIntegration(ValueMap settings, com.segment.analytics.Analytics analytics, Logger logger) {
 
@@ -60,16 +60,16 @@ public class AdobeIntegration extends Integration<Void> {
     boolean ssl = settings.getBoolean("ssl", false);
 
     eventsMapping = getSetting("eventsV2", settings);
-    contextDataVariables = getSetting("contextValues", settings);
+    contextDataConfiguration = new ContextDataConfiguration(settings);
 
     this.logger = logger;
 
     video =
         new VideoAnalytics(
-            analytics.getApplication(), serverUrl, contextDataVariables, ssl, logger);
+            analytics.getApplication(), serverUrl, contextDataConfiguration, ssl, logger);
     adobeAnalytics = new AdobeAnalyticsClient.DefaultClient();
     ecommerce =
-        new EcommerceAnalytics(adobeAnalytics, productIdentifier, contextDataVariables, logger);
+        new EcommerceAnalytics(adobeAnalytics, productIdentifier, contextDataConfiguration, logger);
 
     if (logger.logLevel.equals(com.segment.analytics.Analytics.LogLevel.VERBOSE)) {
       logger.verbose("Enabled debugging");
@@ -96,7 +96,7 @@ public class AdobeIntegration extends Integration<Void> {
     this.video = video;
     this.ecommerce = ecommerce;
     this.eventsMapping = getSetting("eventsV2", settings);
-    this.contextDataVariables = getSetting("contextValues", settings);
+    contextDataConfiguration = new ContextDataConfiguration(settings);
 
     Context context = analytics.getApplication();
     // This is the same as adding it to onCreate in the main application class.
@@ -209,18 +209,21 @@ public class AdobeIntegration extends Integration<Void> {
 
     Map<String, Object> contextData = new HashMap<>();
 
-    for (String key : contextDataVariables.keySet()) {
+    for (String field : contextDataConfiguration.getEventFieldNames()) {
 
-      if (properties.containsKey(key)) {
-        String variable = contextDataVariables.get(key);
-        Object value = properties.get(key);
+      if (properties.containsKey(field)) {
+        String variable = contextDataConfiguration.getVariableName(field);
+        Object value = properties.get(field);
         contextData.put(variable, value);
-        extraProperties.remove(key);
+        extraProperties.remove(field);
       }
     }
 
     // Add all extra properties
-    contextData.putAll(extraProperties);
+    for (String extraProperty : extraProperties.keySet()) {
+      String variable = contextDataConfiguration.getPrefix() + extraProperty;
+      contextData.put(variable, extraProperties.get(extraProperty));
+    }
 
     return contextData;
   }
@@ -274,17 +277,16 @@ public class AdobeIntegration extends Integration<Void> {
     this.eventsMapping = eventsMapping;
   }
 
-  Map<String, String> getContextDataVariables() {
-    return contextDataVariables;
+  ContextDataConfiguration getContextDataConfiguration() {
+    return contextDataConfiguration;
   }
 
   /**
-   * Allows to redefine the context data variables. Only used for testing.
+   * Allows to redefine the context data configuration. Only used for testing.
    *
-   * @param contextDataVariables Context data variables as <code>
-   *     {segment field, adobe analytics field}</code>.
+   * @param contextDataConfiguration New context data configuration.
    */
-  void setContextDataVariables(Map<String, String> contextDataVariables) {
-    this.contextDataVariables = contextDataVariables;
+  void setContextDataConfiguration(ContextDataConfiguration contextDataConfiguration) {
+    this.contextDataConfiguration = contextDataConfiguration;
   }
 }

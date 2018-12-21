@@ -24,18 +24,19 @@ public class EcommerceAnalyticsTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        Map<String, String> contextVariables = new HashMap<>();
-        ecommerceAnalytics = new EcommerceAnalytics(client, "", contextVariables, Logger.with(Analytics.LogLevel.NONE));
+        ContextDataConfiguration contextDataConfiguration = new ContextDataConfiguration("", new HashMap<String, String>());
+        ecommerceAnalytics = new EcommerceAnalytics(client, "", contextDataConfiguration, Logger.with(Analytics.LogLevel.NONE));
     }
 
     @Test
     public void initialize() {
         Map<String, String> contextVariables = new HashMap<>();
         contextVariables.put("testField", "myapp.var");
-        ecommerceAnalytics = new EcommerceAnalytics(client, "id", contextVariables, Logger.with(Analytics.LogLevel.NONE));
+        ContextDataConfiguration contextDataConfiguration = new ContextDataConfiguration("myapp.", contextVariables);
+        ecommerceAnalytics = new EcommerceAnalytics(client, "id", contextDataConfiguration, Logger.with(Analytics.LogLevel.NONE));
 
         Assert.assertEquals("id", ecommerceAnalytics.getProductIdentifier());
-        Assert.assertEquals(contextVariables, ecommerceAnalytics.getContextDataVariables());
+        Assert.assertEquals(contextDataConfiguration, ecommerceAnalytics.getContextDataConfiguration());
     }
 
     @Test
@@ -58,7 +59,7 @@ public class EcommerceAnalyticsTest {
 
         Map<String, String> contextDataVariables = new HashMap<>();
         contextDataVariables.put("testing", "myapp.testing");
-        ecommerceAnalytics.setContextDataVariables(contextDataVariables);
+        ecommerceAnalytics.setContextDataConfiguration(new ContextDataConfiguration("", contextDataVariables));
 
         EcommerceAnalytics.Event event = EcommerceAnalytics.Event.OrderCompleted;
         Properties.Product product = new Properties.Product("123", "ABC", 10.0);
@@ -91,7 +92,7 @@ public class EcommerceAnalyticsTest {
 
         Map<String, String> contextDataVariables = new HashMap<>();
         contextDataVariables.put("testing", "myapp.testing");
-        ecommerceAnalytics.setContextDataVariables(contextDataVariables);
+        ecommerceAnalytics.setContextDataConfiguration(new ContextDataConfiguration("myapp.", contextDataVariables));
 
         EcommerceAnalytics.Event event = EcommerceAnalytics.Event.OrderCompleted;
         Properties.Product product = new Properties.Product("123", "ABC", 10.0);
@@ -116,7 +117,7 @@ public class EcommerceAnalyticsTest {
         contextData.put("purchaseid", "A5744855555");
         contextData.put("&&products", "athletic;shoes;2;20.0");
         contextData.put("&&events", event.getAdobeAnalyticsEvent());
-        contextData.put("extra", "extra value");
+        contextData.put("myapp.extra", "extra value");
         Mockito.verify(client).trackAction(event.getAdobeAnalyticsEvent(), contextData);
     }
 

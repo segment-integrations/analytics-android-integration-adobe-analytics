@@ -62,7 +62,7 @@ public class AdobeIntegrationTest {
     integration = new AdobeIntegration(settings, analytics, videoAnalytics, ecommerceAnalytics, client, Logger.with(LogLevel.VERBOSE));
 
     Assert.assertEquals(integration.getEventsMapping(), new HashMap<String, Object>());
-    Assert.assertEquals(integration.getContextDataVariables(), new HashMap<String, Object>());
+    Assert.assertEquals(integration.getContextDataConfiguration(), new ContextDataConfiguration(settings));
   }
 
   @Test
@@ -138,20 +138,45 @@ public class AdobeIntegrationTest {
 
     Map<String, String> contextDataVariables = new HashMap<>();
     contextDataVariables.put("testing", "myapp.testing.Testing");
-    integration.setContextDataVariables(contextDataVariables);
+    integration.setContextDataConfiguration(new ContextDataConfiguration("myapp.", contextDataVariables));
 
     TrackPayload payload = new TrackPayload.Builder()
             .userId("test-user")
             .event("Testing Event")
-            .properties(new Properties().putValue("testing", "testing value"))
+            .properties(new Properties().putValue("testing", "testing value").putValue("extra", "extra value"))
             .build();
 
     integration.track(payload);
 
     Map<String, Object> contextData = new HashMap<>();
     contextData.put("myapp.testing.Testing", "testing value");
+    contextData.put("myapp.extra", "extra value");
     Mockito.verify(client).trackAction("Adobe Testing Event", contextData);
   }
+
+    @Test
+    public void trackWithContextValuesAndInvalidPrefix() {
+        Map<String, String> eventsMapping = new HashMap<>();
+        eventsMapping.put("Testing Event", "Adobe Testing Event");
+        integration.setEventsMapping(eventsMapping);
+
+        Map<String, String> contextDataVariables = new HashMap<>();
+        contextDataVariables.put("testing", "myapp.testing.Testing");
+        integration.setContextDataConfiguration(new ContextDataConfiguration("a.", contextDataVariables));
+
+        TrackPayload payload = new TrackPayload.Builder()
+                .userId("test-user")
+                .event("Testing Event")
+                .properties(new Properties().putValue("testing", "testing value").putValue("extra", "extra value"))
+                .build();
+
+        integration.track(payload);
+
+        Map<String, Object> contextData = new HashMap<>();
+        contextData.put("myapp.testing.Testing", "testing value");
+        contextData.put("extra", "extra value");
+        Mockito.verify(client).trackAction("Adobe Testing Event", contextData);
+    }
 
   @Test
   public void trackWithContextValuesAndExtraProperties() {
@@ -161,7 +186,7 @@ public class AdobeIntegrationTest {
 
     Map<String, String> contextDataVariables = new HashMap<>();
     contextDataVariables.put("testing", "myapp.testing.Testing");
-    integration.setContextDataVariables(contextDataVariables);
+    integration.setContextDataConfiguration(new ContextDataConfiguration("", contextDataVariables));
 
     TrackPayload payload = new TrackPayload.Builder()
             .userId("test-user")
@@ -204,7 +229,7 @@ public class AdobeIntegrationTest {
   public void screenWithContextValues() {
     Map<String, String> contextDataVariables = new HashMap<>();
     contextDataVariables.put("testing", "myapp.testing.Testing");
-    integration.setContextDataVariables(contextDataVariables);
+    integration.setContextDataConfiguration(new ContextDataConfiguration("", contextDataVariables));
 
     ScreenPayload payload = new ScreenPayload.Builder()
             .userId("test-user")

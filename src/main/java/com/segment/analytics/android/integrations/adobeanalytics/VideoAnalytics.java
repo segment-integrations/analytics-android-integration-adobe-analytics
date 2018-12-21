@@ -116,7 +116,7 @@ class VideoAnalytics {
   }
 
   private String heartbeatTrackingServerUrl;
-  private Map<String, String> contextDataVariables;
+  private ContextDataConfiguration contextDataConfiguration;
   private boolean ssl;
   private boolean debug;
   private boolean sessionStarted;
@@ -129,23 +129,23 @@ class VideoAnalytics {
   VideoAnalytics(
       Context context,
       String serverUrl,
-      Map<String, String> contextDataVariables,
+      ContextDataConfiguration contextDataConfiguration,
       boolean ssl,
       Logger logger) {
-    this(context, serverUrl, contextDataVariables, ssl, new HeartbeatFactory(), logger);
+    this(context, serverUrl, contextDataConfiguration, ssl, new HeartbeatFactory(), logger);
   }
 
   VideoAnalytics(
       Context context,
       String serverUrl,
-      Map<String, String> contextDataVariables,
+      ContextDataConfiguration contextDataConfiguration,
       boolean ssl,
       HeartbeatFactory heartbeatFactory,
       Logger logger) {
     this.heartbeatFactory = heartbeatFactory;
     this.logger = logger;
     this.ssl = ssl;
-    this.contextDataVariables = contextDataVariables;
+    this.contextDataConfiguration = contextDataConfiguration;
 
     sessionStarted = false;
     debug = false;
@@ -385,14 +385,17 @@ class VideoAnalytics {
     this.debug = debug;
   }
 
+  ContextDataConfiguration getContextDataConfiguration() {
+    return contextDataConfiguration;
+  }
+
   /**
-   * Allows to redefine the context data variables. Only used for testing.
+   * Allows to redefine the context data configuration. Only used for testing.
    *
-   * @param contextDataVariables Context data variables as <code>
-   *     {segment field, adobe analytics field}</code>.
+   * @param contextDataConfiguration New context data configuration.
    */
-  void setContextDataVariables(Map<String, String> contextDataVariables) {
-    this.contextDataVariables = contextDataVariables;
+  void setContextDataConfiguration(ContextDataConfiguration contextDataConfiguration) {
+    this.contextDataConfiguration = contextDataConfiguration;
   }
 
   /** A wrapper for video metadata and properties. */
@@ -486,17 +489,20 @@ class VideoAnalytics {
 
       Map<String, String> cdata = new HashMap<>();
 
-      for (String key : contextDataVariables.keySet()) {
+      for (String field : contextDataConfiguration.getEventFieldNames()) {
 
-        if (properties.containsKey(key)) {
-          String variable = contextDataVariables.get(key);
-          cdata.put(variable, String.valueOf(properties.getString(key)));
-          extraProperties.remove(key);
+        if (properties.containsKey(field)) {
+          String variable = contextDataConfiguration.getVariableName(field);
+          cdata.put(variable, String.valueOf(properties.getString(field)));
+          extraProperties.remove(field);
         }
       }
 
       // Add extra properties.
-      cdata.putAll(extraProperties.toStringMap());
+      for (String extraProperty : extraProperties.keySet()) {
+        String variable = contextDataConfiguration.getPrefix() + extraProperty;
+        cdata.put(variable, extraProperties.getString(extraProperty));
+      }
 
       return cdata;
     }

@@ -44,14 +44,15 @@ public class VideoAnalyticsTest {
     Mockito.when(context.getPackageName()).thenReturn("test");
     Mockito.when(heartbeatFactory.get(Mockito.any(MediaHeartbeatDelegate.class), Mockito.any(MediaHeartbeatConfig.class))).thenReturn(heartbeat);
 
-    videoAnalytics = new VideoAnalytics(context, SERVER_URL, new HashMap<String, String>(), true, heartbeatFactory, Logger.with(Analytics.LogLevel.NONE));
+    ContextDataConfiguration contextDataConfiguration = new ContextDataConfiguration("", new HashMap<String, String>());
+    videoAnalytics = new VideoAnalytics(context, SERVER_URL, contextDataConfiguration, true, heartbeatFactory, Logger.with(Analytics.LogLevel.NONE));
   }
 
   @Test
   public void trackVideoPlaybackStarted() {
     Map<String, String> variables = new HashMap<>();
     variables.put("random metadata", "adobe.random");
-    videoAnalytics.setContextDataVariables(variables);
+    videoAnalytics.setContextDataConfiguration(new ContextDataConfiguration("", variables));
 
     TrackPayload payload = new TrackPayload.Builder()
             .userId("test-user")
@@ -120,7 +121,7 @@ public class VideoAnalyticsTest {
   public void trackVideoContentStarted() {
     Map<String, String> variables = new HashMap<>();
     variables.put("title", "adobe.title");
-    videoAnalytics.setContextDataVariables(variables);
+    videoAnalytics.setContextDataConfiguration(new ContextDataConfiguration("", variables));
     startVideoSession();
 
     TrackPayload payload = new TrackPayload.Builder()
@@ -179,7 +180,7 @@ public class VideoAnalyticsTest {
   public void trackVideoContentStartedWithExtraProperties() {
     Map<String, String> variables = new HashMap<>();
     variables.put("title", "adobe.title");
-    videoAnalytics.setContextDataVariables(variables);
+    videoAnalytics.setContextDataConfiguration(new ContextDataConfiguration("", variables));
     startVideoSession();
 
     TrackPayload payload = new TrackPayload.Builder()
@@ -290,7 +291,7 @@ public class VideoAnalyticsTest {
   public void trackVideoAdBreakStarted() {
     Map<String, String> variables = new HashMap<>();
     variables.put("contextValue", "adobe.context.value");
-    videoAnalytics.setContextDataVariables(variables);
+    videoAnalytics.setContextDataConfiguration(new ContextDataConfiguration("", variables));
     startVideoSession();
 
     TrackPayload payload = new TrackPayload.Builder()
@@ -330,7 +331,7 @@ public class VideoAnalyticsTest {
   public void trackVideoAdStarted() {
     Map<String, String> variables = new HashMap<>();
     variables.put("title", "adobe.title");
-    videoAnalytics.setContextDataVariables(variables);
+    videoAnalytics.setContextDataConfiguration(new ContextDataConfiguration("myapp.", variables));
     startVideoSession();
 
     TrackPayload payload = new TrackPayload.Builder()
@@ -341,7 +342,8 @@ public class VideoAnalyticsTest {
                     .putValue("assetId", "123")
                     .putValue("totalLength", 10D)
                     .putValue("indexPosition", 1L)
-                    .putValue("publisher", "Lexus"))
+                    .putValue("publisher", "Lexus")
+                    .putValue("extra", "extra value"))
             .build();
 
     videoAnalytics.track(payload);
@@ -355,6 +357,7 @@ public class VideoAnalyticsTest {
 
     Map<String, String> adMetadata = new HashMap<>();
     adMetadata.put("adobe.title", "Car Commercial");
+    adMetadata.put("myapp.extra", "extra value");
 
     Map<String, String> standardAdMetadata = new HashMap<>();
     standardAdMetadata.put(MediaHeartbeat.AdMetadataKeys.ADVERTISER, "Lexus");

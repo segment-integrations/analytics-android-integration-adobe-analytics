@@ -88,17 +88,17 @@ public class EcommerceAnalytics {
 
   private AdobeAnalyticsClient adobeAnalytics;
   private Logger logger;
-  private Map<String, String> contextDataVariables;
+  private ContextDataConfiguration contextDataConfiguration;
   private String productIdentifier;
 
   EcommerceAnalytics(
       AdobeAnalyticsClient adobeAnalytics,
       String productIdentifier,
-      Map<String, String> contextDataVariables,
+      ContextDataConfiguration contextDataConfiguration,
       Logger logger) {
     this.adobeAnalytics = adobeAnalytics;
     this.logger = logger;
-    this.contextDataVariables = contextDataVariables;
+    this.contextDataConfiguration = contextDataConfiguration;
     this.productIdentifier = productIdentifier;
   }
 
@@ -150,18 +150,21 @@ public class EcommerceAnalytics {
     }
 
     // add all customer-mapped properties to ecommerce context data map
-    for (String key : contextDataVariables.keySet()) {
+    for (String field : contextDataConfiguration.getEventFieldNames()) {
 
-      if (properties.containsKey(key)) {
-        String variable = contextDataVariables.get(key);
-        Object value = properties.get(key);
+      if (properties.containsKey(field)) {
+        String variable = contextDataConfiguration.getVariableName(field);
+        Object value = properties.get(field);
         contextData.put(variable, value);
-        extraProperties.remove(key);
+        extraProperties.remove(field);
       }
     }
 
     // Add extra properties.
-    contextData.putAll(extraProperties.toStringMap());
+    for (String extraProperty : extraProperties.keySet()) {
+      String variable = contextDataConfiguration.getPrefix() + extraProperty;
+      contextData.put(variable, extraProperties.get(extraProperty));
+    }
 
     return contextData;
   }
@@ -179,18 +182,17 @@ public class EcommerceAnalytics {
     this.productIdentifier = productIdentifier;
   }
 
-  Map<String, String> getContextDataVariables() {
-    return contextDataVariables;
+  ContextDataConfiguration getContextDataConfiguration() {
+    return contextDataConfiguration;
   }
 
   /**
-   * Allows to redefine the context data variables. Only used for testing.
+   * Allows to redefine the context data configuration. Only used for testing.
    *
-   * @param contextDataVariables Context data variables as <code>
-   *     {segment field, adobe analytics field}</code>.
+   * @param contextDataConfiguration New context data configuration.
    */
-  void setContextDataVariables(Map<String, String> contextDataVariables) {
-    this.contextDataVariables = contextDataVariables;
+  void setContextDataConfiguration(ContextDataConfiguration contextDataConfiguration) {
+    this.contextDataConfiguration = contextDataConfiguration;
   }
 
   /** Defines a Adobe Analytics ecommerce product. */
