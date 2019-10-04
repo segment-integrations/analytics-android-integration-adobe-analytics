@@ -1,4 +1,4 @@
-analytics-android-integration-amplitude
+analytics-android-integration-adobe-analytics
 =======================================
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.segment.analytics.android.integrations/adobe-analytics/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.segment.analytics.android.integrations/adobe-analytics)
