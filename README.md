@@ -20,7 +20,7 @@ After adding the dependency, you must register the integration with our SDK.  To
 
 
 ```
-import com.segment.analytics.android.integrations.amplitude.AdobeIntegration;
+import com.segment.analytics.android.integrations.adobeanalytics.AdobeIntegration;
 
 ```
 
