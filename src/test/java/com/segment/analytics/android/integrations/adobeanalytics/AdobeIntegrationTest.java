@@ -110,7 +110,7 @@ public class AdobeIntegrationTest {
   public void trackVideoEvent() {
     TrackPayload payload = new TrackPayload.Builder()
             .userId("test-user")
-            .event("VideoEvent Playback Started")
+            .event("Video Playback Started")
             .build();
 
     integration.track(payload);
