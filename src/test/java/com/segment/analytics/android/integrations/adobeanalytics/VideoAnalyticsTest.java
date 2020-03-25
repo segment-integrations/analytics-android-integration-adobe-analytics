@@ -57,7 +57,7 @@ public class VideoAnalyticsTest {
 
     TrackPayload payload = new TrackPayload.Builder()
             .userId("test-user")
-            .event(VideoAnalytics.Event.PlaybackStarted.getName())
+            .event("Video Playback Started")
             .properties(new Properties()
                     .putValue("title", "You Win or You Die")
                     .putValue("contentAssetId", "123")
@@ -105,7 +105,7 @@ public class VideoAnalyticsTest {
   @Test
   public void trackVideoPlaybackPaused() {
     startVideoSession();
-    sendHeartbeat("VideoEvent Playback Paused");
+    sendHeartbeat("Video Playback Paused");
     Assert.assertTrue(videoAnalytics.getPlayback().isPaused());
     Mockito.verify(heartbeat).trackPause();
   }
@@ -113,7 +113,7 @@ public class VideoAnalyticsTest {
   @Test
   public void trackVideoPlaybackResumed() {
     startVideoSession();
-    sendHeartbeat("VideoEvent Playback Resumed");
+    sendHeartbeat("Video Playback Resumed");
     Assert.assertFalse(videoAnalytics.getPlayback().isPaused());
     Mockito.verify(heartbeat).trackPlay();
   }
@@ -127,7 +127,7 @@ public class VideoAnalyticsTest {
 
     TrackPayload payload = new TrackPayload.Builder()
             .userId("test-user")
-            .event(VideoAnalytics.Event.ContentStarted.getName())
+            .event("Video Content Started")
             .properties(new Properties()
                     .putValue("title", "You Win or You Die")
                     .putValue("contentAssetId", "123")
@@ -187,7 +187,7 @@ public class VideoAnalyticsTest {
 
     TrackPayload payload = new TrackPayload.Builder()
             .userId("test-user")
-            .event(VideoAnalytics.Event.ContentStarted.getName())
+            .event("Video Content Started")
             .context(new ValueMap().putValue("library", "Android"))
             .properties(new Properties()
                     .putValue("title", "You Win or You Die")
@@ -244,7 +244,7 @@ public class VideoAnalyticsTest {
   @Test
   public void trackVideoContentComplete() {
     startVideoSession();
-    sendHeartbeat("VideoEvent Content Completed");
+    sendHeartbeat("Video Content Completed");
     Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
     Mockito.verify(heartbeat).trackComplete();
   }
@@ -252,14 +252,14 @@ public class VideoAnalyticsTest {
   @Test
   public void trackVideoPlaybackComplete() {
     startVideoSession();
-    sendHeartbeat("VideoEvent Playback Completed");
+    sendHeartbeat("Video Playback Completed");
     Mockito.verify(heartbeat).trackSessionEnd();
   }
 
   @Test
   public void trackVideoBufferStarted() {
     startVideoSession();
-    sendHeartbeat("VideoEvent Playback Buffer Started");
+    sendHeartbeat("Video Playback Buffer Started");
     Assert.assertTrue(videoAnalytics.getPlayback().isPaused());
     Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferStart, null, null);
   }
@@ -267,7 +267,7 @@ public class VideoAnalyticsTest {
   @Test
   public void trackVideoBufferComplete() {
     startVideoSession();
-    sendHeartbeat("VideoEvent Playback Buffer Completed");
+    sendHeartbeat("Video Playback Buffer Completed");
     Assert.assertFalse(videoAnalytics.getPlayback().isPaused());
     Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.BufferComplete, null, null);
   }
@@ -275,7 +275,7 @@ public class VideoAnalyticsTest {
   @Test
   public void trackVideoSeekStarted() {
     startVideoSession();
-    sendSeekHeartbeat("VideoEvent Playback Seek Started", null);
+    sendSeekHeartbeat("Video Playback Seek Started", null);
     Assert.assertTrue(videoAnalytics.getPlayback().isPaused());
     Assert.assertEquals(videoAnalytics.getPlayback().getCurrentPlaybackTime(), 0.0, 0.001);
     Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekStart, null, null);
@@ -285,7 +285,7 @@ public class VideoAnalyticsTest {
   public void trackVideoSeekComplete() {
     startVideoSession();
     double first = videoAnalytics.getPlayback().getCurrentPlaybackTime();
-    sendSeekHeartbeat("VideoEvent Playback Seek Completed", 50L);
+    sendSeekHeartbeat("Video Playback Seek Completed", 50L);
     Assert.assertFalse(videoAnalytics.getPlayback().isPaused());
     Assert.assertEquals(videoAnalytics.getPlayback().getCurrentPlaybackTime(), first + 50, 0.01);
     Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.SeekComplete, null, null);
@@ -327,7 +327,7 @@ public class VideoAnalyticsTest {
   @Test
   public void trackVideoAdBreakCompleted() {
     startVideoSession();
-    sendHeartbeat("VideoEvent Ad Break Completed");
+    sendHeartbeat("Video Ad Break Completed");
     Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdBreakComplete, null, null);
   }
 
@@ -374,21 +374,21 @@ public class VideoAnalyticsTest {
   @Test
   public void trackVideoAdSkipped() {
     startVideoSession();
-    sendHeartbeat("VideoEvent Ad Skipped");
+    sendHeartbeat("Video Ad Skipped");
     Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdSkip, null, null);
   }
 
   @Test
   public void trackVideoAdCompleted() {
     startVideoSession();
-    sendHeartbeat("VideoEvent Ad Completed");
+    sendHeartbeat("Video Ad Completed");
     Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.AdComplete, null, null);
   }
 
   @Test
   public void trackVideoPlaybackInterrupted() throws Exception {
     startVideoSession();
-    sendHeartbeat("VideoEvent Playback Interrupted");
+    sendHeartbeat("Video Playback Interrupted");
     Double first = videoAnalytics.getPlayback().getCurrentPlaybackTime();
     Thread.sleep(2000L);
     Assert.assertEquals(videoAnalytics.getPlayback().getCurrentPlaybackTime(), first, 0.001);

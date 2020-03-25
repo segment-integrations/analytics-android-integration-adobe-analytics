@@ -22,23 +22,23 @@ import java.util.Map;
 class VideoAnalytics {
 
   enum Event {
-    PlaybackStarted("VideoEvent Playback Started"),
-    ContentStarted("VideoEvent Content Started"),
-    PlaybackPaused("VideoEvent Playback Paused"),
-    PlaybackResumed("VideoEvent Playback Resumed"),
-    ContentCompleted("VideoEvent Content Completed"),
-    PlaybackCompleted("VideoEvent Playback Completed"),
-    PlaybackBufferStarted("VideoEvent Playback Buffer Started"),
-    PlaybackBufferCompleted("VideoEvent Playback Buffer Completed"),
-    PlaybackSeekStarted("VideoEvent Playback Seek Started"),
-    PlaybackSeekCompleted("VideoEvent Playback Seek Completed"),
-    AdBreakStarted("VideoEvent Ad Break Started"),
-    AdBreakCompleted("VideoEvent Ad Break Completed"),
-    AdStarted("VideoEvent Ad Started"),
-    AdSkipped("VideoEvent Ad Skipped"),
-    AdCompleted("VideoEvent Ad Completed"),
-    PlaybackInterrupted("VideoEvent Playback Interrupted"),
-    QualityUpdated("VideoEvent Quality Updated");
+    PlaybackStarted("Video Playback Started"),
+    ContentStarted("Video Content Started"),
+    PlaybackPaused("Video Playback Paused"),
+    PlaybackResumed("Video Playback Resumed"),
+    ContentCompleted("Video Content Completed"),
+    PlaybackCompleted("Video Playback Completed"),
+    PlaybackBufferStarted("Video Playback Buffer Started"),
+    PlaybackBufferCompleted("Video Playback Buffer Completed"),
+    PlaybackSeekStarted("Video Playback Seek Started"),
+    PlaybackSeekCompleted("Video Playback Seek Completed"),
+    AdBreakStarted("Video Ad Break Started"),
+    AdBreakCompleted("Video Ad Break Completed"),
+    AdStarted("Video Ad Started"),
+    AdSkipped("Video Ad Skipped"),
+    AdCompleted("Video Ad Completed"),
+    PlaybackInterrupted("Video Playback Interrupted"),
+    QualityUpdated("Video Quality Updated");
 
     private String name;
 
