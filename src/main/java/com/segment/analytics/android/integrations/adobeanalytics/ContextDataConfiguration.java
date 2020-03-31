@@ -1,6 +1,5 @@
 package com.segment.analytics.android.integrations.adobeanalytics;
 
-import com.segment.analytics.Properties;
 import com.segment.analytics.ValueMap;
 import com.segment.analytics.integrations.BasePayload;
 
