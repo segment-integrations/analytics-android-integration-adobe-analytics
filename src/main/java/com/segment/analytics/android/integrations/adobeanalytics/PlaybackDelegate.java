@@ -42,12 +42,22 @@ class PlaybackDelegate implements MediaHeartbeat.MediaHeartbeatDelegate {
    *     invocation of this method.
    */
   void createAndUpdateQosObject(Properties properties) {
+    double startupTime = properties.getDouble("startupTime", 0);
+    if (startupTime == 0) {
+      startupTime = properties.getDouble("startup_time", 0);
+    }
+
+    long droppedFrames = properties.getLong("droppedFrames", 0);
+    if (droppedFrames == 0) {
+      droppedFrames = properties.getLong("dropped_frames", 0);
+    }
+
     qosData =
         MediaHeartbeat.createQoSObject(
             properties.getLong("bitrate", 0),
-            properties.getDouble("startupTime", 0),
+            startupTime,
             properties.getDouble("fps", 0),
-            properties.getLong("droppedFrames", 0));
+            droppedFrames);
   }
 
   /** Adobe invokes this method once every ten seconds to report quality of service data. */

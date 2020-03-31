@@ -178,6 +178,65 @@ public class VideoAnalyticsTest {
   }
 
   @Test
+  public void trackVideoContentStarted_snakeCase() {
+    Map<String, String> variables = new HashMap<>();
+    variables.put("title", "adobe.title");
+    videoAnalytics.setContextDataConfiguration(new ContextDataConfiguration("", variables));
+    startVideoSession();
+
+    TrackPayload payload = new TrackPayload.Builder()
+            .userId("test-user")
+            .event("Video Content Started")
+            .properties(new Properties()
+                    .putValue("title", "You Win or You Die")
+                    .putValue("content_asset_id", "123")
+                    .putValue("total_length", 100D)
+                    .putValue("start_time", 10D)
+                    .putValue("index_position", 1L)
+                    .putValue("position", 35)
+                    .putValue("season", "1")
+                    .putValue("program", "Game of Thrones")
+                    .putValue("episode", "7")
+                    .putValue("genre", "fantasy")
+                    .putValue("channel", "HBO")
+                    .putValue("airdate", "2011")
+                    .putValue("publisher", "HBO")
+                    .putValue("rating", "MA"))
+            .build();
+    videoAnalytics.track(payload);
+
+    Map<String, String> videoMetadata = new HashMap<>();
+    videoMetadata.put("adobe.title", "You Win or You Die");
+
+    MediaObject mediaChapter = MediaHeartbeat.createChapterObject(
+            "You Win or You Die",
+            1L,
+            100D,
+            10D
+    );
+
+    Map <String, String> standardVideoMetadata = new HashMap<>();
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ASSET_ID, "123");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SHOW, "Game of Thrones");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.SEASON, "1");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.EPISODE, "7");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.GENRE, "fantasy");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.NETWORK, "HBO");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE, "2011");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.ORIGINATOR, "HBO");
+    standardVideoMetadata.put(MediaHeartbeat.VideoMetadataKeys.RATING, "MA");
+
+    mediaChapter.setValue(MediaHeartbeat.MediaObjectKey.StandardVideoMetadata,
+            standardVideoMetadata);
+
+    Assert.assertEquals(videoAnalytics.getPlayback().getCurrentPlaybackTime(), 35.0, 0.01);
+    Mockito.verify(heartbeat).trackPlay();
+    Mockito.verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.ChapterStart),
+            mediaObjectEq(mediaChapter),
+            eq(videoMetadata));
+  }
+
+  @Test
   public void trackVideoContentStartedWithExtraProperties() {
     Map<String, String> variables = new HashMap<>();
     variables.put("title", "adobe.title");
@@ -325,6 +384,40 @@ public class VideoAnalyticsTest {
   }
 
   @Test
+  public void trackVideoAdBreakStarted_snakeCase() {
+    Map<String, String> variables = new HashMap<>();
+    variables.put("context_value", "adobe.context.value");
+    videoAnalytics.setContextDataConfiguration(new ContextDataConfiguration("", variables));
+    startVideoSession();
+
+    TrackPayload payload = new TrackPayload.Builder()
+            .userId("test-user")
+            .event(VideoAnalytics.Event.AdBreakStarted.getName())
+            .properties(new Properties()
+                    .putValue("title",
+                            "Car Commercial") // Should this be pre-roll, mid-roll or post-roll instead?
+                    .putValue("start_time", 10D)
+                    .putValue("index_position", 1L)
+                    .putValue("context_value", "value"))
+            .build();
+
+    videoAnalytics.track(payload);
+
+    MediaObject mediaAdBreakInfo = MediaHeartbeat.createAdBreakObject(
+            "Car Commercial",
+            1L,
+            10D
+    );
+
+    Map<String, String> adBreakMetadata = new HashMap<>();
+    adBreakMetadata.put("adobe.context.value", "value");
+
+    Mockito.verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdBreakStart),
+            mediaObjectEq(mediaAdBreakInfo), eq(adBreakMetadata));
+  }
+
+
+  @Test
   public void trackVideoAdBreakCompleted() {
     startVideoSession();
     sendHeartbeat("Video Ad Break Completed");
@@ -372,6 +465,46 @@ public class VideoAnalyticsTest {
   }
 
   @Test
+  public void trackVideoAdStarted_snakeCase() {
+    Map<String, String> variables = new HashMap<>();
+    variables.put("title", "adobe.title");
+    videoAnalytics.setContextDataConfiguration(new ContextDataConfiguration("myapp.", variables));
+    startVideoSession();
+
+    TrackPayload payload = new TrackPayload.Builder()
+            .userId("test-user")
+            .event(VideoAnalytics.Event.AdStarted.getName())
+            .properties(new Properties()
+                    .putValue("title", "Car Commercial")
+                    .putValue("asset_id", "123")
+                    .putValue("total_length", 10D)
+                    .putValue("index_position", 1L)
+                    .putValue("publisher", "Lexus")
+                    .putValue("extra", "extra value"))
+            .build();
+
+    videoAnalytics.track(payload);
+
+    MediaObject mediaAdInfo = MediaHeartbeat.createAdObject(
+            "Car Commercial",
+            "123",
+            1L,
+            10D
+    );
+
+    Map<String, String> adMetadata = new HashMap<>();
+    adMetadata.put("adobe.title", "Car Commercial");
+    adMetadata.put("myapp.extra", "extra value");
+
+    Map<String, String> standardAdMetadata = new HashMap<>();
+    standardAdMetadata.put(MediaHeartbeat.AdMetadataKeys.ADVERTISER, "Lexus");
+    mediaAdInfo.setValue(MediaHeartbeat.MediaObjectKey.StandardAdMetadata, standardAdMetadata);
+
+    Mockito.verify(heartbeat).trackEvent(eq(MediaHeartbeat.Event.AdStart),
+            mediaObjectEq(mediaAdInfo), eq(adMetadata));
+  }
+
+  @Test
   public void trackVideoAdSkipped() {
     startVideoSession();
     sendHeartbeat("Video Ad Skipped");
@@ -414,6 +547,33 @@ public class VideoAnalyticsTest {
         1D,
         50D,
         1L
+    );
+
+    ArgumentMatcher<MediaObject> matcher = new MediaObjectEqArgumentMatcher(expectedMediaObject);
+
+    Assert.assertTrue(matcher.matches(videoAnalytics.getPlayback().getQosData()));
+  }
+
+  @Test
+  public void trackVideoQualityUpdated_snakeCase() {
+    startVideoSession();
+
+    TrackPayload payload = new TrackPayload.Builder()
+            .userId("test-user")
+            .event(VideoAnalytics.Event.QualityUpdated.getName())
+            .properties(new Properties()
+                    .putValue("bitrate", 12000)
+                    .putValue("startup_time", 1)
+                    .putValue("fps", 50)
+                    .putValue("dropped_frames", 1))
+            .build();
+    videoAnalytics.track(payload);
+
+    MediaObject expectedMediaObject = MediaHeartbeat.createQoSObject(
+            12000L,
+            1D,
+            50D,
+            1L
     );
 
     ArgumentMatcher<MediaObject> matcher = new MediaObjectEqArgumentMatcher(expectedMediaObject);

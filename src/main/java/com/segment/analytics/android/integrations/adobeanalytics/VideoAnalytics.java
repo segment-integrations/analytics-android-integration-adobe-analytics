@@ -86,27 +86,29 @@ class VideoAnalytics {
   private static final Map<String, String> VIDEO_METADATA_KEYS = new HashMap<>();
   private static final Map<String, String> AD_METADATA_KEYS = new HashMap<>();
 
-  static {
-    VIDEO_METADATA_KEYS.put("assetId", MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
-    VIDEO_METADATA_KEYS.put("contentAssetId", MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
-    VIDEO_METADATA_KEYS.put("program", MediaHeartbeat.VideoMetadataKeys.SHOW);
-    VIDEO_METADATA_KEYS.put("season", MediaHeartbeat.VideoMetadataKeys.SEASON);
-    VIDEO_METADATA_KEYS.put("episode", MediaHeartbeat.VideoMetadataKeys.EPISODE);
-    VIDEO_METADATA_KEYS.put("genre", MediaHeartbeat.VideoMetadataKeys.GENRE);
-    VIDEO_METADATA_KEYS.put("channel", MediaHeartbeat.VideoMetadataKeys.NETWORK);
-    VIDEO_METADATA_KEYS.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
-    VIDEO_METADATA_KEYS.put("publisher", MediaHeartbeat.VideoMetadataKeys.ORIGINATOR);
-    VIDEO_METADATA_KEYS.put("rating", MediaHeartbeat.VideoMetadataKeys.RATING);
-
-    AD_METADATA_KEYS.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
-  }
-
   /**
    * Creates MediaHeartbeats with the provided delegate.
    *
    * @since 1.1.1
    */
   static class HeartbeatFactory {
+
+    static {
+      VIDEO_METADATA_KEYS.put("assetId", MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
+      VIDEO_METADATA_KEYS.put("asset_id", MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
+      VIDEO_METADATA_KEYS.put("contentAssetId", MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
+      VIDEO_METADATA_KEYS.put("content_asset_id", MediaHeartbeat.VideoMetadataKeys.ASSET_ID);
+      VIDEO_METADATA_KEYS.put("program", MediaHeartbeat.VideoMetadataKeys.SHOW);
+      VIDEO_METADATA_KEYS.put("season", MediaHeartbeat.VideoMetadataKeys.SEASON);
+      VIDEO_METADATA_KEYS.put("episode", MediaHeartbeat.VideoMetadataKeys.EPISODE);
+      VIDEO_METADATA_KEYS.put("genre", MediaHeartbeat.VideoMetadataKeys.GENRE);
+      VIDEO_METADATA_KEYS.put("channel", MediaHeartbeat.VideoMetadataKeys.NETWORK);
+      VIDEO_METADATA_KEYS.put("airdate", MediaHeartbeat.VideoMetadataKeys.FIRST_AIR_DATE);
+      VIDEO_METADATA_KEYS.put("publisher", MediaHeartbeat.VideoMetadataKeys.ORIGINATOR);
+      VIDEO_METADATA_KEYS.put("rating", MediaHeartbeat.VideoMetadataKeys.RATING);
+
+      AD_METADATA_KEYS.put("publisher", MediaHeartbeat.AdMetadataKeys.ADVERTISER);
+    }
 
     HeartbeatFactory() {}
 
@@ -256,7 +258,10 @@ class VideoAnalytics {
 
     config.playerName = eventProperties.getString("videoPlayer");
     if (config.playerName == null) {
-      config.playerName = "unknown";
+      config.playerName = eventProperties.getString("video_player");
+      if (config.playerName == null) {
+        config.playerName = "unknown";
+      }
     }
 
     config.appVersion = packageName;
@@ -265,6 +270,10 @@ class VideoAnalytics {
     ValueMap eventOptions = track.integrations().getValueMap("Adobe Analytics");
     if (eventOptions != null && eventOptions.getString("ovpName") != null) {
       config.ovp = eventOptions.getString("ovpName");
+    } else if (eventOptions != null && eventOptions.getString("ovp_name") != null) {
+      config.ovp = eventOptions.getString("ovp_name");
+    } else if (eventOptions != null && eventOptions.getString("ovp") != null) {
+      config.ovp = eventOptions.getString("ovp");
     } else {
       config.ovp = "unknown";
     }
@@ -338,7 +347,11 @@ class VideoAnalytics {
 
   private void trackVideoPlaybackSeekCompleted(TrackPayload track) {
     Properties seekProperties = track.properties();
-    playback.updatePlayheadPosition(seekProperties.getLong("seekPosition", 0));
+    long seekPosition = seekProperties.getLong("seekPosition", 0);
+    if (seekPosition == 0) {
+      seekPosition = seekProperties.getLong("seek_position", 0);
+    }
+    playback.updatePlayheadPosition(seekPosition);
     playback.unPausePlayhead();
     trackAdobeEvent(MediaHeartbeat.Event.SeekComplete, null, null);
   }
@@ -488,7 +501,16 @@ class VideoAnalytics {
 
       // Remove media object keys
       for (String key :
-          new String[] {"title", "indexPosition", "position", "totalLength", "startTime"}) {
+          new String[] {
+            "title",
+            "indexPosition",
+            "index_position",
+            "position",
+            "totalLength",
+            "total_length",
+            "startTime",
+            "start_time"
+          }) {
         extraProperties.remove(key);
       }
 
@@ -528,8 +550,17 @@ class VideoAnalytics {
       String title = eventProperties.getString("title");
       long indexPosition =
           eventProperties.getLong("indexPosition", 1); // Segment does not spec this
+      if (indexPosition == 1) {
+        indexPosition = eventProperties.getLong("index_position", 1);
+      }
       double totalLength = eventProperties.getDouble("totalLength", 0);
+      if (totalLength == 0) {
+        totalLength = eventProperties.getDouble("total_length", 0);
+      }
       double startTime = eventProperties.getDouble("startTime", 0);
+      if (startTime == 0) {
+        startTime = eventProperties.getDouble("start_time", 0);
+      }
 
       MediaObject media =
           MediaHeartbeat.createChapterObject(title, indexPosition, totalLength, startTime);
@@ -546,7 +577,13 @@ class VideoAnalytics {
 
       String title = eventProperties.getString("title");
       String contentAssetId = eventProperties.getString("contentAssetId");
+      if (contentAssetId == null || contentAssetId.trim().isEmpty()) {
+        contentAssetId = eventProperties.getString("content_asset_id");
+      }
       double totalLength = eventProperties.getDouble("totalLength", 0);
+      if (totalLength == 0) {
+        totalLength = eventProperties.getDouble("total_length", 0);
+      }
       String format = MediaHeartbeat.StreamType.LIVE;
       if (!eventProperties.getBoolean("livestream", false)) {
         format = MediaHeartbeat.StreamType.VOD;
@@ -567,8 +604,17 @@ class VideoAnalytics {
 
       String title = eventProperties.getString("title");
       String assetId = eventProperties.getString("assetId");
-      long indexPosition = eventProperties.getLong("indexPosition", 0);
+      if (assetId == null || assetId.trim().isEmpty()) {
+        assetId = eventProperties.getString("asset_id");
+      }
+      long indexPosition = eventProperties.getLong("indexPosition", 1);
+      if (indexPosition == 1) {
+        indexPosition = eventProperties.getLong("index_position", 1);
+      }
       double totalLength = eventProperties.getDouble("totalLength", 0);
+      if (totalLength == 0) {
+        totalLength = eventProperties.getDouble("total_length", 0);
+      }
 
       MediaObject media = MediaHeartbeat.createAdObject(title, assetId, indexPosition, totalLength);
 
@@ -586,7 +632,13 @@ class VideoAnalytics {
       String title = eventProperties.getString("title");
       long indexPosition =
           eventProperties.getLong("indexPosition", 1); // Segment does not spec this
+      if (indexPosition == 1) {
+        indexPosition = eventProperties.getLong("index_position", 1);
+      }
       double startTime = eventProperties.getDouble("startTime", 0);
+      if (startTime == 0) {
+        startTime = eventProperties.getDouble("start_time", 0);
+      }
       MediaObject media = MediaHeartbeat.createAdBreakObject(title, indexPosition, startTime);
 
       return media;

@@ -7,7 +7,9 @@ import com.segment.analytics.integrations.Logger;
 import com.segment.analytics.integrations.TrackPayload;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -133,14 +135,21 @@ public class EcommerceAnalytics {
       products = new Products(properties.getList("products", Properties.Product.class));
       extraProperties.remove("products");
     } else {
+      List<String> propertiesToRemove = new LinkedList<>();
+      propertiesToRemove.add("category");
+      propertiesToRemove.add("quantity");
+      propertiesToRemove.add("price");
       products = new Products(properties);
 
       String idKey = productIdentifier;
       if (idKey == null || idKey.equals("id")) {
-        idKey = "productId";
+        propertiesToRemove.add("productId");
+        propertiesToRemove.add("product_id");
+      } else {
+        propertiesToRemove.add(idKey);
       }
 
-      for (String key : new String[] {"category", "quantity", "price", idKey}) {
+      for (String key : propertiesToRemove) {
         extraProperties.remove(key);
       }
     }
@@ -152,6 +161,11 @@ public class EcommerceAnalytics {
     if (properties.containsKey("orderId")) {
       contextData.put("purchaseid", properties.getString("orderId"));
       extraProperties.remove("orderId");
+    }
+
+    if (properties.containsKey("order_id")) {
+      contextData.put("purchaseid", properties.getString("order_id"));
+      extraProperties.remove("order_id");
     }
 
     // add all customer-mapped properties to ecommerce context data map
@@ -282,6 +296,11 @@ public class EcommerceAnalytics {
       // Fallback to "productId" as V2 ecommerce spec
       if (id == null || id.trim().length() == 0) {
         id = eventProduct.getString("productId");
+      }
+
+      // Fallback to "product_id" as V2 ecommerce spec
+      if (id == null || id.trim().length() == 0) {
+        id = eventProduct.getString("product_id");
       }
 
       // Fallback to "id" as V1 ecommerce spec
