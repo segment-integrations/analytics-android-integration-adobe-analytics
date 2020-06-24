@@ -315,11 +315,13 @@ class VideoAnalytics {
 
   private void trackVideoContentCompleted() {
     trackAdobeEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
-    heartbeat.trackComplete();
-    logger.verbose("heartbeat.trackComplete();");
   }
 
+  //Upon playback complete, pause playhead, call trackComplete, and end session
   private void trackVideoPlaybackCompleted() {
+    playback.pausePlayhead();
+    heartbeat.trackComplete();
+    logger.verbose("heartbeat.trackComplete();");
     heartbeat.trackSessionEnd();
     logger.verbose("heartbeat.trackSessionEnd();");
   }
