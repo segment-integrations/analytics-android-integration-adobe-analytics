@@ -305,13 +305,14 @@ public class VideoAnalyticsTest {
     startVideoSession();
     sendHeartbeat("Video Content Completed");
     Mockito.verify(heartbeat).trackEvent(MediaHeartbeat.Event.ChapterComplete, null, null);
-    Mockito.verify(heartbeat).trackComplete();
   }
 
   @Test
   public void trackVideoPlaybackComplete() {
     startVideoSession();
     sendHeartbeat("Video Playback Completed");
+    Assert.assertTrue(videoAnalytics.getPlayback().isPaused());
+    Mockito.verify(heartbeat).trackComplete();
     Mockito.verify(heartbeat).trackSessionEnd();
   }
 
