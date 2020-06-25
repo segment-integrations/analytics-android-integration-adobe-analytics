@@ -1,4 +1,9 @@
 
+1.4.0 / 2020-06-25
+==================
+
+  * [STRATCONN-273] Update trackComplete logic on Video Content Completed and Video Playback Completed events (#74)
+
 1.3.0 / 2020-03-31
 ==================
 
