@@ -16,7 +16,7 @@ compile 'com.segment.analytics.android.integrations:adobeanalytics:+'
 
 ## Usage
 
-After adding the dependency, you must register the integration with our SDK.  To do this, import the Amplitude integration:
+After adding the dependency, you must register the integration with our SDK.  To do this, import the Adobe Analytics integration:
 
 
 ```
