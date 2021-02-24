@@ -11,7 +11,7 @@ Adobe Analytics integration for [analytics-android](https://github.com/segmentio
 To install the Segment-Adobe Analytics integration, simply add this line to your gradle file:
 
 ```
-compile 'com.segment.analytics.android.integrations:adobeanalytics:+'
+compile 'com.segment.analytics.android.integrations:adobe-analytics:+'
 ```
 
 ## Usage
