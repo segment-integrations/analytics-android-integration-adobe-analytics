@@ -2,7 +2,6 @@
 buildscript {
     repositories {
         mavenCentral()
-        jcenter()
         google()
     }
 
@@ -43,22 +42,21 @@ android {
 
 dependencies {
     repositories {
-        jcenter()
         mavenCentral()
         google()
     }
 
     api fileTree(dir: 'libs', include: ['*.jar'])
-    api 'com.segment.analytics.android:analytics:4.3.1'
+    api 'com.segment.analytics.android:analytics:4.10.4'
     api 'com.adobe.mobile:adobeMobileLibrary:4.17.9'
 
     testImplementation 'com.segment.analytics.android:analytics-tests:4.3.1'
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.2'
     testImplementation 'com.android.support.test:runner:1.0.2'
-    testImplementation 'org.mockito:mockito-core:2.22.0'
+    testImplementation 'org.mockito:mockito-core:3.1.0'
 
     // Required for local (non-android) testing
-    testImplementation 'org.json:json:20180813'
+    testImplementation 'org.json:json:20200518'
 
 }
 
