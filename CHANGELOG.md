@@ -1,4 +1,9 @@
 
+1.4.1 / 2022-06-14
+==================
+
+  * [LIBMOBILE-851]: address google policy violation by updating to the latest android-analytics (#75) 
+
 1.4.0 / 2020-06-25
 ==================
 
