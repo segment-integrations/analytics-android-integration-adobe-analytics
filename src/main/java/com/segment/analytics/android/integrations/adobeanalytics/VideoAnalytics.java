@@ -383,6 +383,8 @@ class VideoAnalytics {
 
   private void trackVideoPlaybackInterrupted() {
     playback.pausePlayhead();
+    heartbeat.trackPause();
+    logger.verbose("heartbeat.trackPause();");
   }
 
   private void trackVideoQualityUpdated(TrackPayload track) {
