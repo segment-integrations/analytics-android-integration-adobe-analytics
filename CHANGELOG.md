@@ -1,3 +1,6 @@
+1.5.0 / 2022-09-12
+==================
+  * [LIBMOBILE-989] map Video Playback Interrupted to trackPause() (#76)
 
 1.4.1 / 2022-06-14
 ==================
