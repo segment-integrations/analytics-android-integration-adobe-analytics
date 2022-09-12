@@ -526,6 +526,7 @@ public class VideoAnalyticsTest {
     Double first = videoAnalytics.getPlayback().getCurrentPlaybackTime();
     Thread.sleep(2000L);
     Assert.assertEquals(videoAnalytics.getPlayback().getCurrentPlaybackTime(), first, 0.001);
+    Mockito.verify(heartbeat).trackPause();
   }
 
   @Test
